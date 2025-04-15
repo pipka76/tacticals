@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://b3quk14amilq5"]
+
+[ext_resource type="Script" path="res://Code/Maps/Plains.cs" id="1_dup03"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5g8c3"]
+albedo_color = Color(0.390734, 0.693793, 0.215424, 1)
+
+[node name="Plains" type="Node3D"]
+transform = Transform3D(10, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0)
+script = ExtResource("1_dup03")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+material_override = SubResource("StandardMaterial3D_5g8c3")
+
+[node name="Players" type="Node" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://Scenes/Game/Player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.499019, 0.794796, 0.345368, -0.864932, 0.481454, 0.141759, -0.0536091, -0.36946, 0.927699, 0, 100, 0)

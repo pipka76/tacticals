@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dr80yp8c7dfvh"]
+
+[node name="LobbyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 0

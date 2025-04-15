@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://bu8kkxgcut3lq"]
+
+[ext_resource type="Script" path="res://Code/Core/Main.cs" id="1_yoqn1"]
+[ext_resource type="PackedScene" uid="uid://c74jqahpjw3if" path="res://Scenes/Menus/MainMenu.tscn" id="2_dxim7"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_yoqn1")
+
+[node name="Map" type="Node" parent="."]
+
+[node name="MapSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://Scenes/Maps/Plains.tscn")
+spawn_path = NodePath("../Map")
+spawn_limit = 1
+
+[node name="MainMenu" parent="." instance=ExtResource("2_dxim7")]
+anchors_preset = 15
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
