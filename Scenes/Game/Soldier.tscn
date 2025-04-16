@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://cxnkm4n3kvxkb"]
+[gd_scene load_steps=6 format=3 uid="uid://cxnkm4n3kvxkb"]
 
 [ext_resource type="PackedScene" uid="uid://3e5o5crbg62" path="res://Assets/Game/SoldierLevel1.fbx" id="1_8r05e"]
 [ext_resource type="Script" path="res://Code/Game/Soldier.cs" id="1_quuc0"]
+[ext_resource type="PackedScene" uid="uid://nygqr22se08u" path="res://Assets/Game/SelectionRing.fbx" id="2_dmp1f"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_n3hgi"]
 properties/0/path = NodePath(".:position")
@@ -11,10 +12,26 @@ properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_he0pt"]
+size = Vector3(0.743164, 1.70407, 0.471191)
+
 [node name="Soldier" type="Node3D"]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
 script = ExtResource("1_quuc0")
 
+[node name="SelectionRing" parent="." instance=ExtResource("2_dmp1f")]
+visible = false
+
 [node name="SoldierLevel1" parent="." instance=ExtResource("1_8r05e")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="ServerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_n3hgi")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 7
+collision_mask = 7
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000488281, 0.856827, -0.0109863)
+shape = SubResource("BoxShape3D_he0pt")

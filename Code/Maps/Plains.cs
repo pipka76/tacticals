@@ -1,15 +1,18 @@
 using Godot;
 using System;
 
-public partial class Plains : Node3D
+public partial class Plains : Node3D, IGameMap
 {
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://Scenes/Game/Player.tscn");
+	private Node _entities;
 	
 	public override void _Ready()
 	{
 		if (!Multiplayer.IsServer())
 			return;
 
+		_entities = GetNode<Node>("Entities");
+		
 		Multiplayer.PeerConnected += AddPlayer;
 		Multiplayer.PeerDisconnected += DelPlayer;
 
@@ -58,5 +61,10 @@ public partial class Plains : Node3D
 
 		var playerNode = playersNode.GetNode(id.ToString());
 		playerNode.QueueFree();
+	}
+
+	public void SpawnEntity(Node3D entity)
+	{
+		_entities.AddChild(entity);
 	}
 }
