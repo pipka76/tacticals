@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bs6ddw8i2d41a"]
+
+[ext_resource type="Script" path="res://Code/Maps/Minimap.cs" id="1_rev4h"]
+
+[node name="Minimap" type="Node2D"]
+script = ExtResource("1_rev4h")
+
+[node name="MinimapTexture" type="Sprite2D" parent="."]

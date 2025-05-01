@@ -11,6 +11,7 @@ public partial class Player : Node3D
 	private float _selectCooldown;
 	private float _moveToCooldown;
 	private List<TeamEntity> _myArmy;
+	private Vector3 _homeBaseCoords;
 	
 	private const float CAM_MOVE_SPEED = 5f;
 	private const float VIEW_DISTANCE = 100f;
@@ -26,6 +27,16 @@ public partial class Player : Node3D
 			_playerId = value;
 			// Give authority over the player input to the appropriate peer.
 			GetNode("PlayerInput").SetMultiplayerAuthority(value);
+		}
+	}
+
+	[Export]
+	public Vector3 HomeBaseCoordinates
+	{
+		get => _homeBaseCoords;
+		set
+		{
+			_homeBaseCoords = value;
 		}
 	}
 
@@ -47,9 +58,21 @@ public partial class Player : Node3D
 		if (map != null)
 		{
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
-			var s = (Node3D)soldier.Instantiate();
-			map.SpawnEntity(s);
-			_myArmy.Add((TeamEntity)s);
+			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
+
+			int i = 0;
+			var aUnit = GameUtils.GenerateGrid(Godot.Vector2.Zero, 3,3, 1f);
+			foreach (var au in aUnit)
+			{
+				var s = (Node3D)soldier.Instantiate();
+				var mesh = s.GetNode<Node3D>("SoldierLevel1");
+				var body = (MeshInstance3D)mesh.GetChild(1);
+				body.MaterialOverride = red;
+				s.Name = $"{Multiplayer.GetUniqueId()}-{i++}";
+				map.SpawnEntity(s);
+				((MovableTeamEntity)s).MoveTo(new Vector2(au.X, au.Y));
+				_myArmy.Add((TeamEntity)s);
+			}
 		}
 	}
 
@@ -99,6 +122,8 @@ public partial class Player : Node3D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		_godCamera.Fov = _inputs.CameraFov;
+		
 		if (_inputs.IsSelecting)
 		{
 			if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)

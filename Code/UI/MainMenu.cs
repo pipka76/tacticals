@@ -1,30 +1,26 @@
 using Godot;
 using System;
 
-public partial class MainMenu : Control
+public partial class MainMenu : Control, IGameMenu
 {
-    private void NewGame()
-    {
-        var g = (Main)GetParent();
-        g.StartServer();
-    }
+    public NavigateContext Context { get; set; }
 
     private void JoinGame()
     {
-        //var serverAddress = this.GetNodeOrNull<LineEdit>("HFlowContainer/btnJoinServer/tbServerAddress");
-        var serverAddress = "localhost"; // TODO
-        if (String.IsNullOrEmpty(serverAddress))
-        {
-            GD.Print("Server address is empty. Unable to join.");
-            return;
-        }
-
-        var nm = (Main)GetParent();
-        nm.JoinServer(serverAddress);
+        var main = (Main)GetParent();
+        main.NavigateTo(Main.NAVIGATE_TARGET.LOBBYMENU);
     }
-    
+
+    private void Options()
+    {
+    }
+
     private void QuitGame()
     {
         GetTree().Quit();
+    }
+
+    public void OnNavigateTo(NavigateContext context)
+    {
     }
 }

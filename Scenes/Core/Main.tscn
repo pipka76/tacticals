@@ -1,21 +1,31 @@
-[gd_scene load_steps=3 format=3 uid="uid://bu8kkxgcut3lq"]
+[gd_scene load_steps=7 format=3 uid="uid://bu8kkxgcut3lq"]
 
 [ext_resource type="Script" path="res://Code/Core/Main.cs" id="1_yoqn1"]
+[ext_resource type="Script" path="res://Code/Game/BattleServer.cs" id="2_d0tau"]
 [ext_resource type="PackedScene" uid="uid://c74jqahpjw3if" path="res://Scenes/Menus/MainMenu.tscn" id="2_dxim7"]
+[ext_resource type="Script" path="res://Code/Game/BattleNetwork.cs" id="3_g5eid"]
+[ext_resource type="PackedScene" uid="uid://dr80yp8c7dfvh" path="res://Scenes/Menus/LobbyMenu.tscn" id="3_r4p2y"]
+[ext_resource type="PackedScene" uid="uid://dx1papmc2pq23" path="res://Scenes/Menus/BattleMenu.tscn" id="5_cggsw"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_yoqn1")
 
+[node name="BattleServer" type="Node" parent="."]
+script = ExtResource("2_d0tau")
+
+[node name="BattleNetwork" type="Node" parent="."]
+script = ExtResource("3_g5eid")
+
 [node name="Map" type="Node" parent="."]
 
-[node name="MapSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://Scenes/Maps/Plains.tscn")
-spawn_path = NodePath("../Map")
-spawn_limit = 1
-
 [node name="MainMenu" parent="." instance=ExtResource("2_dxim7")]
-anchors_preset = 15
 offset_right = 0.0
 offset_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
+
+[node name="LobbyMenu" parent="." instance=ExtResource("3_r4p2y")]
+visible = false
+
+[node name="BattleMenu" parent="." instance=ExtResource("5_cggsw")]
+visible = false
+offset_right = 1600.0
+offset_bottom = 1200.0

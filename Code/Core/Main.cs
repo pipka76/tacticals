@@ -1,16 +1,35 @@
 using Godot;
 using System;
+using System.Linq;
 
 public partial class Main : Node
 {
-	private const int PORT = 50000;
-	
+	public enum NAVIGATE_TARGET
+	{
+		MAINMENU,
+		LOBBYMENU,
+		BATTLEMENU
+	}
+
+	private const int PORT = 20000;
+	private const string PORT_ARG = "--port=";
 	public override void _Ready()
 	{
 		// Automatically start the server in headless mode.
 		if (DisplayServer.GetName() == "headless")
 		{
-			GD.Print("Automatically starting dedicated server");
+			int port = PORT;
+			var args = OS.GetCmdlineArgs();
+//			GD.Print($"Found port parameter: {args.Length}");
+			var sPort= args.FirstOrDefault(a => a.StartsWith(PORT_ARG));
+			if (!String.IsNullOrEmpty(sPort))
+			{
+				GD.Print($"Found port parameter: {sPort}");
+				if (!int.TryParse(sPort.Substring(PORT_ARG.Length), out port))
+					port = PORT;
+			}
+
+			GD.Print($"Automatically starting dedicated server on port {port}");
 			CallDeferred(nameof(StartServer));
 		}
 	}
@@ -28,15 +47,22 @@ public partial class Main : Node
 		}
 
 		Multiplayer.MultiplayerPeer = peer;
-		StartGame();
-
+		
 		GD.Print("Server Started!");
 	}
 	
-	public void JoinServer(string ip)
+	public void StartGame(string mapScene)
+	{
+		if (Multiplayer.IsServer())
+		{
+			CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
+		}
+	}
+	
+	public void JoinServer(int port)
 	{
 		var peer = new ENetMultiplayerPeer();
-		var error = peer.CreateClient(ip, PORT);
+		var error = peer.CreateClient("localhost", port);
 
 		if (error != Error.Ok || peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Disconnected)
 		{
@@ -45,28 +71,39 @@ public partial class Main : Node
 		}
 
 		Multiplayer.MultiplayerPeer = peer;
-		StartGame();
+		
+		//StartGame();
 	}
-	
-	private void OnConnectedToServer()
+
+	public void NavigateTo(NAVIGATE_TARGET target, NavigateContext context = null)
 	{
-		GD.Print("Connected successfully to the server.");
-		StartGame();
-	}
-	
-	private void StartGame()
-	{
-		(GetNode("MainMenu") as Control).Hide();
-		//GetTree().Paused = false;
-        
-		// Only change map on the server.
-		// Clients will instantiate the map via the spawner.
-		if (Multiplayer.IsServer())
+		var main = (GetNode("MainMenu") as MainMenu);
+		var lobby = (GetNode("LobbyMenu") as LobbyMenu);
+		var battle = (GetNode("BattleMenu") as BattleMenu);
+		
+		switch (target)
 		{
-			CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>("res://Scenes/Maps/Plains.tscn"));
+			case NAVIGATE_TARGET.MAINMENU:
+				main.Show();
+				main.OnNavigateTo(context);
+				lobby.Hide();
+				battle.Hide();
+				break;
+			case NAVIGATE_TARGET.LOBBYMENU:
+				main.Hide();
+				lobby.Show();
+				lobby.OnNavigateTo(context);
+				battle.Hide();
+				break;
+			case NAVIGATE_TARGET.BATTLEMENU:
+				main.Hide();
+				lobby.Hide();
+				battle.Show();
+				battle.OnNavigateTo(context);
+				break;
 		}
 	}
-	
+
 	private void ChangeLevel(PackedScene scene)
 	{
 		// Remove old level if any.
@@ -79,6 +116,7 @@ public partial class Main : Node
 
 		// Add new level.
 		var li = scene.Instantiate();
+		(li as IGameMap).GenerateLevel();
 		mapRoot.AddChild(li);
 	}
 }

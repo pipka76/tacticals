@@ -9,7 +9,7 @@
 script = ExtResource("1_webvv")
 
 [node name="GodCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.880188, 0.474626, 0, -0.474626, 0.880188, 0, 0.837528, 0)
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 10, 5)
 
 [node name="PlayerInput" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_l8t2c")

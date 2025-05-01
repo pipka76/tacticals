@@ -1,5 +1,113 @@
-[gd_scene format=3 uid="uid://dr80yp8c7dfvh"]
+[gd_scene load_steps=5 format=3 uid="uid://dr80yp8c7dfvh"]
+
+[ext_resource type="Texture2D" uid="uid://dv515eov7bg77" path="res://Assets/UI/menuBackground.png" id="1_0rsls"]
+[ext_resource type="Script" path="res://Code/UI/LobbyMenu.cs" id="1_4jbjn"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jroqm"]
+bg_color = Color(0, 0.251771, 0.663359, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_21sbj"]
+bg_color = Color(4.81308e-08, 0.393094, 0.264821, 1)
 
 [node name="LobbyMenu" type="Control"]
+custom_minimum_size = Vector2(1600, 1200)
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_4jbjn")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_0rsls")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="CreateJoinBattle" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="Separator" type="Control" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.498039, 0, 1)
+theme_override_constants/outline_size = 24
+theme_override_font_sizes/font_size = 140
+text = "Create or join battle"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/CreateJoinBattle/HBoxContainer"]
+custom_minimum_size = Vector2(801, 800)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="btnNewBattle" type="Button" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(800, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+theme_override_styles/normal = SubResource("StyleBoxFlat_jroqm")
+text = "Create new battle"
+
+[node name="hBoxBattleName" type="HBoxContainer" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="TextEdit" type="TextEdit" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName"]
+custom_minimum_size = Vector2(700, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+
+[node name="btnOk" type="Button" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+theme_override_styles/normal = SubResource("StyleBoxFlat_21sbj")
+text = "OK"
+
+[node name="Separator" type="Control" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="hostedGameTemplate" type="Button" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(800, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "---"
+
+[node name="ExistingGames" type="VBoxContainer" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+text = "Refresh"
+
+[connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnNewBattle" to="." method="CreateNewBattleStep1"]
+[connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName/btnOk" to="." method="CreateNewBattleFinal"]
+[connection signal="pressed" from="MarginContainer/CreateJoinBattle/Button" to="." method="RefreshBattles"]
