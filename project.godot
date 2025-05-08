@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="tacticals"
-run/main_scene="res://Scenes/Core/Main.tscn"
+run/main_scene="res://Scenes/Menus/StartMenu.tscn"
 config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 config/icon="res://icon.png"
 
