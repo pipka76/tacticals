@@ -81,7 +81,7 @@ texture_normal = ExtResource("3_f802u")
 texture_pressed = ExtResource("6_47n7a")
 
 [node name="MiddleMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 400)
+custom_minimum_size = Vector2(0, 800)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MiddleMarginContainer"]
@@ -89,12 +89,6 @@ layout_mode = 2
 
 [node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer"]
 layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-expand_mode = 3
 
 [node name="BottomMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 200)
@@ -149,8 +143,10 @@ toggle_mode = true
 texture_normal = ExtResource("11_2m8qd")
 texture_pressed = ExtResource("14_3jk11")
 
+[connection signal="resized" from="." to="." method="OnResized"]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
+[connection signal="gui_input" from="MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel" to="." method="OnGridPanelInput"]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/SOLDIER" to="." method="OnUnitSelected" binds= ["SOLDIER"]]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/TANK" to="." method="OnUnitSelected" binds= ["TANK"]]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/MOTORCYCLE" to="." method="OnUnitSelected" binds= ["MOTORCYCLE"]]
