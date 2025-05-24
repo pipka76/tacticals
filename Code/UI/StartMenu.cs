@@ -8,7 +8,9 @@ public partial class StartMenu : Control
     
 	TextureButton _classicModeButton;
     TextureButton _trainModeButton;
+    TextureButton _hamButton;
     HBoxContainer _unitContainer;
+    HBoxContainer _popupMenu;
     private UnitPlacement[][] _army;
     private Panel _gridPanel;
     private UnitType _selectedUnit;
@@ -37,10 +39,12 @@ public partial class StartMenu : Control
 
     public override void _Ready()
 	{
-		_classicModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/TopMenu/HBoxContainer/btnClassicMode");
-        _trainModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/TopMenu/HBoxContainer/btnTrainDefence");
+		_classicModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode");
+        _trainModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence");
         _unitContainer = GetNode<HBoxContainer>("MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog");
         _gridPanel = GetNode<Panel>("MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel");
+        _popupMenu = GetNode<HBoxContainer>("MarginContainer/PopupMenu");
+        _hamButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/Hamburger");
 
         ArmyGridInit();
     }
@@ -277,5 +281,22 @@ public partial class StartMenu : Control
         }
         GD.PrintErr($"Unknown unit type: {unitId}");
         return UnitType.NONE;
+    }
+
+    private void OnShowPopupMenu()
+    {
+        _popupMenu.Visible = true;
+        _hamButton.Visible = false;
+    }
+
+    private void OnHidePopupMenu()
+    {
+        _popupMenu.Visible = false;
+        _hamButton.Visible = true;
+    }
+
+    private void OnOptionsPressed()
+    {
+        
     }
 }
