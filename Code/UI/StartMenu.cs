@@ -17,8 +17,6 @@ public partial class StartMenu : Control
     private int _unitId;
     private bool _forceRefresh = false;
     
-    private bool _isUpdating = false;
-
     private enum UnitType
     {
         NONE = 0,
