@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Code/UI/OptionsMenu.cs" id="1_auaux"]
 [ext_resource type="Texture2D" uid="uid://b1xtn5b02yner" path="res://Assets/UI/BackButton.png" id="1_foxyg"]
 [ext_resource type="Texture2D" uid="uid://dwd6nkd6mjx8a" path="res://Assets/UI/ArtileryUnit.png" id="3_dumdx"]
-[ext_resource type="ButtonGroup" uid="uid://ca12dkaek26sw" path="res://Scenes/Menus/OptionsButtonGroup.tres" id="3_uxl6n"]
+[ext_resource type="ButtonGroup" path="res://Scenes/Menus/OptionsButtonGroup.tres" id="3_uxl6n"]
 
 [node name="OptionsMenu" type="Control"]
 custom_minimum_size = Vector2(1600, 1200)
