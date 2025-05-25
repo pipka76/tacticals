@@ -18,33 +18,21 @@ public partial class OptionsMenu : Control
         _videoMenu = GetNode<ScrollContainer>("MarginContainer/VBoxContainer/VideoMenu");
         _audioMenu = GetNode<ScrollContainer>("MarginContainer/VBoxContainer/AudioMenu");
     }
-	
-	public override void _Process(double delta)
-	{
-        if (_keybindsButton.ButtonPressed == false && _videoButton.ButtonPressed == false && _audioButton.ButtonPressed == false) 
-        {
-            _keybindsButton.ButtonPressed = true;
-        }
-	}
-
+    
 	private void OnKeybinds(bool toggledOn)
 	{
-        _videoButton.ButtonPressed = false;
-        _audioButton.ButtonPressed = false;
+        GD.Print($"OnKeybinds: {toggledOn}");
         _keybindsMenu.Visible = toggledOn;
     }
 
     private void OnVideo(bool toggledOn)
     {
-        _keybindsButton.ButtonPressed = false;
-        _audioButton.ButtonPressed = false;
+        GD.Print($"OnVideo: {toggledOn}");
         _videoMenu.Visible = toggledOn;
     }
 
     private void OnAudio(bool toggledOn)
     {
-        _keybindsButton.ButtonPressed = false;
-        _videoButton.ButtonPressed = false;
         _audioMenu.Visible = toggledOn;
     }
 }

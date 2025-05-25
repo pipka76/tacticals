@@ -6,8 +6,6 @@ public partial class StartMenu : Control
     private const int ARMY_GRID_ROWS = 3;
     private const int ARMY_GRID_COLS = 10;
     
-	TextureButton _classicModeButton;
-    TextureButton _trainModeButton;
     TextureButton _hamButton;
     HBoxContainer _unitContainer;
     HBoxContainer _popupMenu;
@@ -37,8 +35,6 @@ public partial class StartMenu : Control
 
     public override void _Ready()
 	{
-		_classicModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode");
-        _trainModeButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence");
         _unitContainer = GetNode<HBoxContainer>("MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog");
         _gridPanel = GetNode<Panel>("MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel");
         _popupMenu = GetNode<HBoxContainer>("MarginContainer/PopupMenu");
@@ -142,15 +138,10 @@ public partial class StartMenu : Control
 
     private void OnClassicMode(bool toggledOn)
     {
-        GD.Print($"OnClassicMode: {toggledOn}");
-        _trainModeButton.ButtonPressed = !toggledOn;
-
     }
 
     private void OnTrainMode(bool toggledOn)
     {
-        GD.Print($"OnTrainMode: {toggledOn}");
-        _classicModeButton.ButtonPressed = !toggledOn;
     }
 
     private void OnUnitSelected(bool toggledOn, string unitId)
@@ -159,7 +150,6 @@ public partial class StartMenu : Control
         if (toggledOn)
         {
             _selectedUnit = ConvertToUnitType(unitId);
-            UnselectOtherUnits(unitId);
         }
     }
     
