@@ -9,6 +9,8 @@ public partial class StartMenu : Control, IGameMenu
     TextureButton _hamButton;
     HBoxContainer _unitContainer;
     HBoxContainer _popupMenu;
+    Control _optionsMenu;
+
     private UnitPlacement[][] _army;
     private Panel _gridPanel;
     private UnitType _selectedUnit;
@@ -44,10 +46,11 @@ public partial class StartMenu : Control, IGameMenu
 
     public override void _Ready()
 	{
-        _unitContainer = GetNode<HBoxContainer>("MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog");
-        _gridPanel = GetNode<Panel>("MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel");
-        _popupMenu = GetNode<HBoxContainer>("MarginContainer/PopupMenu");
-        _hamButton = GetNode<TextureButton>("MarginContainer/VBoxContainer/TopMarginContainer/Hamburger");
+        _unitContainer = GetNode<HBoxContainer>("StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog");
+        _gridPanel = GetNode<Panel>("StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel");
+        _popupMenu = GetNode<HBoxContainer>("StartMenuContents/PopupMenu");
+        _hamButton = GetNode<TextureButton>("StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger");
+        _optionsMenu = GetNode<Control>("OptionsMenu");
 
         ArmyGridInit();
     }
@@ -338,11 +341,6 @@ public partial class StartMenu : Control, IGameMenu
         _hamButton.Visible = true;
     }
 
-    private void OnOptionsPressed()
-    {
-        
-    }
-
     private void OnBattlePressed()
     {
         var main = (Main)GetParent();
@@ -354,5 +352,10 @@ public partial class StartMenu : Control, IGameMenu
     public void OnNavigateTo(NavigateContext context)
     {
         
+    }
+    private void OnOptionsPressed()
+    {
+        StartMenu.Visible = false;
+        _optionsMenu.Visible = true;
     }
 }

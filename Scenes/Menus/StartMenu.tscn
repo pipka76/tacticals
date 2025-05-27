@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://bertea36m5op7"]
+[gd_scene load_steps=28 format=3 uid="uid://bertea36m5op7"]
 
 [ext_resource type="Script" path="res://Code/UI/StartMenu.cs" id="1_uasv6"]
 [ext_resource type="Texture2D" uid="uid://byr057x0qdp4y" path="res://Assets/UI/BattleButton.png" id="1_ypqbx"]
@@ -24,6 +24,9 @@
 [ext_resource type="Texture2D" uid="uid://d4fav2ji2m58t" path="res://Assets/UI/PressedDeleteButton.png" id="14_3jk11"]
 [ext_resource type="Texture2D" uid="uid://chj6sklfxa5s5" path="res://Assets/UI/PressedHelicopterUnit.png" id="14_4ktbp"]
 [ext_resource type="Texture2D" uid="uid://b1xtn5b02yner" path="res://Assets/UI/BackButton.png" id="22_vcxan"]
+[ext_resource type="PackedScene" uid="uid://c447kwkb1m2ks" path="res://Scenes/Menus/ProfileMenu.tscn" id="25_2mqdi"]
+[ext_resource type="PackedScene" uid="uid://dsd5vlsrknp3t" path="res://Scenes/Menus/OptionsMenu.tscn" id="26_vq855"]
+[ext_resource type="PackedScene" uid="uid://bh0dy7bnvlx7l" path="res://Scenes/Menus/LeaderboardMenu.tscn" id="27_cv53x"]
 
 [node name="StartMenu" type="Control"]
 layout_mode = 3
@@ -34,7 +37,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_uasv6")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="StartMenuContents" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -46,31 +49,31 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="StartMenuContents"]
 layout_mode = 2
 
-[node name="TopMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
+[node name="TopMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/VBoxContainer/TopMarginContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="TopMenu" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer"]
+[node name="TopMenu" type="VBoxContainer" parent="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer"]
 layout_mode = 2
 
-[node name="btnGotoBattle" type="TextureButton" parent="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu"]
+[node name="btnGotoBattle" type="TextureButton" parent="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu"]
 layout_mode = 2
 size_flags_horizontal = 4
 texture_normal = ExtResource("1_ypqbx")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu"]
+[node name="HBoxContainer" type="HBoxContainer" parent="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu"]
 layout_mode = 2
 size_flags_horizontal = 4
 
-[node name="btnClassicMode" type="TextureButton" parent="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer"]
+[node name="btnClassicMode" type="TextureButton" parent="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer"]
 custom_minimum_size = Vector2(350, 100)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -80,7 +83,7 @@ button_group = ExtResource("3_kpkjo")
 texture_normal = ExtResource("2_nmiks")
 texture_pressed = ExtResource("4_13r7w")
 
-[node name="btnTrainDefence" type="TextureButton" parent="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer"]
+[node name="btnTrainDefence" type="TextureButton" parent="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer"]
 custom_minimum_size = Vector2(350, 100)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -89,133 +92,146 @@ button_group = ExtResource("3_kpkjo")
 texture_normal = ExtResource("3_f802u")
 texture_pressed = ExtResource("6_47n7a")
 
-[node name="Hamburger" type="TextureButton" parent="MarginContainer/VBoxContainer/TopMarginContainer"]
+[node name="Hamburger" type="TextureButton" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
 texture_normal = ExtResource("7_we17s")
 
-[node name="MiddleMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
+[node name="MiddleMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
 custom_minimum_size = Vector2(0, 650)
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MiddleMarginContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer/MiddleMarginContainer"]
 layout_mode = 2
 
-[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer"]
+[node name="Panel" type="Panel" parent="StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer"]
 layout_mode = 2
 
-[node name="BottomMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
+[node name="BottomMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 theme_override_constants/margin_left = 100
 theme_override_constants/margin_right = 100
 
-[node name="UnitCatalog" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BottomMarginContainer"]
+[node name="UnitCatalog" type="HBoxContainer" parent="StartMenuContents/VBoxContainer/BottomMarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="SOLDIER" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="SOLDIER" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("4_wxe8e")
 texture_pressed = ExtResource("6_mh477")
 
-[node name="TANK" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="TANK" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("5_1xq7c")
 texture_pressed = ExtResource("8_p5g46")
 
-[node name="MOTORCYCLE" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="MOTORCYCLE" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("6_m1mx8")
 texture_pressed = ExtResource("10_qjdfa")
 
-[node name="TRUCK" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="TRUCK" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("7_ygi7i")
 texture_pressed = ExtResource("9_fli88")
 
-[node name="HELICOPTER" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="HELICOPTER" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("8_bnnql")
 texture_pressed = ExtResource("14_4ktbp")
 
-[node name="ARTILERY" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="ARTILERY" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("9_t7fcg")
 texture_pressed = ExtResource("12_f0f4e")
 
-[node name="TRASH" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog"]
+[node name="TRASH" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
 layout_mode = 2
 toggle_mode = true
 button_group = ExtResource("8_c0ark")
 texture_normal = ExtResource("11_2m8qd")
 texture_pressed = ExtResource("14_3jk11")
 
-[node name="PopupMenu" type="HBoxContainer" parent="MarginContainer"]
+[node name="PopupMenu" type="HBoxContainer" parent="StartMenuContents"]
 visible = false
 layout_mode = 2
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/PopupMenu"]
+[node name="VBoxContainer2" type="VBoxContainer" parent="StartMenuContents/PopupMenu"]
 custom_minimum_size = Vector2(300, 500)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
 
-[node name="Profile" type="Button" parent="MarginContainer/PopupMenu/VBoxContainer2"]
+[node name="Profile" type="Button" parent="StartMenuContents/PopupMenu/VBoxContainer2"]
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 text = "PROFILE"
 
-[node name="Options" type="Button" parent="MarginContainer/PopupMenu/VBoxContainer2"]
+[node name="Options" type="Button" parent="StartMenuContents/PopupMenu/VBoxContainer2"]
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 text = "OPTIONS"
 
-[node name="Leaderboard" type="Button" parent="MarginContainer/PopupMenu/VBoxContainer2"]
+[node name="Leaderboard" type="Button" parent="StartMenuContents/PopupMenu/VBoxContainer2"]
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 text = "LEADERBOARD"
 
-[node name="Battlelog" type="Button" parent="MarginContainer/PopupMenu/VBoxContainer2"]
+[node name="Battlelog" type="Button" parent="StartMenuContents/PopupMenu/VBoxContainer2"]
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 text = "BATTLELOG"
 
-[node name="Quit" type="Button" parent="MarginContainer/PopupMenu/VBoxContainer2"]
+[node name="Quit" type="Button" parent="StartMenuContents/PopupMenu/VBoxContainer2"]
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 text = "QUIT"
 
-[node name="Back" type="TextureButton" parent="MarginContainer/PopupMenu"]
+[node name="Back" type="TextureButton" parent="StartMenuContents/PopupMenu"]
 layout_mode = 2
 texture_normal = ExtResource("22_vcxan")
 
+[node name="ProfileMenu" parent="." instance=ExtResource("25_2mqdi")]
+visible = false
+layout_mode = 1
+
+[node name="OptionsMenu" parent="." instance=ExtResource("26_vq855")]
+visible = false
+layout_mode = 1
+
+[node name="LeaderboardMenu" parent="." instance=ExtResource("27_cv53x")]
+visible = false
+layout_mode = 1
+
 [connection signal="resized" from="." to="." method="OnResized"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/btnGotoBattle" to="." method="OnBattlePressed"]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/TopMarginContainer/Hamburger" to="." method="OnShowPopupMenu"]
-[connection signal="gui_input" from="MarginContainer/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel" to="." method="OnGridPanelInput"]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/SOLDIER" to="." method="OnUnitSelected" binds= ["SOLDIER"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/TANK" to="." method="OnUnitSelected" binds= ["TANK"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/MOTORCYCLE" to="." method="OnUnitSelected" binds= ["MOTORCYCLE"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/TRUCK" to="." method="OnUnitSelected" binds= ["TRUCK"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/HELICOPTER" to="." method="OnUnitSelected" binds= ["HELICOPTER"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/ARTILERY" to="." method="OnUnitSelected" binds= ["ARTILERY"]]
-[connection signal="toggled" from="MarginContainer/VBoxContainer/BottomMarginContainer/UnitCatalog/TRASH" to="." method="OnUnitSelected" binds= ["TRASH"]]
-[connection signal="pressed" from="MarginContainer/PopupMenu/Back" to="." method="OnHidePopupMenu"]
+[connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/btnGotoBattle" to="." method="OnBattlePressed"]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
+[connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger" to="." method="OnShowPopupMenu"]
+[connection signal="gui_input" from="StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel" to="." method="OnGridPanelInput"]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/SOLDIER" to="." method="OnUnitSelected" binds= ["SOLDIER"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TANK" to="." method="OnUnitSelected" binds= ["TANK"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/MOTORCYCLE" to="." method="OnUnitSelected" binds= ["MOTORCYCLE"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TRUCK" to="." method="OnUnitSelected" binds= ["TRUCK"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/HELICOPTER" to="." method="OnUnitSelected" binds= ["HELICOPTER"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/ARTILERY" to="." method="OnUnitSelected" binds= ["ARTILERY"]]
+[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TRASH" to="." method="OnUnitSelected" binds= ["TRASH"]]
+[connection signal="pressed" from="StartMenuContents/PopupMenu/VBoxContainer2/Options" to="." method="OnOptionsPressed"]
+[connection signal="pressed" from="StartMenuContents/PopupMenu/Back" to="." method="OnHidePopupMenu"]
