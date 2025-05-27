@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://Code/Core/Main.cs" id="1_yoqn1"]
 [ext_resource type="Script" path="res://Code/Game/BattleServer.cs" id="2_d0tau"]
-[ext_resource type="PackedScene" uid="uid://c74jqahpjw3if" path="res://Scenes/Menus/MainMenu.tscn" id="2_dxim7"]
 [ext_resource type="Script" path="res://Code/Game/BattleNetwork.cs" id="3_g5eid"]
 [ext_resource type="PackedScene" uid="uid://dr80yp8c7dfvh" path="res://Scenes/Menus/LobbyMenu.tscn" id="3_r4p2y"]
+[ext_resource type="PackedScene" uid="uid://bertea36m5op7" path="res://Scenes/Menus/StartMenu.tscn" id="4_cja2m"]
 [ext_resource type="PackedScene" uid="uid://dx1papmc2pq23" path="res://Scenes/Menus/BattleMenu.tscn" id="5_cggsw"]
 
 [node name="Main" type="Node"]
@@ -18,9 +18,7 @@ script = ExtResource("3_g5eid")
 
 [node name="Map" type="Node" parent="."]
 
-[node name="MainMenu" parent="." instance=ExtResource("2_dxim7")]
-offset_right = 0.0
-offset_bottom = 0.0
+[node name="StartMenu" parent="." instance=ExtResource("4_cja2m")]
 
 [node name="LobbyMenu" parent="." instance=ExtResource("3_r4p2y")]
 visible = false

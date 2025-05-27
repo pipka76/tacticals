@@ -8,7 +8,7 @@ using System.Web;
 
 public partial class BattleServer : Node
 {
-	private const string ServerApiUrl = "http://localhost:5000/";
+	private const string ServerApiUrl = "http://172.33.1.169:5000/";
 	private System.Net.Http.HttpClient _serverApi;
 
 	public struct NewBattle

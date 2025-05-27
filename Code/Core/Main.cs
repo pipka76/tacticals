@@ -6,7 +6,7 @@ public partial class Main : Node
 {
 	public enum NAVIGATE_TARGET
 	{
-		MAINMENU,
+		STARTMENU,
 		LOBBYMENU,
 		BATTLEMENU
 	}
@@ -77,13 +77,13 @@ public partial class Main : Node
 
 	public void NavigateTo(NAVIGATE_TARGET target, NavigateContext context = null)
 	{
-		var main = (GetNode("MainMenu") as MainMenu);
+		var main = (GetNode("StartMenu") as StartMenu);
 		var lobby = (GetNode("LobbyMenu") as LobbyMenu);
 		var battle = (GetNode("BattleMenu") as BattleMenu);
 		
 		switch (target)
 		{
-			case NAVIGATE_TARGET.MAINMENU:
+			case NAVIGATE_TARGET.STARTMENU:
 				main.Show();
 				main.OnNavigateTo(context);
 				lobby.Hide();

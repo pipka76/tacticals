@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://byr057x0qdp4y" path="res://Assets/UI/BattleButton.png" id="1_ypqbx"]
 [ext_resource type="Texture2D" uid="uid://qoak4lk6gll3" path="res://Assets/UI/ClassicModeButton.png" id="2_nmiks"]
 [ext_resource type="Texture2D" uid="uid://ctq5wyt0c5v4m" path="res://Assets/UI/TrainDefenceButton.png" id="3_f802u"]
-[ext_resource type="ButtonGroup" path="res://Scenes/Menus/GameModeGroup.tres" id="3_kpkjo"]
+[ext_resource type="ButtonGroup" uid="uid://cr2j138gqsqey" path="res://Scenes/Menus/GameModeGroup.tres" id="3_kpkjo"]
 [ext_resource type="Texture2D" uid="uid://61ibieek6vqj" path="res://Assets/UI/PressedClassicModeButton.png" id="4_13r7w"]
 [ext_resource type="Texture2D" uid="uid://cj3vosp6bxpdy" path="res://Assets/UI/SoldierUnit.png" id="4_wxe8e"]
 [ext_resource type="Texture2D" uid="uid://dqllohrd7oadx" path="res://Assets/UI/TankUnit.png" id="5_1xq7c"]
@@ -14,7 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://dmc7mwm2qxmus" path="res://Assets/UI/HamburgerMenuButton.png" id="7_we17s"]
 [ext_resource type="Texture2D" uid="uid://ctllxmta4g7oq" path="res://Assets/UI/TruckUnit.png" id="7_ygi7i"]
 [ext_resource type="Texture2D" uid="uid://g45eqx0ptkud" path="res://Assets/UI/helicopterUnit.png" id="8_bnnql"]
-[ext_resource type="ButtonGroup" path="res://Scenes/Menus/SelectArmyUnitGroup.tres" id="8_c0ark"]
+[ext_resource type="ButtonGroup" uid="uid://cerraupf3r0hf" path="res://Scenes/Menus/SelectArmyUnitGroup.tres" id="8_c0ark"]
 [ext_resource type="Texture2D" uid="uid://dfs4vw3lylavc" path="res://Assets/UI/PressedTankUnit.png" id="8_p5g46"]
 [ext_resource type="Texture2D" uid="uid://b761q77v37e71" path="res://Assets/UI/PressedTruckUnit.png" id="9_fli88"]
 [ext_resource type="Texture2D" uid="uid://dwd6nkd6mjx8a" path="res://Assets/UI/ArtileryUnit.png" id="9_t7fcg"]
@@ -97,7 +97,7 @@ size_flags_vertical = 0
 texture_normal = ExtResource("7_we17s")
 
 [node name="MiddleMarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 800)
+custom_minimum_size = Vector2(0, 650)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MiddleMarginContainer"]
@@ -206,6 +206,7 @@ layout_mode = 2
 texture_normal = ExtResource("22_vcxan")
 
 [connection signal="resized" from="." to="." method="OnResized"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/btnGotoBattle" to="." method="OnBattlePressed"]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
 [connection signal="toggled" from="MarginContainer/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/TopMarginContainer/Hamburger" to="." method="OnShowPopupMenu"]

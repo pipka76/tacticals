@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class StartMenu : Control
+public partial class StartMenu : Control, IGameMenu
 {
     private const int ARMY_GRID_ROWS = 3;
     private const int ARMY_GRID_COLS = 10;
@@ -14,7 +14,14 @@ public partial class StartMenu : Control
     private UnitType _selectedUnit;
     private int _unitId;
     private bool _forceRefresh = false;
+    private GameMode _gameModeSelected = GameMode.CLASSIC;
     
+    private enum GameMode
+    {
+        CLASSIC,
+        TRAIN_DEFENSE
+    }
+
     private enum UnitType
     {
         NONE = 0,
@@ -32,6 +39,8 @@ public partial class StartMenu : Control
         public UnitType Unit;
         public int Id;
     }
+
+    public NavigateContext Context { get; set; }
 
     public override void _Ready()
 	{
@@ -138,10 +147,12 @@ public partial class StartMenu : Control
 
     private void OnClassicMode(bool toggledOn)
     {
+        _gameModeSelected = GameMode.CLASSIC;
     }
 
     private void OnTrainMode(bool toggledOn)
     {
+        _gameModeSelected = GameMode.TRAIN_DEFENSE;
     }
 
     private void OnUnitSelected(bool toggledOn, string unitId)
@@ -209,6 +220,50 @@ public partial class StartMenu : Control
         {
             PlaceUnit(coords, _selectedUnit);
         }
+    }
+
+    private string ExtractArmySetup()
+    {
+        ArmySetup aSetup = new ArmySetup();
+        
+        for (int r = 0; r < ARMY_GRID_ROWS; r++)
+        {
+            for (int c = 0; c < ARMY_GRID_COLS; c++)
+            {
+                var placement = _army[r][c];
+                switch (placement.Unit)
+                {
+                    case UnitType.SOLDIER:
+                        aSetup.SoldierCount++;
+                        break;
+                    case UnitType.TANK:
+                        aSetup.TankCount++;
+                        break;
+                    case UnitType.MOTORCYCLE:
+                        aSetup.MotoBikeCount++;
+                        break;
+                    case UnitType.TRUCK:
+                        aSetup.TruckCount++;
+                        break;
+                    case UnitType.HELICOPTER:
+                        aSetup.HeliCount++;
+                        break;
+                    case UnitType.ARTILERY:
+                        aSetup.ArtiCount++;
+                        break;
+                    default:
+                        continue;
+                }
+
+                aSetup.TankCount /= 4;
+                aSetup.TruckCount /= 4;
+                aSetup.MotoBikeCount /= 2;
+                aSetup.HeliCount /= 2;
+                aSetup.ArtiCount /= 4;
+            }
+        }
+
+        return System.Text.Json.JsonSerializer.Serialize(aSetup);
     }
 
     private void PlaceUnit(Vector2I coords, UnitType uType)
@@ -284,6 +339,19 @@ public partial class StartMenu : Control
     }
 
     private void OnOptionsPressed()
+    {
+        
+    }
+
+    private void OnBattlePressed()
+    {
+        var main = (Main)GetParent();
+        var c = new NavigateContext() { Command = (_gameModeSelected == GameMode.CLASSIC) ? "CLASSIC" : "TRAIN_DEFENSE" };
+        c.Metadata.Add("ArmySetup", ExtractArmySetup());
+        main.NavigateTo(Main.NAVIGATE_TARGET.LOBBYMENU, c);
+    }
+
+    public void OnNavigateTo(NavigateContext context)
     {
         
     }
