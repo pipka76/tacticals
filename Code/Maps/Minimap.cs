@@ -15,7 +15,7 @@ public partial class Minimap : Node2D
 	public void Generate(MapBlock[][] map)
 	{
 		// Create an image
-		var img = Image.Create(map.Length * PIXEL_SIZE, map[0].Length * PIXEL_SIZE, false, Image.Format.Rgba8);
+		var img = Image.CreateEmpty(map.Length * PIXEL_SIZE, map[0].Length * PIXEL_SIZE, false, Image.Format.Rgba8);
 		img.Fill(Colors.Transparent); // Optional
 
 		for (int i = 0; i < map.Length; i++)

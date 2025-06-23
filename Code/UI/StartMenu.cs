@@ -355,7 +355,7 @@ public partial class StartMenu : Control, IGameMenu
     }
     private void OnOptionsPressed()
     {
-        StartMenu.Visible = false;
+        this.Visible = false;
         _optionsMenu.Visible = true;
     }
 }

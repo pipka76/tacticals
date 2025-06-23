@@ -100,23 +100,23 @@ size_flags_vertical = 0
 texture_normal = ExtResource("7_we17s")
 
 [node name="LoginLabel" type="Label" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
-visible = false
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
-text = "LOGGED IN"
+text = "LOG IN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LogoutLabel" type="Label" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.854902, 0.0823529, 0, 1)
 theme_override_colors/font_outline_color = Color(0.890196, 0, 0, 1)
-text = "LOGGED OUT"
+text = "LOG OUT"
 horizontal_alignment = 1
 vertical_alignment = 1
 

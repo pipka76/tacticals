@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="HomeUbuntu" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="HomeUbuntu">
+        <serverdata>
+          <mappings>
+            <mapping deploy="tacticals/api" local="$PROJECT_DIR$/../tacticals-api-server/tacticals-api-server/bin/ExportRelease/net8.0" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
