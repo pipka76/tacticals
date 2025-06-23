@@ -23,27 +23,27 @@ theme_override_constants/margin_bottom = 20
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="TopContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 
-[node name="Picture" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="ProfilePicture" type="TextureRect" parent="MarginContainer/VBoxContainer/TopContainer"]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 
-[node name="Name" type="LineEdit" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="Name" type="LineEdit" parent="MarginContainer/VBoxContainer/TopContainer"]
 custom_minimum_size = Vector2(750, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 100
 placeholder_text = "ENTER NAME"
 
-[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+[node name="BottomGrid" type="GridContainer" parent="MarginContainer/VBoxContainer"]
 layout_direction = 2
 layout_mode = 2
 columns = 3
 
-[node name="Deck" type="Label" parent="MarginContainer/VBoxContainer/GridContainer"]
+[node name="DeckTitle" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
 custom_minimum_size = Vector2(500, 150)
 layout_mode = 2
 theme_override_font_sizes/font_size = 75
@@ -51,7 +51,7 @@ text = "DECK"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Win" type="Label" parent="MarginContainer/VBoxContainer/GridContainer"]
+[node name="WinTitle" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
 custom_minimum_size = Vector2(500, 150)
 layout_mode = 2
 theme_override_font_sizes/font_size = 75
@@ -59,10 +59,19 @@ text = "WIN%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Games Played" type="Label" parent="MarginContainer/VBoxContainer/GridContainer"]
+[node name="GamesPlayedTitle" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
 custom_minimum_size = Vector2(500, 150)
 layout_mode = 2
 theme_override_font_sizes/font_size = 75
 text = "GAMES PLAYED"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Deck" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
+layout_mode = 2
+
+[node name="Win" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
+layout_mode = 2
+
+[node name="GamesPlayed" type="Label" parent="MarginContainer/VBoxContainer/BottomGrid"]
+layout_mode = 2
