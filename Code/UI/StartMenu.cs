@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using tacticals_api_server.Domain;
 
 public partial class StartMenu : Control, IGameMenu
 {
@@ -10,6 +11,7 @@ public partial class StartMenu : Control, IGameMenu
     HBoxContainer _unitContainer;
     HBoxContainer _popupMenu;
     Control _optionsMenu;
+    Control _registerMenu;
 
     private UnitPlacement[][] _army;
     private Panel _gridPanel;
@@ -51,6 +53,7 @@ public partial class StartMenu : Control, IGameMenu
         _popupMenu = GetNode<HBoxContainer>("StartMenuContents/PopupMenu");
         _hamButton = GetNode<TextureButton>("StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger");
         _optionsMenu = GetNode<Control>("OptionsMenu");
+        _registerMenu = GetNode<Control>("RegisterMenu");
 
         ArmyGridInit();
     }
@@ -353,6 +356,12 @@ public partial class StartMenu : Control, IGameMenu
     {
         
     }
+
+    private void OnLoginRegisterPressed()
+    {
+        _registerMenu.Visible = true;
+    }
+   
     private void OnOptionsPressed()
     {
         this.Visible = false;

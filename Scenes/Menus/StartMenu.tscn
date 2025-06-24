@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://bertea36m5op7"]
+[gd_scene load_steps=29 format=3 uid="uid://bertea36m5op7"]
 
 [ext_resource type="Script" path="res://Code/UI/StartMenu.cs" id="1_uasv6"]
 [ext_resource type="Texture2D" uid="uid://byr057x0qdp4y" path="res://Assets/UI/BattleButton.png" id="1_ypqbx"]
@@ -25,6 +25,7 @@
 [ext_resource type="Texture2D" uid="uid://chj6sklfxa5s5" path="res://Assets/UI/PressedHelicopterUnit.png" id="14_4ktbp"]
 [ext_resource type="Texture2D" uid="uid://b1xtn5b02yner" path="res://Assets/UI/BackButton.png" id="22_vcxan"]
 [ext_resource type="PackedScene" uid="uid://c447kwkb1m2ks" path="res://Scenes/Menus/ProfileMenu.tscn" id="25_2mqdi"]
+[ext_resource type="PackedScene" uid="uid://k1x2anf5atdu" path="res://Scenes/Menus/RegisterMenu.tscn" id="26_kkbv8"]
 [ext_resource type="PackedScene" uid="uid://dsd5vlsrknp3t" path="res://Scenes/Menus/OptionsMenu.tscn" id="26_vq855"]
 [ext_resource type="PackedScene" uid="uid://bh0dy7bnvlx7l" path="res://Scenes/Menus/LeaderboardMenu.tscn" id="27_cv53x"]
 
@@ -99,26 +100,12 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 texture_normal = ExtResource("7_we17s")
 
-[node name="LoginLabel" type="Label" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
-custom_minimum_size = Vector2(200, 50)
+[node name="btnLoginLogout" type="Button" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
-text = "LOG IN"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="LogoutLabel" type="Label" parent="StartMenuContents/VBoxContainer/TopMarginContainer"]
-visible = false
-custom_minimum_size = Vector2(200, 50)
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 0
-theme_override_colors/font_color = Color(0.854902, 0.0823529, 0, 1)
-theme_override_colors/font_outline_color = Color(0.890196, 0, 0, 1)
-text = "LOG OUT"
-horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 24
+text = "LOGIN/REGISTER"
 
 [node name="MiddleMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
 custom_minimum_size = Vector2(0, 650)
@@ -233,6 +220,10 @@ texture_normal = ExtResource("22_vcxan")
 visible = false
 layout_mode = 1
 
+[node name="RegisterMenu" parent="." instance=ExtResource("26_kkbv8")]
+visible = false
+layout_mode = 1
+
 [node name="OptionsMenu" parent="." instance=ExtResource("26_vq855")]
 visible = false
 layout_mode = 1
@@ -246,6 +237,7 @@ layout_mode = 1
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
 [connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger" to="." method="OnShowPopupMenu"]
+[connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/btnLoginLogout" to="." method="OnLoginRegisterPressed"]
 [connection signal="gui_input" from="StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel" to="." method="OnGridPanelInput"]
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/SOLDIER" to="." method="OnUnitSelected" binds= ["SOLDIER"]]
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TANK" to="." method="OnUnitSelected" binds= ["TANK"]]

@@ -2,9 +2,11 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Web;
+using tacticals_api_server.Domain;
 
 public partial class BattleServer : Node
 {
@@ -120,6 +122,21 @@ public partial class BattleServer : Node
 		catch (Exception e)
 		{
 			return new List<tacticals_api_server.Domain.Battle>();
+		}
+	}
+
+
+	public async Task RegisterProfile(UProfile profile)
+	{
+		try
+		{
+			var result = await _serverApi.PostAsJsonAsync("/profile/create", profile);
+			if (!result.IsSuccessStatusCode)
+				GD.Print($"RegisterProfile failed: {result.StatusCode}");
+		}
+		catch (Exception e)
+		{
+			GD.Print($"RegisterProfile: {e.Message}");
 		}
 	}
 }

@@ -1,4 +1,7 @@
-[gd_scene format=3 uid="uid://k1x2anf5atdu"]
+[gd_scene load_steps=3 format=3 uid="uid://k1x2anf5atdu"]
+
+[ext_resource type="Script" path="res://Code/UI/RegisterMenu.cs" id="1_fu4h5"]
+[ext_resource type="Texture2D" uid="uid://dv515eov7bg77" path="res://Assets/UI/menuBackground.png" id="1_uysfs"]
 
 [node name="RegisterMenu" type="Control"]
 layout_mode = 3
@@ -7,6 +10,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_fu4h5")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_uysfs")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -78,3 +91,21 @@ vertical_alignment = 1
 [node name="PInput" type="LineEdit" parent="MarginContainer/TopContainer/BottomContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 45
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/TopContainer"]
+layout_mode = 2
+theme_override_constants/separation = 100
+alignment = 1
+
+[node name="btnRegister" type="Button" parent="MarginContainer/TopContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "Register"
+
+[node name="btnCancel" type="Button" parent="MarginContainer/TopContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "Cancel"
+
+[connection signal="pressed" from="MarginContainer/TopContainer/HBoxContainer/btnRegister" to="." method="OnRegisterActionPressed"]
+[connection signal="pressed" from="MarginContainer/TopContainer/HBoxContainer/btnCancel" to="." method="OnCancelPressed"]
