@@ -25,9 +25,9 @@
 [ext_resource type="Texture2D" uid="uid://chj6sklfxa5s5" path="res://Assets/UI/PressedHelicopterUnit.png" id="14_4ktbp"]
 [ext_resource type="Texture2D" uid="uid://b1xtn5b02yner" path="res://Assets/UI/BackButton.png" id="22_vcxan"]
 [ext_resource type="PackedScene" uid="uid://c447kwkb1m2ks" path="res://Scenes/Menus/ProfileMenu.tscn" id="25_2mqdi"]
-[ext_resource type="PackedScene" uid="uid://k1x2anf5atdu" path="res://Scenes/Menus/RegisterMenu.tscn" id="26_kkbv8"]
 [ext_resource type="PackedScene" uid="uid://dsd5vlsrknp3t" path="res://Scenes/Menus/OptionsMenu.tscn" id="26_vq855"]
 [ext_resource type="PackedScene" uid="uid://bh0dy7bnvlx7l" path="res://Scenes/Menus/LeaderboardMenu.tscn" id="27_cv53x"]
+[ext_resource type="PackedScene" uid="uid://cheabov0mlq4k" path="res://Scenes/Menus/LoginMenu.tscn" id="28_ifjwx"]
 
 [node name="StartMenu" type="Control"]
 layout_mode = 3
@@ -220,15 +220,15 @@ texture_normal = ExtResource("22_vcxan")
 visible = false
 layout_mode = 1
 
-[node name="RegisterMenu" parent="." instance=ExtResource("26_kkbv8")]
-visible = false
-layout_mode = 1
-
 [node name="OptionsMenu" parent="." instance=ExtResource("26_vq855")]
 visible = false
 layout_mode = 1
 
 [node name="LeaderboardMenu" parent="." instance=ExtResource("27_cv53x")]
+visible = false
+layout_mode = 1
+
+[node name="LoginMenu" parent="." instance=ExtResource("28_ifjwx")]
 visible = false
 layout_mode = 1
 

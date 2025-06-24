@@ -11,7 +11,7 @@ public partial class StartMenu : Control, IGameMenu
     HBoxContainer _unitContainer;
     HBoxContainer _popupMenu;
     Control _optionsMenu;
-    Control _registerMenu;
+    Control _loginMenu;
 
     private UnitPlacement[][] _army;
     private Panel _gridPanel;
@@ -53,7 +53,7 @@ public partial class StartMenu : Control, IGameMenu
         _popupMenu = GetNode<HBoxContainer>("StartMenuContents/PopupMenu");
         _hamButton = GetNode<TextureButton>("StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger");
         _optionsMenu = GetNode<Control>("OptionsMenu");
-        _registerMenu = GetNode<Control>("RegisterMenu");
+        _loginMenu = GetNode<Control>("LoginMenu");
 
         ArmyGridInit();
     }
@@ -359,7 +359,7 @@ public partial class StartMenu : Control, IGameMenu
 
     private void OnLoginRegisterPressed()
     {
-        _registerMenu.Visible = true;
+        _loginMenu.Visible = true;
     }
    
     private void OnOptionsPressed()

@@ -37,10 +37,20 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 
 [node name="Title" type="Label" parent="MarginContainer/TopContainer"]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
 text = "REGISTER ACCOUNT"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Error" type="Label" parent="MarginContainer/TopContainer"]
+custom_minimum_size = Vector2(500, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.921569, 0, 0, 1)
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -60,8 +70,10 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="IGNInput" type="LineEdit" parent="MarginContainer/TopContainer/BottomContainer"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 45
 
 [node name="Email" type="Label" parent="MarginContainer/TopContainer/BottomContainer"]
@@ -75,7 +87,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="EInput" type="LineEdit" parent="MarginContainer/TopContainer/BottomContainer"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 45
 
 [node name="Password" type="Label" parent="MarginContainer/TopContainer/BottomContainer"]
@@ -89,10 +103,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PInput" type="LineEdit" parent="MarginContainer/TopContainer/BottomContainer"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 45
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/TopContainer"]
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 theme_override_constants/separation = 100
 alignment = 1
