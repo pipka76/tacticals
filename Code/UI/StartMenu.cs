@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Net.Mime;
 using tacticals_api_server.Domain;
 
 public partial class StartMenu : Control, IGameMenu
@@ -18,6 +19,7 @@ public partial class StartMenu : Control, IGameMenu
     private UnitType _selectedUnit;
     private int _unitId;
     private bool _forceRefresh = false;
+    private bool _isLoggedIn = false;
     private GameMode _gameModeSelected = GameMode.CLASSIC;
     
     private enum GameMode
@@ -354,12 +356,30 @@ public partial class StartMenu : Control, IGameMenu
 
     public void OnNavigateTo(NavigateContext context)
     {
-        
+        if (context.Metadata.ContainsKey("LoggedAs"))
+        {
+            var loginBtn = GetNode<Button>("StartMenuContents/VBoxContainer/TopMarginContainer/btnLoginLogout");
+            context.Metadata.TryGetValue("LoggedAs", out string lasVal);
+            loginBtn.Text = lasVal;
+            _isLoggedIn = true;
+        }
     }
 
     private void OnLoginRegisterPressed()
     {
-        _loginMenu.Visible = true;
+        if (_isLoggedIn)
+        {
+            // logout
+            var loginBtn = GetNode<Button>("StartMenuContents/VBoxContainer/TopMarginContainer/btnLoginLogout");
+            BattleServer.Current.Logout();
+            loginBtn.Text = "LOGIN/REGISTER";
+            _isLoggedIn = false;
+        }
+        else
+        {
+            // show login dialog
+            _loginMenu.Visible = true;
+        }
     }
    
     private void OnOptionsPressed()

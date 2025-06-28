@@ -27,7 +27,7 @@
 [ext_resource type="PackedScene" uid="uid://c447kwkb1m2ks" path="res://Scenes/Menus/ProfileMenu.tscn" id="25_2mqdi"]
 [ext_resource type="PackedScene" uid="uid://dsd5vlsrknp3t" path="res://Scenes/Menus/OptionsMenu.tscn" id="26_vq855"]
 [ext_resource type="PackedScene" uid="uid://bh0dy7bnvlx7l" path="res://Scenes/Menus/LeaderboardMenu.tscn" id="27_cv53x"]
-[ext_resource type="PackedScene" uid="uid://cheabov0mlq4k" path="res://Scenes/Menus/LoginMenu.tscn" id="28_ifjwx"]
+[ext_resource type="PackedScene" uid="uid://dhnokjolswbl1" path="res://Scenes/Menus/LoginMenu.tscn" id="28_ifjwx"]
 
 [node name="StartMenu" type="Control"]
 layout_mode = 3

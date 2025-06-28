@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using tacticals_api_server.Domain;
@@ -12,6 +14,7 @@ public partial class BattleServer : Node
 {
 	private const string ServerApiUrl = "http://172.33.1.169:5000/";
 	private System.Net.Http.HttpClient _serverApi;
+	private string _currentToken;
 
 	public struct NewBattle
 	{
@@ -24,6 +27,7 @@ public partial class BattleServer : Node
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		_currentToken = null;
 		_serverApi = new System.Net.Http.HttpClient();
 		_serverApi.BaseAddress = new Uri(ServerApiUrl);
 		Current = this;
@@ -125,18 +129,68 @@ public partial class BattleServer : Node
 		}
 	}
 
-
-	public async Task RegisterProfile(UProfile profile)
+	public async Task<bool> LoginProfile(UProfile profile)
 	{
 		try
 		{
-			var result = await _serverApi.PostAsJsonAsync("/profile/create", profile);
+			// Send password hash as raw JSON string (with quotes)
+			var content = new StringContent($"\"{profile.PasswordHash}\"", Encoding.UTF8, "text/json");
+			var result = await _serverApi.PostAsync(
+				$"/profile/login/{HttpUtility.UrlEncode(profile.Email)}",
+				content);
 			if (!result.IsSuccessStatusCode)
-				GD.Print($"RegisterProfile failed: {result.StatusCode}");
+			{
+				_currentToken = null;
+				GD.Print($"Login failed: {result.StatusCode}");
+				return false;
+			}
+
+			_currentToken = await result.Content.ReadAsStringAsync();
+			return true;
 		}
 		catch (Exception e)
 		{
-			GD.Print($"RegisterProfile: {e.Message}");
+			_currentToken = null;
+			GD.Print($"LoginProfile exception: {e.Message}");
+			return false;
 		}
+	}
+
+	public void Logout()
+	{
+		_currentToken = null;
+	}
+
+	public async Task<UProfile> GetProfile()
+	{
+		try
+		{
+			_serverApi.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _currentToken);
+			var result = await _serverApi.GetAsync("/profile/get");
+			if (!result.IsSuccessStatusCode)
+			{
+				GD.Print($"GetProfile failed: {result.StatusCode}");
+				return null;
+			}
+
+			return await result.Content.ReadFromJsonAsync<UProfile>();
+		}
+		catch (Exception e)
+		{
+			GD.Print($"GetProfile exception: {e.Message}");
+			return null;
+		}
+	}
+
+	public async Task<bool> RegisterProfile(UProfile profile)
+	{
+		var result = await _serverApi.PostAsJsonAsync("/profile/create", profile);
+		if (!result.IsSuccessStatusCode)
+		{
+			GD.Print($"RegisterProfile failed: {result.StatusCode}");
+			return false;
+		}
+
+		return true;
 	}
 }

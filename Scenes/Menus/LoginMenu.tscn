@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://cheabov0mlq4k"]
+[gd_scene load_steps=4 format=3 uid="uid://dhnokjolswbl1"]
 
 [ext_resource type="PackedScene" uid="uid://k1x2anf5atdu" path="res://Scenes/Menus/RegisterMenu.tscn" id="1_j688s"]
 [ext_resource type="Script" path="res://Code/UI/LoginMenu.cs" id="1_od607"]
@@ -136,4 +136,5 @@ visible = false
 layout_mode = 1
 
 [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer2/btnRegister" to="." method="OnRegisterPressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/btnLogin" to="." method="OnLoginPressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/btnCancel" to="." method="OnCancelPressed"]
