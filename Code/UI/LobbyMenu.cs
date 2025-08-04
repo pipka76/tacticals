@@ -122,6 +122,14 @@ public partial class LobbyMenu : Control, IGameMenu
 		}
 	}
 
+	private void CreateNewDemoBattle()
+	{
+		((Main)GetTree().CurrentScene).StartGame("res://Scenes/Maps/Plains.tscn");
+		this.Visible = false;
+		var player = (Player)GD.Load<PackedScene>("res://Scenes/Game/Player.tscn").Instantiate();
+		GetTree().CurrentScene.GetNode<Node>("Map").GetChild(0).GetNode<Node>("Players").AddChild(player);
+	}
+
 	public void OnNavigateTo(NavigateContext context)
 	{
 	}

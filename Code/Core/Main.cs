@@ -53,10 +53,11 @@ public partial class Main : Node
 	
 	public void StartGame(string mapScene)
 	{
-		if (Multiplayer.IsServer())
-		{
-			CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
-		}
+//		if (Multiplayer.IsServer())
+//		{
+	//		CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
+//		}
+	ChangeLevel(GD.Load<PackedScene>(mapScene));
 	}
 	
 	public void JoinServer(int port)

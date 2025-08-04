@@ -68,6 +68,10 @@ layout_mode = 2
 layout_mode = 2
 theme_override_constants/separation = 10
 
+[node name="btnDemo" type="Button" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+text = "DEMO"
+
 [node name="btnNewBattle" type="Button" parent="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer"]
 custom_minimum_size = Vector2(800, 0)
 layout_mode = 2
@@ -108,6 +112,7 @@ layout_mode = 2
 layout_mode = 2
 text = "Refresh"
 
+[connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnDemo" to="." method="CreateNewDemoBattle"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnNewBattle" to="." method="CreateNewBattleStep1"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName/btnOk" to="." method="CreateNewBattleFinal"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/Button" to="." method="RefreshBattles"]

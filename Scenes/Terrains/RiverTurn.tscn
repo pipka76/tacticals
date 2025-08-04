@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://c31h8f5s5ijs2"]
+
+[ext_resource type="PackedScene" uid="uid://cvnaipq0hi6d0" path="res://Assets/Game/RiverTurn.fbx" id="1_ufffd"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rty4h"]
+size = Vector3(4.99377, 1, 4.98218)
+
+[node name="RiverTurn" type="Node3D"]
+
+[node name="RiverTurn" parent="." instance=ExtResource("1_ufffd")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00408936, 0, -0.00427246)
+shape = SubResource("BoxShape3D_rty4h")

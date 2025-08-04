@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://qnj2nxljhs0y"]
+
+[ext_resource type="PackedScene" uid="uid://b77gt14o7rd3k" path="res://Assets/Game/RiverStraight.fbx" id="1_ao7ee"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jfy5p"]
+size = Vector3(4.99017, 1, 4.99042)
+
+[node name="RiverStraight" type="Node3D"]
+
+[node name="RiverStraight" parent="." instance=ExtResource("1_ao7ee")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("BoxShape3D_jfy5p")
