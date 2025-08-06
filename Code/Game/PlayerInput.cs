@@ -14,6 +14,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public bool IsSelecting;
 	public bool IsMoveArmy;
 	public bool IsDragging;
+	public bool MapToggle;
 	public float CameraFov = 100f;
 	
 	public override void _Input(InputEvent @event)
@@ -70,7 +71,10 @@ public partial class PlayerInput : MultiplayerSynchronizer
 			IsSelecting = false;
 		}
 
-		if (IsDragging && !Input.IsActionPressed("select_entity"))
+		if (Input.IsActionJustReleased("map_toggle"))
+            MapToggle = !MapToggle;
+
+        if (IsDragging && !Input.IsActionPressed("select_entity"))
 			IsDragging = false;
 		
 //		if (!IsDragging)
@@ -79,6 +83,6 @@ public partial class PlayerInput : MultiplayerSynchronizer
 //		else
 //			IsSelecting = false;
 		
-		CameraMove = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
+		CameraMove = Input.GetVector("cam_right", "cam_left", "cam_backward", "cam_forward");
 	}
 }

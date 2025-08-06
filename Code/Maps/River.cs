@@ -15,7 +15,7 @@ public class River
             float currentY = Start.Y;
             lastY = (int)currentY;
             
-            for (int i = Start.X; i < End.X; i++)
+            for (int i = Start.X; i <= End.X; i++)
             {
                 if(lastY != (int)currentY)
                     mm[i][lastY].BlockType = MapBlockType.RIVER;
@@ -34,7 +34,7 @@ public class River
             float currentX = Start.X;
             lastX = (int)currentX;
             
-            for (int j = Start.Y; j < End.Y; j++)
+            for (int j = Start.Y; j <= End.Y; j++)
             {
                 if(lastX != (int)currentX)
                     mm[lastX][j].BlockType = MapBlockType.RIVER;

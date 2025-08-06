@@ -6,3 +6,4 @@
 script = ExtResource("1_rev4h")
 
 [node name="MinimapTexture" type="Sprite2D" parent="."]
+position = Vector2(706, 382)

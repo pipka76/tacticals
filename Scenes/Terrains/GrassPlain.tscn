@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://b44m8vlw85yhi"]
+
+[ext_resource type="PackedScene" uid="uid://d2y77fk64bkdp" path="res://Assets/Game/Grass.fbx" id="1_jg3qh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_unkft"]
+size = Vector3(9.98691, 1, 9.98718)
+
+[node name="GrassPlain" type="Node3D"]
+
+[node name="Grass" parent="." instance=ExtResource("1_jg3qh")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("BoxShape3D_unkft")

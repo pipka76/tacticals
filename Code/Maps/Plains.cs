@@ -1,34 +1,60 @@
 using Godot;
 using System;
+using tacticals.Code.Maps;
 
 public partial class Plains : Node3D, IGameMap
 {
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://Scenes/Game/Player.tscn");
 	private Node _entities;
+	private MapBlock[][] _map;
 
 	public override void _Ready()
 	{
 		_entities = GetNode<Node>("Entities");
 	}
 
-	public void SpawnEntity(Node3D entity)
+    public void SpawnEntity(Node3D entity)
 	{
-		_entities.AddChild(entity);
+		var b = FindFirstBase();
+        _entities.AddChild(entity);
+        if (b != Vector2I.Zero)
+            entity.GlobalPosition = new Vector3(b.X * MapConstants.BLOCK_SIZE, 0, b.Y * MapConstants.BLOCK_SIZE);
+    }
+
+    private Vector2I FindFirstBase()
+	{
+		for (int i = 0; i < _map.Length; i++)
+		{
+			for (int j = 0; j < _map[i].Length; j++)
+			{
+				if (_map[i][j].StructureType == MapBlockStructureType.BASE)
+					return new Vector2I(i, j);
+			}
+		}
+
+		return Vector2I.Zero;
 	}
 
 	public void GenerateLevel()
 	{
 		var mm = new MapGenerator(100, 100);
-		var map = mm.GenerateMinimap();
+		_map = mm.GenerateMinimap();
 
-		GenerateSceneObjects(map);
+		GenerateSceneObjects(_map);
 		
 		var minimap = GetNode<Minimap>("Minimap");
 		if (minimap != null)
-			minimap.Generate(map);
+			minimap.Generate(_map);
 	}
 
-	public void ImportLevelData(string data)
+	public void ToggleMinimap()
+	{
+        var minimap = GetNode<Minimap>("Minimap");
+		if (minimap != null)
+			minimap.Visible = !minimap.Visible;
+    }
+
+    public void ImportLevelData(string data)
 	{
 		var dData = System.Text.Json.JsonSerializer.Deserialize<MapBlock[][]>(data);
 		var minimap = GetNode<Minimap>("Minimap");
@@ -70,8 +96,12 @@ public partial class Plains : Node3D, IGameMap
 
 	private Node3D PreparePlainBlock(MapBlock[][] map, int i, int j)
 	{
-		// TODO METY
-	}
+        PackedScene grassP = GD.Load<PackedScene>("res://Scenes/Terrains/GrassPlain.tscn");
+
+        var r = (Node3D)grassP.Instantiate();
+        r.Translate(new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+        return r;
+    }
 
 	private Node3D PrepareRiverBlock(MapBlock[][] map, int i, int j)
 	{
@@ -82,48 +112,49 @@ public partial class Plains : Node3D, IGameMap
 		    ((i + 1) < map.Length && map[i + 1][j].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverS.Instantiate();
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		if (((j - 1) >= 0 && map[i][j - 1].BlockType == MapBlockType.RIVER) && ((j + 1) < map.Length && map[i][j + 1].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverS.Instantiate();
 			r.RotateY((float)Math.PI / 2);
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		if (((i - 1) >= 0 && map[i - 1][j].BlockType == MapBlockType.RIVER) &&
 		    ((j - 1) >= 0 && map[i][j - 1].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverT.Instantiate();
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		if (((i - 1) >= 0 && map[i - 1][j].BlockType == MapBlockType.RIVER) && ((j + 1) < map.Length && map[i][j + 1].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverT.Instantiate();
-			r.RotateY((float)(3 * Math.PI / 2));
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.RotateY((float)Math.PI / 2);
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		if (((i + 1) < map.Length && map[i + 1][j].BlockType == MapBlockType.RIVER) && ((j + 1) < map.Length && map[i][j + 1].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverT.Instantiate();
-			r.RotateY((float)Math.PI);
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.RotateY((float)Math.PI);
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		if (((i + 1) < map.Length && map[i + 1][j].BlockType == MapBlockType.RIVER) && ((j - 1) >= 0 && map[i][j - 1].BlockType == MapBlockType.RIVER))
 		{
 			var r = (Node3D)riverT.Instantiate();
-			r.RotateY((float)Math.PI / 2);
-			r.Translate(new Vector3(j * 5, 0, i * 5));
-			return r;
+            r.RotateY((float)(3 * Math.PI / 2));
+
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
 		}
 
 		return null;

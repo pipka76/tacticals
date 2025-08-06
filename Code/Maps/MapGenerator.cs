@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using Godot;
+using tacticals.Code.Maps.Spawners;
 
 public class MapGenerator
 {
@@ -29,10 +30,28 @@ public class MapGenerator
         var river = GenerateRiver();
         river.Draw(mm);
         GenerateBases(mm);
-        
+
+        // structures
+        GenerateStructures(mm);
+
         return mm;
     }
-    
+
+    private void GenerateStructures(MapBlock[][] map)
+    {
+        var spw = new Spawner();
+
+        spw.RegisterLimit(MapBlockStructureType.TANK, 5);
+
+        for (int i = 0; i < map.Length; i++)
+        {
+            for (int j = 0; j < map[i].Length; j++)
+            {
+                spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.05f);
+            }
+        }
+    }
+
     private River GenerateRiver()
     {
         River river = new River();

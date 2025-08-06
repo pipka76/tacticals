@@ -13,7 +13,7 @@ public partial class Player : Node3D
 	private List<TeamEntity> _myArmy;
 	private Vector3 _homeBaseCoords;
 	
-	private const float CAM_MOVE_SPEED = 5f;
+	private const float CAM_MOVE_SPEED = 20f;
 	private const float VIEW_DISTANCE = 100f;
 	private const float CLICK_COOLDOWN = 0.2f;
 	
@@ -163,6 +163,16 @@ public partial class Player : Node3D
 			}
 		}
 
-		this.Position += new Vector3( _inputs.CameraMove.X, 0,  _inputs.CameraMove.Y) * (float)delta * CAM_MOVE_SPEED;
+		if (_inputs.MapToggle)
+		{
+            var map = GetParent().GetParent() as IGameMap;
+			if (map != null)
+			{
+				map.ToggleMinimap();
+				_inputs.MapToggle = false;
+            }
+        }
+
+        this.Position += new Vector3( _inputs.CameraMove.X, 0,  _inputs.CameraMove.Y) * (float)delta * CAM_MOVE_SPEED;
 	}
 }
