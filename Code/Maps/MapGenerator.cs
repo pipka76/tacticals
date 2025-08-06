@@ -48,8 +48,8 @@ public class MapGenerator
         {
             for (int j = 0; j < map[i].Length; j++)
             {
-                //spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.01f);
-                spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 0.02f);
+                spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.001f);
+                spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 0.002f);
             }
         }
     }

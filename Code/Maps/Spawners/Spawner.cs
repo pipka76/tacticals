@@ -38,7 +38,7 @@ namespace tacticals.Code.Maps.Spawners
         protected bool CheckProbability(float probability)
         {
             int r = _rand.Next(0, 1000);
-            if (r > 0 && r < (probability*1000))
+            if (r > 0 && r <= (probability*1000))
                 return true;
             return false;
         }
