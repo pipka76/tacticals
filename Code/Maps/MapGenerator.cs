@@ -42,12 +42,14 @@ public class MapGenerator
         var spw = new Spawner();
 
         spw.RegisterLimit(MapBlockStructureType.TANK, 5);
+        spw.RegisterLimit(MapBlockStructureType.TOWER, 10);
 
         for (int i = 0; i < map.Length; i++)
         {
             for (int j = 0; j < map[i].Length; j++)
             {
-                spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.05f);
+                //spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.01f);
+                spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 0.02f);
             }
         }
     }

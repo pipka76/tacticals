@@ -87,9 +87,30 @@ public partial class Plains : Node3D, IGameMap
 				switch (map[i][j].StructureType)
 				{
 					case MapBlockStructureType.BASE:
+                        PackedScene teamflag = GD.Load<PackedScene>("res://Scenes/Structures/TeamFlag.tscn");
 
-						break;
-				}
+                        var tf = (Node3D)teamflag.Instantiate();
+                        tf.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
+                        if (tf != null)
+                            this.AddChild(tf);
+                        break;
+					case MapBlockStructureType.TANK:
+                        PackedScene tank = GD.Load<PackedScene>("res://Scenes/Structures/Tank.tscn");
+
+                        var t = (Node3D)tank.Instantiate();
+                        t.Position = (new Vector3(i * MapConstants.BLOCK_SIZE,(float)0.5, j * MapConstants.BLOCK_SIZE));
+                        if (t != null)
+                            this.AddChild(t);
+                        break;
+                    case MapBlockStructureType.TOWER:
+                        PackedScene tower = GD.Load<PackedScene>("res://Scenes/Structures/Tower.tscn");
+
+                        var to = (Node3D)tower.Instantiate();
+                        to.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
+                        if (to != null)
+                            this.AddChild(to);
+                        break;
+                }
 			}
 		}
 	}
