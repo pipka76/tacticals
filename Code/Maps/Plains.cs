@@ -62,6 +62,7 @@ public partial class Plains : Node3D, IGameMap
 			minimap.Generate(dData);
 	}
 
+
 	private void GenerateSceneObjects(MapBlock[][] map)
 	{
 		for (int i = 0; i < map.Length; i++)
@@ -177,7 +178,21 @@ public partial class Plains : Node3D, IGameMap
             r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
             return r;
 		}
+        if (((i - 1) >= 0 && map[i - 1][j].BlockType == MapBlockType.RIVER) ||
+            ((i + 1) < map.Length && map[i + 1][j].BlockType == MapBlockType.RIVER))
+        {
+            var r = (Node3D)riverS.Instantiate();
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
+        }
+        if (((j - 1) >= 0 && map[i][j - 1].BlockType == MapBlockType.RIVER) || ((j + 1) < map.Length && map[i][j + 1].BlockType == MapBlockType.RIVER))
+        {
+            var r = (Node3D)riverS.Instantiate();
+            r.RotateY((float)Math.PI / 2);
+            r.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, 0, j * MapConstants.BLOCK_SIZE));
+            return r;
+        }
 
-		return null;
+        return null;
 	}
 }

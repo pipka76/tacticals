@@ -110,7 +110,7 @@ public class MapGenerator
             for (int j = 0; j < _mapHeight; j++)
             {
                 mm[i][j] = new MapBlock()
-                {   
+                {
                     BlockType = MapBlockType.PLAIN,
                     StructureType = MapBlockStructureType.NONE,
                     LayerIndex = 0,
