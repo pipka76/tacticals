@@ -8,6 +8,7 @@ public class MapGenerator
     private readonly int _mapWidth;
     private readonly int _mapHeight;
     private int _structureID;
+    private const int HEATRADIUS = 10;
     
     public MapGenerator(int mapWidth, int mapHeight)
     {
@@ -39,17 +40,57 @@ public class MapGenerator
 
     private void GenerateStructures(MapBlock[][] map)
     {
+        var rnd = new Random(); 
         var spw = new Spawner();
 
         spw.RegisterLimit(MapBlockStructureType.TANK, 5);
         spw.RegisterLimit(MapBlockStructureType.TOWER, 10);
 
-        for (int i = 0; i < map.Length; i++)
+        while (true)
         {
-            for (int j = 0; j < map[i].Length; j++)
+            int i = rnd.Next(0, map.Length);
+            int j = rnd.Next(0, map[0].Length);
+
+            if(map[i][j].StructurePlacable(MapBlockStructureType.TANK))
             {
-                spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 0.001f);
-                spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 0.002f);
+                if(spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 1f))
+                    AddHeat(map, i, j, HEATRADIUS);
+            }
+
+
+            if (map[i][j].StructurePlacable(MapBlockStructureType.TOWER))
+            {
+                if(spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 1f))
+                    AddHeat(map, i, j, HEATRADIUS);
+            }
+
+            if (spw.IsLimitReached())
+                break;
+        }
+    }
+
+    private void AddHeat(MapBlock[][] map,int i, int j, int radius)
+    {
+        int iMax, jMax, iMin, jMin;
+        iMax = i + radius;
+        if (iMax >= map.Length) iMax = map.Length - 1;
+        jMax = j + radius;
+        if (jMax >= map[0].Length) jMax = map[0].Length - 1;
+        iMin = i - radius;
+        if (iMin < 0) iMin = 0;
+        jMin = j - radius;
+        if (jMin < 0) jMin = 0;
+
+        for ( int x = iMin; x <= iMax; x++)
+        {
+            for ( int y = jMin; y <= jMax; y++) 
+            {
+                int a = x - i, b = y - j;
+
+                if (a * a + b * b <= radius*radius)
+                {
+                    map[x][y].StructureHeat++;
+                }
             }
         }
     }
