@@ -45,6 +45,9 @@ public partial class Minimap : Node2D
                     case MapBlockStructureType.TOWER:
                         img.FillRect(new Rect2I(map[i][j].Coordinates * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE), new Color("red"));
                         break;
+                    case MapBlockStructureType.BUNKER:
+                        img.FillRect(new Rect2I(map[i][j].Coordinates * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE), new Color("purple"));
+                        break;
                 }
 			}
 		}

@@ -45,6 +45,7 @@ public class MapGenerator
 
         spw.RegisterLimit(MapBlockStructureType.TANK, 5);
         spw.RegisterLimit(MapBlockStructureType.TOWER, 10);
+        spw.RegisterLimit(MapBlockStructureType.BUNKER, 10);
 
         while (true)
         {
@@ -61,6 +62,12 @@ public class MapGenerator
             if (map[i][j].StructurePlacable(MapBlockStructureType.TOWER))
             {
                 if(spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 1f))
+                    AddHeat(map, i, j, HEATRADIUS);
+            }
+
+            if (map[i][j].StructurePlacable(MapBlockStructureType.BUNKER))
+            {
+                if (spw.SpawnAt(map, i, j, MapBlockStructureType.BUNKER, 1f))
                     AddHeat(map, i, j, HEATRADIUS);
             }
 

@@ -4,5 +4,6 @@ public enum MapBlockStructureType
     TOWER,
     FOREST,
     TANK,
-    BASE
+    BASE,
+    BUNKER
 }

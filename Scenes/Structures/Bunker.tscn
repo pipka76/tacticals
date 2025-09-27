@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bk08jiy6cb8qu"]
+
+[ext_resource type="PackedScene" uid="uid://kljqyeujb10w" path="res://Assets/Game/Bunker.fbx" id="1_r3ahs"]
+
+[node name="Bunker" type="Node3D"]
+
+[node name="Bunker" parent="." instance=ExtResource("1_r3ahs")]

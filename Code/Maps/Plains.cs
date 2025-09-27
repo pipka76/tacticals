@@ -111,6 +111,14 @@ public partial class Plains : Node3D, IGameMap
                         if (to != null)
                             this.AddChild(to);
                         break;
+                    case MapBlockStructureType.BUNKER:
+                        PackedScene bunker = GD.Load<PackedScene>("res://Scenes/Structures/Bunker.tscn");
+
+                        var b = (Node3D)bunker.Instantiate();
+                        b.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
+                        if (b != null)
+                            this.AddChild(b);
+                        break;
                 }
 			}
 		}
