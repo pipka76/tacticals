@@ -16,14 +16,12 @@ public partial class Soldier : MovableTeamEntity
 		_selectorObject = GetNode<Node3D>("SelectionRing");
 		_synchronizer = GetNode<MultiplayerSynchronizer>("ServerSynchronizer");
 		//_synchronizer.SetVisibilityFor();
+		AddChild(_rayCast);
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		if(!IsInsideTree())
-			return;
-		
 		if ((MoveToCoordinates - GlobalPosition).Length() > 0.1f)
 		{
 			var direction = (MoveToCoordinates - GlobalPosition).Normalized();
