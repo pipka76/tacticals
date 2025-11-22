@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using tacticals.Code.Maps;
 
 public class MapBlock
 {
@@ -34,5 +35,14 @@ public class MapBlock
         // todo switch per structureType
 
         return StructureHeat < 1;
+    }
+
+    public Vector3 GlobalPosition
+    {
+        get
+        {
+            return new Vector3(Coordinates.X * MapConstants.BLOCK_SIZE, (float)0.5,
+                Coordinates.Y * MapConstants.BLOCK_SIZE);
+        }
     }
 }

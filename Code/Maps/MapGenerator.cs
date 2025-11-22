@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
 using GodotPlugins.Game;
+using tacticals.Code.Maps;
 using tacticals.Code.Maps.Generators;
 using tacticals.Code.Maps.Spawners;
 using static MapBlock;
@@ -14,7 +15,7 @@ public class MapGenerator
     private readonly int _mapHeight;
     private int _structureID;
     private const int HEATRADIUS = 10;
-    private const int BIOMEHEATMAPSCALE = 20; // 20:1
+    private const int BIOMEHEATMAPSCALE = 2; // 5:1
     Random _r = new Random();
     
     public MapGenerator(int mapWidth, int mapHeight)
@@ -57,9 +58,9 @@ public class MapGenerator
         const float threshold = 10f;
         int width = forestMap.GetWidth();
         int height = forestMap.GetHeight();
-        Color treeMin = new Color("008130ff");
-        Color treeMax = new Color("f8fc00ff");
-        Color treeMid = new Color("88db00ff");
+        Color treeMin = new Color("002030ff");
+        Color treeMax = new Color("f8ff00ff");
+        Color treeMid = new Color("60ff00ff");
 
         for (int y = 0; y < height; y++)
         {
@@ -73,12 +74,12 @@ public class MapGenerator
                 if (mm[(int)mapX][(int)mapY].BiomeInfo == null)
                     mm[(int)mapX][(int)mapY].BiomeInfo = new List<MapBlock.BiomeData>();
 
-                if (ColorInRange(color, treeMin, treeMax))
+                if (ColorInRange(color, treeMid, 0.4f))
                 {
                     var bd = new MapBlock.BiomeData();
-                    bd.LocalCoord = new Vector3(mapX % 1, 0, mapY % 1);
+                    bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2);
 
-                    if (ColorInRange(color, treeMin, treeMid))
+                    if (ColorInRange(color, treeMin, 0.7f))
                     {
                         string treeType = "broadleaved";
                         bd.Type = Enum.Parse<BiomeDataType>(ChooseTree(treeType));
@@ -120,9 +121,9 @@ public class MapGenerator
                 default: return "TREEC1";
         }
     }
-    private bool ColorInRange(Color color, Color Min, Color Max)
+    private bool ColorInRange(Color color, Color Mid, float colorRange)
     {
-        return (color.R >= Min.R && color.R <= Min.R && color.G >= Min.G && color.G <= Min.G && color.B >= Min.B && color.B <= Min.B);
+        return (Math.Abs(color.R - Mid.R) + Math.Abs(color.G - Mid.G) + Math.Abs(color.B - Mid.B)) <= colorRange;
     }
 
     private void GenerateStructures(MapBlock[][] map)

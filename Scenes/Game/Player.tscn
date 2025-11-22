@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://drg52tdixfmoq"]
 
-[ext_resource type="Script" path="res://Code/Game/Player.cs" id="1_webvv"]
-[ext_resource type="Script" path="res://Code/Game/PlayerInput.cs" id="2_kphrg"]
+[ext_resource type="Script" uid="uid://83mrlc2tuqd8" path="res://Code/Game/Player.cs" id="1_webvv"]
+[ext_resource type="Script" uid="uid://g2sum1oleeia" path="res://Code/Game/PlayerInput.cs" id="2_kphrg"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_l8t2c"]
 
@@ -9,7 +9,8 @@
 script = ExtResource("1_webvv")
 
 [node name="GodCamera" type="Camera3D" parent="."]
-transform = Transform3D(-1, 6.18172e-08, -6.18172e-08, 0, 0.707107, 0.707107, 8.74228e-08, 0.707107, -0.707107, 0, 10, -5)
+transform = Transform3D(-1, -7.5710346e-08, 4.3711378e-08, 0, 0.49999994, 0.86602545, -8.742278e-08, 0.86602545, -0.49999994, 0, 68.82304, -5)
+fov = 110.0
 
 [node name="PlayerInput" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_l8t2c")

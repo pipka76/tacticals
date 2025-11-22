@@ -8,6 +8,6 @@ namespace tacticals.Code.Maps
 {
     internal class MapConstants
     {
-        public const int BLOCK_SIZE = 10;
+        public const int BLOCK_SIZE = 15;
     }
 }

@@ -6,6 +6,7 @@ using static MapBlock;
 public partial class Plains : Node3D, IGameMap
 {
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://Scenes/Game/Player.tscn");
+	private PackedScene _teamflag, _tank, _tower, _bunker, _treeB1, _treeB2, _treeC1, _treeC2, _treeC3, _treeC4, _treeC5, _treeC6;
 	private Node _entities;
 	private MapBlock[][] _map;
 
@@ -13,6 +14,22 @@ public partial class Plains : Node3D, IGameMap
 	{
 		_entities = GetNode<Node>("Entities");
 	}
+
+    private void LoadResources()
+    {
+        _teamflag = GD.Load<PackedScene>("res://Scenes/Structures/TeamFlag.tscn");
+        _tank = GD.Load<PackedScene>("res://Scenes/Structures/Tank.tscn");
+        _tower = GD.Load<PackedScene>("res://Scenes/Structures/Tower.tscn");
+        _bunker = GD.Load<PackedScene>("res://Scenes/Structures/Bunker.tscn");
+        _treeB1 = GD.Load<PackedScene>("res://Scenes/Biome/TreeB1.tscn");
+        _treeB2 = GD.Load<PackedScene>("res://Scenes/Biome/TreeB2.tscn");
+        _treeC1 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC1.tscn");
+        _treeC2 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC2.tscn");
+        _treeC3 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC3.tscn");
+        _treeC4 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC4.tscn");
+        _treeC5 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC5.tscn");
+        _treeC6 = GD.Load<PackedScene>("res://Scenes/Biome/TreeC6.tscn");
+    }
 
     public void SpawnEntity(Node3D entity)
 	{
@@ -41,6 +58,7 @@ public partial class Plains : Node3D, IGameMap
 		var mm = new MapGenerator(100, 100);
 		_map = mm.GenerateMinimap();
 
+        LoadResources();
 		GenerateSceneObjects(_map);
 		
 		var minimap = GetNode<Minimap>("Minimap");
@@ -89,38 +107,69 @@ public partial class Plains : Node3D, IGameMap
 				switch (map[i][j].StructureType)
 				{
 					case MapBlockStructureType.BASE:
-                        PackedScene teamflag = GD.Load<PackedScene>("res://Scenes/Structures/TeamFlag.tscn");
-
-                        var tf = (Node3D)teamflag.Instantiate();
+                        var tf = (Node3D)_teamflag.Instantiate();
                         tf.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
                         if (tf != null)
                             this.AddChild(tf);
                         break;
 					case MapBlockStructureType.TANK:
-                        PackedScene tank = GD.Load<PackedScene>("res://Scenes/Structures/Tank.tscn");
-
-                        var t = (Node3D)tank.Instantiate();
+                        var t = (Node3D)_tank.Instantiate();
                         t.Position = (new Vector3(i * MapConstants.BLOCK_SIZE,(float)0.5, j * MapConstants.BLOCK_SIZE));
                         if (t != null)
                             this.AddChild(t);
                         break;
                     case MapBlockStructureType.TOWER:
-                        PackedScene tower = GD.Load<PackedScene>("res://Scenes/Structures/Tower.tscn");
-
-                        var to = (Node3D)tower.Instantiate();
+                        var to = (Node3D)_tower.Instantiate();
                         to.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
                         if (to != null)
                             this.AddChild(to);
                         break;
                     case MapBlockStructureType.BUNKER:
-                        PackedScene bunker = GD.Load<PackedScene>("res://Scenes/Structures/Bunker.tscn");
-
-                        var b = (Node3D)bunker.Instantiate();
+                        var b = (Node3D)_bunker.Instantiate();
                         b.Position = (new Vector3(i * MapConstants.BLOCK_SIZE, (float)0.5, j * MapConstants.BLOCK_SIZE));
                         if (b != null)
                             this.AddChild(b);
                         break;
                 }
+				
+				// generate biomes
+				if (map[i][j].BiomeInfo != null)
+				{
+					foreach (var bd in map[i][j].BiomeInfo)
+					{
+						Node3D tree = null;
+						switch (bd.Type)
+						{
+							case MapBlock.BiomeDataType.TREEB1:
+								tree = (Node3D)_treeB1.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEB2:
+								tree = (Node3D)_treeB1.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC1:
+								tree = (Node3D)_treeC1.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC2:
+								tree = (Node3D)_treeC2.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC3:
+								tree = (Node3D)_treeC3.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC4:
+								tree = (Node3D)_treeC4.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC5:
+								tree = (Node3D)_treeC5.Instantiate();
+								break;
+							case MapBlock.BiomeDataType.TREEC6:
+								tree = (Node3D)_treeC6.Instantiate();
+								break;
+						}
+						
+						tree.GlobalPosition = map[i][j].GlobalPosition + bd.LocalCoord;
+						this.AddChild(tree);
+					}
+				}
 			}
 		}
 	}
