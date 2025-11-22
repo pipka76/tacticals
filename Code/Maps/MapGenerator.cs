@@ -96,27 +96,27 @@ public class MapGenerator
     }
     private string ChooseTree(string treeType)
     {
-        int r = _r.Next(0, 100);
+        int r = _r.Next(0, 120);
         switch (treeType)
         {
             case "conifer":
-                if (r <= 25)
+                if (r <= 20)
                     return "TREEC1";
-                else if (r > 25 && r <= 50)
+                else if (r > 20 && r <= 40)
                     return "TREEC2";
-                else if (r > 50 && r <= 75)
+                else if (r > 40 && r <= 60)
                     return "TREEC3";
-                else
+                else if (r > 60 && r <= 80)
                     return "TREEC4";
-            case "broadleaved":
-                if (r <= 25)
-                    return "TREEB1";
-                else if (r > 25 && r <= 50)
-                    return "TREEB2";
-                else if (r > 50 && r <= 75)
-                    return "TREEB3";
+                else if (r > 80 && r <= 100)
+                    return "TREEC5";
                 else
-                    return "TREEB4";
+                    return "TREEC6";
+            case "broadleaved":
+                if (r <= 60)
+                    return "TREEB1";
+                else
+                    return "TREEB2";
                 default: return "TREEC1";
         }
     }

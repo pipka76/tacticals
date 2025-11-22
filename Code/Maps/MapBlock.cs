@@ -9,10 +9,10 @@ public class MapBlock
         TREEC2,
         TREEC3,
         TREEC4,
+        TREEC5,
+        TREEC6,
         TREEB1,
         TREEB2,
-        TREEB3,
-        TREEB4,
     }
 
     public class BiomeData
