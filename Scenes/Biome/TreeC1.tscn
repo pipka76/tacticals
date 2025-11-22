@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://exxw1wqc3evu"]
+
+[ext_resource type="PackedScene" uid="uid://dggl8xnmft20l" path="res://Assets/Game/TreeC1.fbx" id="1_ci3wi"]
+
+[node name="TreeC1" type="Node3D"]
+
+[node name="TreeC1" parent="." instance=ExtResource("1_ci3wi")]

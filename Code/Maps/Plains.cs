@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using tacticals.Code.Maps;
+using static MapBlock;
 
 public partial class Plains : Node3D, IGameMap
 {

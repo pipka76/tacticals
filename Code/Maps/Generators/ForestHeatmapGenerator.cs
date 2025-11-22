@@ -21,15 +21,15 @@ public static class ForestHeatmapGenerator
         // 	distW[y,x] = 5 + 20 * (float)Math.Abs(Math.Sin((x+y) * 0.002));
         // }
 
-        var freq = (float) new Random().NextDouble() / 100;
+        var freq = (float) new Random().NextDouble() / 300;
 			
         var bmp = ForestHeatmapGenerator.GenerateHeatmapBitmap(
             slope, elev, distW,
             baseFreq: freq, octaves: 5,
             slopeMin: 0, slopeMax: 100,
-            elevMid: 10, elevWidth: 10,
+            elevMid: 50, elevWidth: 100,
             waterNear: 300, waterFar: 1000,
-            blurRadius: 1, rngSeed: 1337);
+            blurRadius: 5, rngSeed: 1337);
 		
         return bmp;
     }

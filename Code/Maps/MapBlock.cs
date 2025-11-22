@@ -5,10 +5,14 @@ public class MapBlock
 {
     public enum BiomeDataType
     {
-        TREE1,
-        TREE2,
-        TREE3,
-        TREE4,
+        TREEC1,
+        TREEC2,
+        TREEC3,
+        TREEC4,
+        TREEB1,
+        TREEB2,
+        TREEB3,
+        TREEB4,
     }
 
     public class BiomeData

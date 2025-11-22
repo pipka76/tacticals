@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
+using GodotPlugins.Game;
 using tacticals.Code.Maps.Generators;
 using tacticals.Code.Maps.Spawners;
+using static MapBlock;
 
 public class MapGenerator
 {
@@ -12,6 +15,7 @@ public class MapGenerator
     private int _structureID;
     private const int HEATRADIUS = 10;
     private const int BIOMEHEATMAPSCALE = 20; // 20:1
+    Random _r = new Random();
     
     public MapGenerator(int mapWidth, int mapHeight)
     {
@@ -42,7 +46,7 @@ public class MapGenerator
         //forestMap.Load("res://Assets/UI/TreeMap.png");
 
         var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth*BIOMEHEATMAPSCALE, _mapHeight*BIOMEHEATMAPSCALE));
-        //biomes.SavePng("biometest.png");
+        biomes.SavePng("biometest.png");
         GenerateForest(mm, biomes);
 
         return mm;
@@ -53,6 +57,9 @@ public class MapGenerator
         const float threshold = 10f;
         int width = forestMap.GetWidth();
         int height = forestMap.GetHeight();
+        Color treeMin = new Color("008130ff");
+        Color treeMax = new Color("f8fc00ff");
+        Color treeMid = new Color("88db00ff");
 
         for (int y = 0; y < height; y++)
         {
@@ -66,16 +73,56 @@ public class MapGenerator
                 if (mm[(int)mapX][(int)mapY].BiomeInfo == null)
                     mm[(int)mapX][(int)mapY].BiomeInfo = new List<MapBlock.BiomeData>();
 
-                // Check if it's black within tolerance
-                if (color.R < threshold && color.G < threshold && color.B < threshold)
+                if (ColorInRange(color, treeMin, treeMax))
                 {
                     var bd = new MapBlock.BiomeData();
-                    bd.Type = MapBlock.BiomeDataType.TREE1;
                     bd.LocalCoord = new Vector3(mapX % 1, 0, mapY % 1);
+
+                    if (ColorInRange(color, treeMin, treeMid))
+                    {
+                        string treeType = "broadleaved";
+                        bd.Type = Enum.Parse<BiomeDataType>(ChooseTree(treeType));
+                    }
+                    else
+                    {
+                        string treeType = "conifer";
+                        bd.Type = Enum.Parse<BiomeDataType>(ChooseTree(treeType));
+                    }
+
                     mm[(int)mapX][(int)mapY].BiomeInfo.Add(bd);
                 }
             }
         }
+    }
+    private string ChooseTree(string treeType)
+    {
+        int r = _r.Next(0, 100);
+        switch (treeType)
+        {
+            case "conifer":
+                if (r <= 25)
+                    return "TREEC1";
+                else if (r > 25 && r <= 50)
+                    return "TREEC2";
+                else if (r > 50 && r <= 75)
+                    return "TREEC3";
+                else
+                    return "TREEC4";
+            case "broadleaved":
+                if (r <= 25)
+                    return "TREEB1";
+                else if (r > 25 && r <= 50)
+                    return "TREEB2";
+                else if (r > 50 && r <= 75)
+                    return "TREEB3";
+                else
+                    return "TREEB4";
+                default: return "TREEC1";
+        }
+    }
+    private bool ColorInRange(Color color, Color Min, Color Max)
+    {
+        return (color.R >= Min.R && color.R <= Min.R && color.G >= Min.G && color.G <= Min.G && color.B >= Min.B && color.B <= Min.B);
     }
 
     private void GenerateStructures(MapBlock[][] map)
