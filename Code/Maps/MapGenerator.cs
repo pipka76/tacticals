@@ -34,8 +34,43 @@ public class MapGenerator
 
         // structures
         GenerateStructures(mm);
+        var forestMap = new Image();
+        forestMap.Load("res://Assets/UI/TreeMap.png");
+        GenerateForest(mm, (Image)forestMap);
 
         return mm;
+    }
+
+    private void GenerateForest(MapBlock[][] mm, Image forestMap)
+    {
+        const float threshold = 10f;
+        int width = forestMap.GetWidth();
+        int height = forestMap.GetHeight();
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color = forestMap.GetPixel(x, y);
+
+                // Check if it's black within tolerance
+                if (color.R < threshold && color.G < threshold && color.B < threshold)
+                {
+                    if (true)
+                    {
+                        int i = x/2
+                        CalculateKvadrant(x, y);
+                        mm[xx][yy].StructureType = MapBlockStructureType.FOREST;
+                        mm[xx][yy].AdditionalInfo = "   ";
+                    }
+                }
+            }
+        }
+    }
+
+    private void CalculateKvadrant(x, y) 
+    {
+         
     }
 
     private void GenerateStructures(MapBlock[][] map)

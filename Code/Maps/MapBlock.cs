@@ -8,6 +8,7 @@ public class MapBlock
     public int LayerIndex;
     public int StructureID;
     public int StructureHeat;
+    public string AdditionalInfo;
 
     public bool StructurePlacable(MapBlockStructureType structureType)
     {
