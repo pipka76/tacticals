@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using Godot;
+using tacticals.Code.Maps.Generators;
 using tacticals.Code.Maps.Spawners;
 
 public class MapGenerator
@@ -9,6 +11,7 @@ public class MapGenerator
     private readonly int _mapHeight;
     private int _structureID;
     private const int HEATRADIUS = 10;
+    private const int BIOMEHEATMAPSCALE = 20; // 20:1
     
     public MapGenerator(int mapWidth, int mapHeight)
     {
@@ -34,9 +37,13 @@ public class MapGenerator
 
         // structures
         GenerateStructures(mm);
-        var forestMap = new Image();
-        forestMap.Load("res://Assets/UI/TreeMap.png");
-        GenerateForest(mm, (Image)forestMap);
+        
+        //var forestMap = new Image();
+        //forestMap.Load("res://Assets/UI/TreeMap.png");
+
+        var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth*BIOMEHEATMAPSCALE, _mapHeight*BIOMEHEATMAPSCALE));
+        //biomes.SavePng("biometest.png");
+        GenerateForest(mm, biomes);
 
         return mm;
     }
@@ -53,24 +60,22 @@ public class MapGenerator
             {
                 Color color = forestMap.GetPixel(x, y);
 
+                float mapX = (float)x / BIOMEHEATMAPSCALE;
+                float mapY = (float)y / BIOMEHEATMAPSCALE;
+
+                if (mm[(int)mapX][(int)mapY].BiomeInfo == null)
+                    mm[(int)mapX][(int)mapY].BiomeInfo = new List<MapBlock.BiomeData>();
+
                 // Check if it's black within tolerance
                 if (color.R < threshold && color.G < threshold && color.B < threshold)
                 {
-                    if (true)
-                    {
-                        int i = x/2
-                        CalculateKvadrant(x, y);
-                        mm[xx][yy].StructureType = MapBlockStructureType.FOREST;
-                        mm[xx][yy].AdditionalInfo = "   ";
-                    }
+                    var bd = new MapBlock.BiomeData();
+                    bd.Type = MapBlock.BiomeDataType.TREE1;
+                    bd.LocalCoord = new Vector3(mapX % 1, 0, mapY % 1);
+                    mm[(int)mapX][(int)mapY].BiomeInfo.Add(bd);
                 }
             }
         }
-    }
-
-    private void CalculateKvadrant(x, y) 
-    {
-         
     }
 
     private void GenerateStructures(MapBlock[][] map)
