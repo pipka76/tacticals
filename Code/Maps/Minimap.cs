@@ -37,6 +37,11 @@ public partial class Minimap : Node2D
 						break;
 				}
 
+                if (map[i][j].BiomeInfo != null && map[i][j].BiomeInfo.Count > 0)
+                {
+                    img.FillRect(new Rect2I(map[i][j].Coordinates * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE), new Color("darkgreen"));
+                }
+    
 				switch (map[i][j].StructureType)
 				{
 					case MapBlockStructureType.BASE:
@@ -55,7 +60,7 @@ public partial class Minimap : Node2D
 					//	img.FillRect(new Rect2I(map[i][j].Coordinates * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE), new Color("darkgreen"));
 					//	break;
                 }
-			}
+            }
 		}
 
 		// Create an ImageTexture and set the image

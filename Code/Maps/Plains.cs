@@ -166,8 +166,8 @@ public partial class Plains : Node3D, IGameMap
 								break;
 						}
 						
-						tree.GlobalPosition = map[i][j].GlobalPosition + bd.LocalCoord;
-						this.AddChild(tree);
+						tree.Position = map[i][j].GlobalPosition + bd.LocalCoord;
+                        this.AddChild(tree);
 					}
 				}
 			}

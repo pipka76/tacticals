@@ -71,13 +71,19 @@ public class MapGenerator
                 float mapX = (float)x / BIOMEHEATMAPSCALE;
                 float mapY = (float)y / BIOMEHEATMAPSCALE;
 
+                if (mm[(int)mapX][(int)mapY].BlockType != MapBlockType.PLAIN)
+                    continue;
+                if (mm[(int)mapX][(int)mapY].StructureType != MapBlockStructureType.NONE)
+                    continue;
+                
                 if (mm[(int)mapX][(int)mapY].BiomeInfo == null)
                     mm[(int)mapX][(int)mapY].BiomeInfo = new List<MapBlock.BiomeData>();
 
                 if (ColorInRange(color, treeMid, 0.4f))
                 {
+                    float treeShift = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
                     var bd = new MapBlock.BiomeData();
-                    bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2);
+                    bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2 + treeShift, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2 + treeShift);
 
                     if (ColorInRange(color, treeMin, 0.7f))
                     {
@@ -232,9 +238,7 @@ public class MapGenerator
 
     private bool FlipCoin()
     {
-        Random r = new Random();
-
-        var n = r.Next(0, 100);
+        var n = Random.Shared.Next(0, 100);
         return n < 50;
     }
 

@@ -13,7 +13,7 @@ public partial class Player : Node3D
 	private List<TeamEntity> _myArmy;
 	private Vector3 _homeBaseCoords;
 	
-	private const float CAM_MOVE_SPEED = 20f;
+	private const float CAM_MOVE_SPEED = 50f;
 	private const float VIEW_DISTANCE = 100f;
 	private const float CLICK_COOLDOWN = 0.2f;
 	

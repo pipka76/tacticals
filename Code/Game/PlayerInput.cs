@@ -83,6 +83,6 @@ public partial class PlayerInput : MultiplayerSynchronizer
 //		else
 //			IsSelecting = false;
 		
-		CameraMove = Input.GetVector("cam_right", "cam_left", "cam_backward", "cam_forward");
+		CameraMove = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
 	}
 }
