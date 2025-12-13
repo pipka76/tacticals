@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using tacticals.Code.Game;
 
 public partial class Soldier : MovableTeamEntity
 {
@@ -29,6 +30,11 @@ public partial class Soldier : MovableTeamEntity
 			_rayCast.TargetPosition = GlobalPosition + direction * 30f;
 			if(!_rayCast.IsColliding())
 				GlobalPosition += direction * (float)delta * MOVE_SPEED;
+		}
+		else
+		{
+			if (IsInState(TeamEntityStates.ONTHEWAY))
+				SetNewState(TeamEntityStates.IDLE);
 		}
 	}
 }

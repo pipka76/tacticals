@@ -1,9 +1,11 @@
 using Godot;
+using tacticals.Code.Game;
 
 public partial class TeamEntity : Node3D
 {
     private TeamObjectType objectType;
     protected Node3D _selectorObject;
+    protected TeamEntityStates _enityState;
     
     public bool IsSelected {
         set
@@ -38,19 +40,28 @@ public partial class TeamEntity : Node3D
 
         Rotation = new Vector3(0, targetAngle, 0);
     }
-
-    public void Attack(Vector3 location)
+    
+    protected bool IsInState(TeamEntityStates state)
     {
-        RotateTowards(location);
+        return (_enityState == state);
+    }
 
-        // var gun = this.GetComponentInChildren<IGun>();
-        // if (gun != null)
-        // {
-        //     gun.Fire(location);
-        //
-        //
-        //     GameServer.Current.ReportFire(this.transform.position, (location - this.transform.position).normalized, AttackTypes.RIFLE);
-        // }
+    protected void SetNewState(TeamEntityStates newState)
+    {
+        _enityState = newState;
+    }
+
+    public void Command(TeamEntityCommands cmd, bool valid, TeamEntityCommandParameters parameters = null)
+    {
+        switch (cmd)
+        {
+            case TeamEntityCommands.MOVETO:
+                if (this is not MovableTeamEntity)
+                    return;
+                if (parameters != null && parameters.Coords != null)
+                (this as MovableTeamEntity).MoveTo(parameters.Coords.Value);
+                break;
+        }
     }
 
     public virtual TeamObjectType GetTeamObjectType()
