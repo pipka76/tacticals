@@ -58,6 +58,13 @@ public partial class Player : Node3D
 		if (map != null)
 		{
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
+
+            var s = (Node3D)soldier.Instantiate();
+			s.GlobalPosition = new Vector3(100, 0 ,100);
+            _myArmy.Add((TeamEntity)s);
+			this.AddChild(s);
+
+            /*
 			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
 
 			int i = 0;
@@ -72,9 +79,9 @@ public partial class Player : Node3D
 				map.SpawnEntity(s);
 				((MovableTeamEntity)s).MoveTo(new Vector2(au.X, au.Y));
 				_myArmy.Add((TeamEntity)s);
-			}
-		}
-	}
+			}*/
+        }
+    }
 
 	private Node MouseRaycastToEntity(uint collisionMask)
 	{

@@ -81,11 +81,12 @@ public class MapGenerator
 
                 if (ColorInRange(color, treeMid, 0.4f))
                 {
-                    float treeShift = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
+                    float treeShiftX = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
+                    float treeShiftY = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
                     var bd = new MapBlock.BiomeData();
-                    bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2 + treeShift, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2 + treeShift);
+                    bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2 + treeShiftX, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2 + treeShiftY);
 
-                    if (ColorInRange(color, treeMin, 0.7f))
+                    if (ColorInRange(color, treeMin, 0f))
                     {
                         string treeType = "broadleaved";
                         bd.Type = Enum.Parse<BiomeDataType>(ChooseTree(treeType));
@@ -124,12 +125,12 @@ public class MapGenerator
                     return "TREEB1";
                 else
                     return "TREEB2";
-                default: return "TREEC1";
+            default: return "TREEC1";
         }
     }
     private bool ColorInRange(Color color, Color Mid, float colorRange)
     {
-        return (Math.Abs(color.R - Mid.R) + Math.Abs(color.G - Mid.G) + Math.Abs(color.B - Mid.B)) <= colorRange;
+        return (Math.Abs(color.R - Mid.R) + Math.Abs(color.G - Mid.G) + Math.Abs(color.B - Mid.B)) < colorRange;
     }
 
     private void GenerateStructures(MapBlock[][] map)
