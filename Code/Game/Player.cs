@@ -14,7 +14,7 @@ public partial class Player : Node3D
 	private Vector3 _homeBaseCoords;
 	
 	private const float CAM_MOVE_SPEED = 50f;
-	private const float VIEW_DISTANCE = 100f;
+	private const float VIEW_DISTANCE = 1000f;
 	private const float CLICK_COOLDOWN = 0.2f;
 	
 	// Set by the authority, synchronized on spawn.
@@ -58,13 +58,11 @@ public partial class Player : Node3D
 		if (map != null)
 		{
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
+			var s = (Node3D)soldier.Instantiate();
+			map.SpawnEntity(s);
+			_myArmy.Add((TeamEntity)s);
 
-            var s = (Node3D)soldier.Instantiate();
-			s.GlobalPosition = new Vector3(100, 0 ,100);
-            _myArmy.Add((TeamEntity)s);
-			this.AddChild(s);
-
-            /*
+			/*
 			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
 
 			int i = 0;
@@ -80,8 +78,8 @@ public partial class Player : Node3D
 				((MovableTeamEntity)s).MoveTo(new Vector2(au.X, au.Y));
 				_myArmy.Add((TeamEntity)s);
 			}*/
-        }
-    }
+		}
+	}
 
 	private Node MouseRaycastToEntity(uint collisionMask)
 	{
@@ -99,7 +97,8 @@ public partial class Player : Node3D
 		{
 			if (collider.Obj != null)
 			{
-				return (collider.Obj as Node)?.GetParent();
+				return collider.Obj as Node;
+				//return (collider.Obj as Node)?.GetParent();
 			}
 		}
 
@@ -130,6 +129,8 @@ public partial class Player : Node3D
 	public override void _Process(double delta)
 	{
 		_godCamera.Fov = _inputs.CameraFov;
+		_godCamera.Rotation = new Vector3(_inputs.CameraDegX, 0, 0);
+		_godCamera.GlobalPosition = new Vector3(_godCamera.GlobalPosition.X, _inputs.CameraY, _godCamera.GlobalPosition.Z);
 		
 		if (_inputs.IsSelecting)
 		{
@@ -179,7 +180,7 @@ public partial class Player : Node3D
 				_inputs.MapToggle = false;
             }
         }
-
-        this.Position += new Vector3( _inputs.CameraMove.X, 0,  _inputs.CameraMove.Y) * (float)delta * CAM_MOVE_SPEED;
+		
+		this.Position += new Vector3( _inputs.CameraMove.X, 0,  _inputs.CameraMove.Y) * (float)delta * CAM_MOVE_SPEED;
 	}
 }

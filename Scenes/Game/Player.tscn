@@ -9,7 +9,7 @@
 script = ExtResource("1_webvv")
 
 [node name="GodCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.49999997, 0.86602545, 0, -0.86602545, 0.49999997, 0, 400, 434.3753)
+transform = Transform3D(1, 0, 0, 0, 0.64278764, 0.76604444, 0, -0.76604444, 0.64278764, 0, 200, 300)
 fov = 50.0
 
 [node name="PlayerInput" type="MultiplayerSynchronizer" parent="."]

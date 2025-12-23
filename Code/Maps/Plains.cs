@@ -36,8 +36,11 @@ public partial class Plains : Node3D, IGameMap
 		var b = FindFirstBase();
         _entities.AddChild(entity);
         if (b != Vector2I.Zero)
-            entity.GlobalPosition = new Vector3(b.X * MapConstants.BLOCK_SIZE, 0, b.Y * MapConstants.BLOCK_SIZE);
-    }
+        {
+	        entity.GlobalPosition = new Vector3(b.X * MapConstants.BLOCK_SIZE, 0, b.Y * MapConstants.BLOCK_SIZE);
+	        //entity.SetScale(new Vector3(10,10,10));
+        }
+	}
 
     private Vector2I FindFirstBase()
 	{

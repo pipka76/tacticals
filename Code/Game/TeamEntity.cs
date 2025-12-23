@@ -1,7 +1,7 @@
 using Godot;
 using tacticals.Code.Game;
 
-public partial class TeamEntity : Node3D
+public partial class TeamEntity : CharacterBody3D
 {
     private TeamObjectType objectType;
     protected Node3D _selectorObject;

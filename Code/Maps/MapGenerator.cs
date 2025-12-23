@@ -47,7 +47,7 @@ public class MapGenerator
         //forestMap.Load("res://Assets/UI/TreeMap.png");
 
         var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth*BIOMEHEATMAPSCALE, _mapHeight*BIOMEHEATMAPSCALE));
-        biomes.SavePng("biometest.png");
+        //biomes.SavePng("biometest.png");
         GenerateForest(mm, biomes);
 
         return mm;
