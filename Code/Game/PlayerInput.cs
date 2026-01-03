@@ -13,9 +13,11 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	private const float MIN_CAMERA_Y = 5.0f;          // close-to-ground height
 	private const float MAX_CAMERA_Y = 300.0f;          // far height
 	private const float MIN_CAMERA_DEG = -60.0f; // zoomed out: look slightly down
-	private const float MAX_CAMERA_DEG = -5.0f;  // zoomed in: pitch up (level up view)
+	private const float MAX_CAMERA_DEG = -15.0f;  // zoomed in: pitch up (level up view)
+	private const float YAW_SENSITIVITY = 0.005f; // radians per pixel
+	private float _groundLevel = 0;
 	
-	public Godot.Vector2 CameraMove = Godot.Vector2.Zero;
+	public Godot.Vector2 PlayerMove = Godot.Vector2.Zero;
 	public bool IsSelecting;
 	public bool IsMoveArmy;
 	public bool IsDragging;
@@ -23,21 +25,46 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public float CameraFov = 50f;
 	public float CameraDegX = MIN_CAMERA_DEG;
 	public float CameraY = MAX_CAMERA_Y;
-	
+	public float CameraYaw = 0f;
+
+	public static PlayerInput Current
+	{
+		get;
+		internal set;
+	}
+
+	public void SetGroundLevel(float val)
+	{
+		if (_groundLevel != val)
+		{
+			_groundLevel = val;
+			AdjustFov(0);
+		}
+	}
+
 	public override void _Input(InputEvent @event)
 	{
-		if(!_processEnabled)
+		if (!_processEnabled)
 			return;
-		
-		// only interested in pressed mouse‐wheel events
+
+		// Always-on camera yaw from mouse movement
+		if (@event is InputEventMouseMotion mm)
+		{
+			// Positive mouse X => rotate right
+			CameraYaw -= mm.Relative.X * YAW_SENSITIVITY;
+			return;
+		}
+
+		// Zoom handling (trackpad)
 		if (@event is InputEventPanGesture pg)
 		{
 			AdjustFov(pg.GetDelta().Y);
+			return;
 		}
 
-		if ((@event is InputEventMouseButton mb) && mb.Pressed)
+		// Zoom handling (mouse wheel)
+		if (@event is InputEventMouseButton mb && mb.Pressed)
 		{
-
 			switch (mb.ButtonIndex)
 			{
 				case MouseButton.WheelUp:
@@ -60,7 +87,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 		
 		// As FOV decreases (zoom in => t goes down), Y should decrease:
 		// so lerp from MinY at t=0 to MaxY at t=1.
-		CameraY = Mathf.Lerp(MIN_CAMERA_Y, MAX_CAMERA_Y, t);
+		CameraY = Mathf.Lerp(_groundLevel + MIN_CAMERA_Y, _groundLevel + MAX_CAMERA_Y, t*t);
 
 		// As FOV decreases (t down), X rotation increases (pitch up):
 		// so lerp from MaxPitchDeg at t=0 to MinPitchDeg at t=1, or invert t.
@@ -69,6 +96,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	
 	public override void _Ready()
 	{
+		Current = this;
 		// Only process for the local player
 		_processEnabled = true;
 		//_processEnabled = GetMultiplayerAuthority() == Multiplayer.GetUniqueId();
@@ -101,6 +129,9 @@ public partial class PlayerInput : MultiplayerSynchronizer
 //		else
 //			IsSelecting = false;
 		
-		CameraMove = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
+		var move = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
+		// Rotate movement by camera yaw so WASD is relative to where the camera is looking.
+		var move3 = new Vector3(move.X, 0f, move.Y).Rotated(Vector3.Up, CameraYaw);
+		PlayerMove = new Vector2(move3.X, move3.Z);
 	}
 }

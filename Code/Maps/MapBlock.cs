@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using tacticals.Code.Maps;
 
@@ -14,6 +15,7 @@ public class MapBlock
         TREEC6,
         TREEB1,
         TREEB2,
+        GROUND
     }
 
     public class BiomeData
@@ -41,8 +43,24 @@ public class MapBlock
     {
         get
         {
-            return new Vector3(Coordinates.X * MapConstants.BLOCK_SIZE, (float)0.5,
-                Coordinates.Y * MapConstants.BLOCK_SIZE);
+            float height = 0f;
+            if (BiomeInfo != null)
+            {
+                float sum = 0f;
+                int cnt = 0;
+                
+                var grounds = BiomeInfo.Where(bi => bi.Type == BiomeDataType.GROUND);
+                foreach (var g in grounds)
+                {
+                    cnt++;
+                    sum += g.LocalCoord.Y;
+                }
+
+                if (cnt != 0)
+                    height = sum / cnt;
+            }
+
+            return new(Coordinates.X * MapConstants.BLOCK_SIZE, height, Coordinates.Y * MapConstants.BLOCK_SIZE);
         }
     }
 }

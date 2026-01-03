@@ -1,13 +1,13 @@
 [gd_scene load_steps=3 format=3 uid="uid://b3quk14amilq5"]
 
-[ext_resource type="Script" path="res://Code/Maps/Plains.cs" id="1_dup03"]
+[ext_resource type="Script" uid="uid://d3q572lsg5mjc" path="res://Code/Maps/Plains.cs" id="1_dup03"]
 [ext_resource type="PackedScene" uid="uid://bs6ddw8i2d41a" path="res://Scenes/Maps/Minimap.tscn" id="2_wj7ge"]
 
 [node name="Plains" type="Node3D"]
 script = ExtResource("1_dup03")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.499019, 0.794796, 0.345368, -0.864932, 0.481454, 0.141759, -0.0536091, -0.36946, 0.927699, 0, 100, 0)
+transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 50, 1000, 50)
 light_energy = 2.0
 shadow_enabled = true
 

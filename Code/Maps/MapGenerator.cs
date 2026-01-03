@@ -15,7 +15,6 @@ public class MapGenerator
     private readonly int _mapHeight;
     private int _structureID;
     private const int HEATRADIUS = 10;
-    private const int BIOMEHEATMAPSCALE = 2; // 5:1
     Random _r = new Random();
     
     public MapGenerator(int mapWidth, int mapHeight)
@@ -29,13 +28,16 @@ public class MapGenerator
         return System.Text.Json.JsonSerializer.Serialize(map, new JsonSerializerOptions() { IncludeFields = true});
     }
 
-    public MapBlock[][] GenerateMinimap()
+    public MapBlock[][] GenerateMap()
     {
         MapBlock[][] mm = new MapBlock[_mapWidth][];
         for (int i = 0; i < _mapWidth; i++)
             mm[i] = new MapBlock[_mapHeight];
 
-        InitMinimap(mm);
+        var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth * MapConstants.BIOMEHEATMAPSCALE, _mapHeight * MapConstants.BIOMEHEATMAPSCALE));
+        //biomes.SavePng("biometest.png");
+
+        InitMinimap(mm, biomes);
         var river = GenerateRiver();
         river.Draw(mm);
         GenerateBases(mm);
@@ -46,8 +48,6 @@ public class MapGenerator
         //var forestMap = new Image();
         //forestMap.Load("res://Assets/UI/TreeMap.png");
 
-        var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth*BIOMEHEATMAPSCALE, _mapHeight*BIOMEHEATMAPSCALE));
-        //biomes.SavePng("biometest.png");
         GenerateForest(mm, biomes);
 
         return mm;
@@ -68,8 +68,8 @@ public class MapGenerator
             {
                 Color color = forestMap.GetPixel(x, y);
 
-                float mapX = (float)x / BIOMEHEATMAPSCALE;
-                float mapY = (float)y / BIOMEHEATMAPSCALE;
+                float mapX = (float)x / MapConstants.BIOMEHEATMAPSCALE;
+                float mapY = (float)y / MapConstants.BIOMEHEATMAPSCALE;
 
                 if (mm[(int)mapX][(int)mapY].BlockType != MapBlockType.PLAIN)
                     continue;
@@ -81,8 +81,8 @@ public class MapGenerator
 
                 if (ColorInRange(color, treeMid, 0.4f))
                 {
-                    float treeShiftX = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
-                    float treeShiftY = (float)Random.Shared.Next(-250, 250) / (1000 * BIOMEHEATMAPSCALE);
+                    float treeShiftX = (float)Random.Shared.Next(-250, 250) / (1000 * MapConstants.BIOMEHEATMAPSCALE);
+                    float treeShiftY = (float)Random.Shared.Next(-250, 250) / (1000 * MapConstants.BIOMEHEATMAPSCALE);
                     var bd = new MapBlock.BiomeData();
                     bd.LocalCoord = new Vector3(MapConstants.BLOCK_SIZE*(mapX % 1) - MapConstants.BLOCK_SIZE/2 + treeShiftX, 0, MapConstants.BLOCK_SIZE*(mapY % 1) - MapConstants.BLOCK_SIZE/2 + treeShiftY);
 
@@ -243,19 +243,37 @@ public class MapGenerator
         return n < 50;
     }
 
-    private void InitMinimap(MapBlock[][] mm)
+    private void InitMinimap(MapBlock[][] mm, Image heatmap, float amplification = 500f)
     {
+        //int width = heatmap.GetWidth();
+        //int height = heatmap.GetHeight();
+        
         _structureID = 0;
         for (int i = 0; i < _mapWidth; i++)
         {
             for (int j = 0; j < _mapHeight; j++)
             {
+                var bd = new List<BiomeData>();
+                for (int k = 0; k < MapConstants.BIOMEHEATMAPSCALE; k++)
+                {
+                    for (int l = 0; l < MapConstants.BIOMEHEATMAPSCALE; l++)
+                    {
+                        Color px = heatmap.GetPixel( i * MapConstants.BIOMEHEATMAPSCALE + k, j * MapConstants.BIOMEHEATMAPSCALE + l);
+                        bd.Add(new BiomeData()
+                        {
+                            Type = BiomeDataType.GROUND,
+                            LocalCoord = new Vector3(k, (px.A == 0 ? 0.001f : px.A) * amplification, l)
+                        });
+                    }
+                }
+
                 mm[i][j] = new MapBlock()
                 {
                     BlockType = MapBlockType.PLAIN,
                     StructureType = MapBlockStructureType.NONE,
                     LayerIndex = 0,
-                    Coordinates = new Vector2I(i, j)
+                    Coordinates = new Vector2I(i, j),
+                    BiomeInfo = bd  
                 };
             }
         }

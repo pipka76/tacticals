@@ -128,9 +128,16 @@ public partial class Player : Node3D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		var map = GetParent().GetParent() as IGameMap;
+		if (map != null)
+		{
+			var camBaseLevel = map.GetTerrainHeight(new Vector2(this.GlobalPosition.X, this.GlobalPosition.Z)); // get height of the place where player's camera is looking at
+			PlayerInput.Current.SetGroundLevel(camBaseLevel);
+		}
+
 		_godCamera.Fov = _inputs.CameraFov;
-		_godCamera.Rotation = new Vector3(_inputs.CameraDegX, 0, 0);
-		_godCamera.GlobalPosition = new Vector3(_godCamera.GlobalPosition.X, _inputs.CameraY, _godCamera.GlobalPosition.Z);
+		_godCamera.Rotation = new Vector3(_inputs.CameraDegX, _inputs.CameraYaw, 0);
+		_godCamera.Position = new Vector3(_godCamera.Position.X, _inputs.CameraY, _godCamera.Position.Z);
 		
 		if (_inputs.IsSelecting)
 		{
@@ -173,7 +180,6 @@ public partial class Player : Node3D
 
 		if (_inputs.MapToggle)
 		{
-            var map = GetParent().GetParent() as IGameMap;
 			if (map != null)
 			{
 				map.ToggleMinimap();
@@ -181,6 +187,6 @@ public partial class Player : Node3D
             }
         }
 		
-		this.Position += new Vector3( _inputs.CameraMove.X, 0,  _inputs.CameraMove.Y) * (float)delta * CAM_MOVE_SPEED;
+		this.Position += new Vector3(_inputs.PlayerMove.X, 0,  _inputs.PlayerMove.Y) * (float)delta * CAM_MOVE_SPEED;
 	}
 }

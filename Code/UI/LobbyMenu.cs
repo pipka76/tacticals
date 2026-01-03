@@ -72,7 +72,7 @@ public partial class LobbyMenu : Control, IGameMenu
 		int port = button.GetMeta("serverport").AsInt32();
 		GD.Print("BattleSelected ID: " + id);
 		
-		((Main)GetTree().CurrentScene).JoinServer(port);
+		Main.Current.JoinServer(port);
 		int peerId = Multiplayer.GetUniqueId();
 		var result = Task.Run(async () => await BattleServer.Current.JoinBattle(Guid.Parse(id), peerId)).Result;
 		if (result)
@@ -82,7 +82,7 @@ public partial class LobbyMenu : Control, IGameMenu
 			var context = new NavigateContext();
 			context.Command = "JoinExisting";
 			context.Metadata.Add("battleid", id);
-			((Main)GetTree().CurrentScene).NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
+			Main.Current.NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
 		}
 	}
 	
@@ -103,7 +103,7 @@ public partial class LobbyMenu : Control, IGameMenu
 		{
 			GD.Print($"New server created on port {result.port}: {result.id})");
 			GD.Print($"Connecting to the server ...");
-			((Main)GetTree().CurrentScene).JoinServer(result.port);
+			Main.Current.JoinServer(result.port);
 			GD.Print($"Authorizing the server as mine ...");
 			int peerId = Multiplayer.GetUniqueId();
 			var authorized =  Task.Run(async () => await BattleServer.Current.AuthorizeBattle(result.id, peerId)).Result;
@@ -113,7 +113,7 @@ public partial class LobbyMenu : Control, IGameMenu
 				var context = new NavigateContext();
 				context.Command = "CreateNew";
 				context.Metadata.Add("battleid", result.id.ToString());
-				((Main)GetTree().CurrentScene).NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
+				Main.Current.NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
 			}
 			else
 			{
@@ -125,9 +125,8 @@ public partial class LobbyMenu : Control, IGameMenu
 	private void CreateNewDemoBattle()
 	{
         this.Visible = false;
-        ((Main)GetTree().CurrentScene).StartGame("res://Scenes/Maps/Plains.tscn");
-		var player = (Player)GD.Load<PackedScene>("res://Scenes/Game/Player.tscn").Instantiate();
-		GetTree().CurrentScene.GetNode<Node>("Map").GetChild(0).GetNode<Node>("Players").AddChild(player);
+        var map = Main.Current.StartGame("res://Scenes/Maps/Plains.tscn");
+        map.SpawnPlayer();
 	}
 
 	public void OnNavigateTo(NavigateContext context)

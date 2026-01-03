@@ -40,7 +40,7 @@ public partial class BattleNetwork : Node
 		_currentBattle.Peers.AddRange(battleServer.Peers.Where(p => p.IsReady));
 
 		var mm = new MapGenerator(100, 100);
-		var map = mm.GenerateMinimap();
+		var map = mm.GenerateMap();
 		string mapData = mm.ToJson(map);
 		foreach (var peer in _currentBattle.Peers)
 		{
