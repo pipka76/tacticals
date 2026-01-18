@@ -310,27 +310,27 @@ public static class ForestHeatmapGenerator
         if (t < 1f / 3f)
         {
             float k = t / (1f / 3f);
-            return LerpColor(new Color(0f, 0f, 0.7f, 1f), new Color(0f, 0.7f, 0f, 1f), k); // blue → green
+            return LerpColor(new Color(0f, 0f, 0.7f, 1f), new Color(0f, 0.7f, 0f, 1f), k, t); // blue → green
         }
         else if (t < 2f / 3f)
         {
             float k = (t - 1f / 3f) / (1f / 3f);
-            return LerpColor(new Color(0f, 0.7f, 0f, 1f), new Color(1f, 1f, 0f, 1f), k);   // green → yellow
+            return LerpColor(new Color(0f, 0.7f, 0f, 1f), new Color(1f, 1f, 0f, 1f), k, t);   // green → yellow
         }
         else
         {
             float k = (t - 2f / 3f) / (1f / 3f);
-            return LerpColor(new Color(1f, 1f, 0f, 1f), new Color(0.9f, 0f, 0f, 1f), k);   // yellow → red
+            return LerpColor(new Color(1f, 1f, 0f, 1f), new Color(0.9f, 0f, 0f, 1f), k, t);   // yellow → red
         }
     }
 
-    private static Color LerpColor(Color a, Color b, float t)
+    private static Color LerpColor(Color a, Color b, float t, float alpha = 1f)
     {
         return new Color(
             Mathf.Lerp(a.R, b.R, t),
             Mathf.Lerp(a.G, b.G, t),
             Mathf.Lerp(a.B, b.B, t),
-            Mathf.Lerp(a.A, b.A, t) // keep alpha = 1
+            alpha
         );
     }
 }

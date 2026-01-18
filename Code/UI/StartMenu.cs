@@ -348,10 +348,9 @@ public partial class StartMenu : Control, IGameMenu
 
     private void OnBattlePressed()
     {
-        var main = (Main)GetParent();
         var c = new NavigateContext() { Command = (_gameModeSelected == GameMode.CLASSIC) ? "CLASSIC" : "TRAIN_DEFENSE" };
         c.Metadata.Add("ArmySetup", ExtractArmySetup());
-        main.NavigateTo(Main.NAVIGATE_TARGET.LOBBYMENU, c);
+        Main.Current.NavigateTo(Main.NAVIGATE_TARGET.LOBBYMENU, c);
     }
 
     public void OnNavigateTo(NavigateContext context)

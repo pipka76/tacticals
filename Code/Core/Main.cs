@@ -13,8 +13,11 @@ public partial class Main : Node
 
 	private const int PORT = 20000;
 	private const string PORT_ARG = "--port=";
+	public static Main Current { get; internal set; }
+	
 	public override void _Ready()
 	{
+		Current = this;
 		// Automatically start the server in headless mode.
 		if (DisplayServer.GetName() == "headless")
 		{
@@ -51,13 +54,13 @@ public partial class Main : Node
 		GD.Print("Server Started!");
 	}
 	
-	public void StartGame(string mapScene)
+	public IGameMap StartGame(string mapScene)
 	{
 //		if (Multiplayer.IsServer())
 //		{
 	//		CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
 //		}
-	ChangeLevel(GD.Load<PackedScene>(mapScene));
+		return ChangeLevel(GD.Load<PackedScene>(mapScene));
 	}
 	
 	public void JoinServer(int port)
@@ -105,7 +108,7 @@ public partial class Main : Node
 		}
 	}
 
-	private void ChangeLevel(PackedScene scene)
+	private IGameMap ChangeLevel(PackedScene scene)
 	{
 		// Remove old level if any.
 		var mapRoot = GetNode("Map");
@@ -117,7 +120,14 @@ public partial class Main : Node
 
 		// Add new level.
 		var li = scene.Instantiate();
-		(li as IGameMap).GenerateLevel();
-		mapRoot.AddChild(li);
+		if (li is IGameMap map)
+		{
+			map.GenerateLevel();
+			mapRoot.AddChild(li);
+
+			return map;
+		}
+
+		return null;
 	}
 }
