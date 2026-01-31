@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cveba8d2gym2d"
-path="res://.godot/imported/Tank.fbx-8c8239bb51c459f6b24ea28aa648e809.scn"
+uid="uid://dmxla06cdpjp0"
+path="res://.godot/imported/Helicopter.fbx-4b97c64bf24e57adad9977a0189e9574.scn"
 
 [deps]
 
-source_file="res://Assets/Game/Tank.fbx"
-dest_files=["res://.godot/imported/Tank.fbx-8c8239bb51c459f6b24ea28aa648e809.scn"]
+source_file="res://Assets/Game/Helicopter.fbx"
+dest_files=["res://.godot/imported/Helicopter.fbx-4b97c64bf24e57adad9977a0189e9574.scn"]
 
 [params]
 
@@ -41,4 +41,4 @@ _subresources={}
 fbx/importer=0
 fbx/allow_geometry_helper_nodes=false
 fbx/embedded_image_handling=1
-fbx/naming_version=1
+fbx/naming_version=2
