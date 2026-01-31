@@ -25,9 +25,9 @@ public static class ForestHeatmapGenerator
 			
         var bmp = ForestHeatmapGenerator.GenerateHeatmapBitmap(
             slope, elev, distW,
-            baseFreq: freq, octaves: 5,
-            slopeMin: 0, slopeMax: 100,
-            elevMid: 50, elevWidth: 100,
+            baseFreq: freq, octaves: 33,
+            slopeMin: 0, slopeMax: 50,
+            elevMid: 50, elevWidth: 70,
             waterNear: 300, waterFar: 1000,
             blurRadius: 5, rngSeed: 1337);
 		

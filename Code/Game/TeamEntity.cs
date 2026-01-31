@@ -6,7 +6,8 @@ public partial class TeamEntity : CharacterBody3D
     private TeamObjectType objectType;
     protected Node3D _selectorObject;
     protected TeamEntityStates _enityState;
-    
+    protected MultiplayerSynchronizer _synchronizer;
+
     public bool IsSelected {
         set
         {
@@ -67,5 +68,37 @@ public partial class TeamEntity : CharacterBody3D
     public virtual TeamObjectType GetTeamObjectType()
     {
         return objectType;
+    }
+    
+    protected bool RaycastToTerrain(out Vector3 hitPos, out Vector3 hitNormal)
+    {
+        const float VIEWDISTANCE = 50f;
+
+        var from = GlobalPosition + Vector3.Up * VIEWDISTANCE;
+        var to   = GlobalPosition - Vector3.Up * VIEWDISTANCE;
+
+        var space = GetWorld3D().DirectSpaceState;
+
+        var query = new PhysicsRayQueryParameters3D
+        {
+            From = from,
+            To = to,
+            CollisionMask = 1,
+            // Optional but recommended if you're raycasting from the entity itself
+            Exclude = new Godot.Collections.Array<Rid> { GetRid() }
+        };
+
+        var result = space.IntersectRay(query);
+
+        if (result.Count == 0)
+        {
+            hitPos = default;
+            hitNormal = default;
+            return false;
+        }
+
+        hitPos = (Vector3)result["position"];
+        hitNormal = (Vector3)result["normal"];
+        return true;
     }
 }

@@ -28,7 +28,7 @@ public class MapGenerator
         return System.Text.Json.JsonSerializer.Serialize(map, new JsonSerializerOptions() { IncludeFields = true});
     }
 
-    public MapBlock[][] GenerateMap()
+    public MapBlock[][] GenerateMap(FlowFieldManager mgr)
     {
         MapBlock[][] mm = new MapBlock[_mapWidth][];
         for (int i = 0; i < _mapWidth; i++)
@@ -36,14 +36,15 @@ public class MapGenerator
 
         var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth * MapConstants.BIOMEHEATMAPSCALE, _mapHeight * MapConstants.BIOMEHEATMAPSCALE));
         //biomes.SavePng("biometest.png");
+        mgr.InitializeMap(_mapWidth, _mapHeight, 1f / MapConstants.BIOMEHEATMAPSCALE, new Vector2(0, 0));
 
         InitMinimap(mm, biomes);
-        var river = GenerateRiver();
-        river.Draw(mm);
-        GenerateBases(mm);
+        //var river = GenerateRiver();
+        //river.Draw(mm);
+        GenerateBases(mm, mgr);
 
         // structures
-        GenerateStructures(mm);
+        GenerateStructures(mm, mgr);
         
         //var forestMap = new Image();
         //forestMap.Load("res://Assets/UI/TreeMap.png");
@@ -133,7 +134,7 @@ public class MapGenerator
         return (Math.Abs(color.R - Mid.R) + Math.Abs(color.G - Mid.G) + Math.Abs(color.B - Mid.B)) < colorRange;
     }
 
-    private void GenerateStructures(MapBlock[][] map)
+    private void GenerateStructures(MapBlock[][] map, FlowFieldManager mgr)
     {
         var rnd = new Random(); 
         var spw = new Spawner();
@@ -156,8 +157,11 @@ public class MapGenerator
 
             if (map[i][j].StructurePlacable(MapBlockStructureType.TOWER))
             {
-                if(spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 1f))
+                if (spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 1f))
+                {
                     AddHeat(map, i, j, HEATRADIUS);
+                    mgr.SetBlocked(new Vector2I(i * MapConstants.BLOCK_SIZE, j), true);
+                }
             }
 
             if (map[i][j].StructurePlacable(MapBlockStructureType.BUNKER))
@@ -168,6 +172,17 @@ public class MapGenerator
 
             if (spw.IsLimitReached())
                 break;
+        }
+    }
+
+    private void SetWholeBlockBlocked(FlowFieldManager mgr, int i, int j)
+    {
+        for (int k = 0; k < MapConstants.BIOMEHEATMAPSCALE; k++)
+        {
+            for (int l = 0; l < MapConstants.BIOMEHEATMAPSCALE; l++)
+            {
+                mgr.SetBlocked(new Vector2I(i * (MapConstants.BLOCK_SIZE * MapConstants.BIOMEHEATMAPSCALE), j * MapConstants.BLOCK_SIZE), true);
+            }
         }
     }
 
@@ -218,7 +233,7 @@ public class MapGenerator
         return river;
     }
 
-    private void GenerateBases(MapBlock[][] mm)
+    private void GenerateBases(MapBlock[][] mm, FlowFieldManager mgr)
     {
         mm[20][20].StructureType = MapBlockStructureType.BASE;
         mm[20][20].StructureID = _structureID++;
@@ -243,7 +258,7 @@ public class MapGenerator
         return n < 50;
     }
 
-    private void InitMinimap(MapBlock[][] mm, Image heatmap, float amplification = 500f)
+    private void InitMinimap(MapBlock[][] mm, Image heatmap, float amplification = 300f)
     {
         //int width = heatmap.GetWidth();
         //int height = heatmap.GetHeight();

@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://dc01ia723pg05"]
+
+[ext_resource type="Script" uid="uid://bmwks1xa6w87h" path="res://Code/Game/Tank.cs" id="1_blx53"]
+[ext_resource type="PackedScene" uid="uid://nygqr22se08u" path="res://Assets/Game/SelectionRing.fbx" id="2_0wwc1"]
+[ext_resource type="PackedScene" uid="uid://cveba8d2gym2d" path="res://Assets/Game/Tank.fbx" id="2_8eonc"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_8eonc"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8eonc"]
+size = Vector3(6.0468445, 2.8707275, 3.7608337)
+
+[node name="Tank" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 7
+script = ExtResource("1_blx53")
+
+[node name="SelectionRing" parent="." instance=ExtResource("2_0wwc1")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+visible = false
+
+[node name="TankMesh" parent="." instance=ExtResource("2_8eonc")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
+
+[node name="ServerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_8eonc")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.056106567, 1.7249146, 0.013320923)
+shape = SubResource("BoxShape3D_8eonc")

@@ -62,6 +62,16 @@ public partial class Player : Node3D
 			map.SpawnEntity(s);
 			_myArmy.Add((TeamEntity)s);
 
+			var s2 = (Node3D)soldier.Instantiate();
+			map.SpawnEntity(s2);
+			_myArmy.Add((TeamEntity)s2);
+
+			
+			var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
+			var t = (Node3D)tank.Instantiate();
+			map.SpawnEntity(t);
+			_myArmy.Add((TeamEntity)t); 
+
 			/*
 			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
 

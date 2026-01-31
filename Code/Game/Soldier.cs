@@ -1,11 +1,11 @@
 using Godot;
 using System;
-using tacticals.Code.Game;
+
+namespace tacticals.Code.Game;
 
 public partial class Soldier : MovableTeamEntity
 {
 	private const float MOVE_SPEED = 2.5f;
-	private MultiplayerSynchronizer _synchronizer;
 	private RayCast3D _rayCast;
 	private AnimationPlayer _animPlayer;
 	
@@ -15,6 +15,7 @@ public partial class Soldier : MovableTeamEntity
 		_rayCast = new RayCast3D();
 		_rayCast.CollisionMask = 0b1111;
 		_rayCast.Enabled = true;
+		
 		_selectorObject = GetNode<Node3D>("SelectionRing");
 		_synchronizer = GetNode<MultiplayerSynchronizer>("ServerSynchronizer");
 		_animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
@@ -25,13 +26,19 @@ public partial class Soldier : MovableTeamEntity
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		if (IsInState(TeamEntityStates.ONTHEWAY) && (MoveToCoordinates - GlobalPosition).Length() > 0.1f)
+		var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+		if (IsInState(TeamEntityStates.ONTHEWAY) && (MoveToCoordinates - globalPositionFlat).Length() > 0.1f)
 		{
-			var direction = (MoveToCoordinates - GlobalPosition).Normalized();
-			_rayCast.GlobalPosition = GlobalPosition;
-			_rayCast.TargetPosition = GlobalPosition + direction * 30f;
-			//if(!_rayCast.IsColliding())
-				GlobalPosition += direction * (float)delta * MOVE_SPEED;
+			if (RaycastToTerrain(out var gnd, out _))
+			{
+				var direction = (MoveToCoordinates - globalPositionFlat).Normalized();
+				//_rayCast.GlobalPosition = GlobalPosition;
+				//_rayCast.TargetPosition = GlobalPosition + direction * 30f;
+				//if(!_rayCast.IsColliding())
+				var moveXZ = GlobalPosition + direction * (float)delta * MOVE_SPEED;
+				moveXZ.Y = gnd.Y;
+				GlobalPosition = moveXZ;
+			}
 		}
 		else
 		{

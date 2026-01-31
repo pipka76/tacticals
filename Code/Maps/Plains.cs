@@ -12,8 +12,9 @@ public partial class Plains : Node3D, IGameMap
 	private PackedScene _teamflag, _tank, _tower, _bunker, _treeB1, _treeB2, _treeC1, _treeC2, _treeC3, _treeC4, _treeC5, _treeC6;
 	private Node _entities;
 	private MapBlock[][] _map;
-	PackedScene _grassP, _riverS, _riverT;
-
+	private PackedScene _grassP, _riverS, _riverT;
+	private FlowFieldManager _mgr = new FlowFieldManager();
+	
 	public override void _Ready()
 	{
 		_entities = GetNode<Node>("Entities");
@@ -66,7 +67,7 @@ public partial class Plains : Node3D, IGameMap
 	public void GenerateLevel()
 	{
 		var mm = new MapGenerator(100, 100);
-		_map = mm.GenerateMap();
+		_map = mm.GenerateMap(_mgr);
 
         LoadResources();
 		GenerateSceneObjects(_map);
@@ -380,7 +381,8 @@ public partial class Plains : Node3D, IGameMap
 
 		var terrain = new MeshInstance3D();
 		terrain.Mesh = mesh;
-
+		terrain.CreateConvexCollision();
+		
 		result.Add(terrain);
 		return result;
 	}
