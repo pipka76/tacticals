@@ -4,6 +4,7 @@ namespace tacticals.Code.Game;
 
 public partial class Heli : MovableTeamEntity
 {
+    private const float CLIMB_SPEED = 10;
     private const float MOVE_SPEED = 10f;
     private const float FLIGHT_LEVEL = 100f;
     private float _aboveGround;
@@ -25,6 +26,11 @@ public partial class Heli : MovableTeamEntity
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+        if (!IsInState(TeamEntityStates.IDLE)) 
+        {
+            GlobalRotation = Vector3.Zero;
+        }
+
         var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
         if ((IsInState(TeamEntityStates.HOVER) || IsInState(TeamEntityStates.ONTHEWAY)) && (MoveToCoordinates - globalPositionFlat).Length() > 0.1f)
         {
@@ -36,6 +42,7 @@ public partial class Heli : MovableTeamEntity
                 //if(!_rayCast.IsColliding())
                 var moveXZ = GlobalPosition + direction * (float)delta * MOVE_SPEED;
                 moveXZ.Y = gnd.Y + _aboveGround;
+                //float.Lerp()
                 GlobalPosition = moveXZ;
             }
         }
@@ -54,6 +61,7 @@ public partial class Heli : MovableTeamEntity
     public override void MoveTo(Vector2 coords)
     {
         _moveToCoords = coords;
+        RotateTowards(new Vector3(coords.X, 0, coords.Y));
 
         if (_aboveGround != FLIGHT_LEVEL)
         {
@@ -74,7 +82,7 @@ public partial class Heli : MovableTeamEntity
 
         if (IsInState(TeamEntityStates.TAKEOFF) && _aboveGround < FLIGHT_LEVEL)
         {
-            _aboveGround += (float)GetProcessDeltaTime();
+            _aboveGround += (float)GetProcessDeltaTime() * CLIMB_SPEED;
             if (_aboveGround >= FLIGHT_LEVEL)
             {
                 _aboveGround = FLIGHT_LEVEL;
@@ -87,7 +95,7 @@ public partial class Heli : MovableTeamEntity
         
         if (IsInState(TeamEntityStates.LANDING) && _aboveGround > 0)
         {
-            _aboveGround -= (float)GetProcessDeltaTime();
+            _aboveGround -= (float)GetProcessDeltaTime() * CLIMB_SPEED;
             if (_aboveGround <= 0)
             {
                 _aboveGround = 0;

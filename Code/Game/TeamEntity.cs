@@ -138,7 +138,7 @@ public partial class TeamEntity : CharacterBody3D
     
     protected bool RaycastToTerrain(out Vector3 hitPos, out Vector3 hitNormal)
     {
-        const float VIEWDISTANCE = 50f;
+        const float VIEWDISTANCE = 200f;
 
         var from = GlobalPosition + Vector3.Up * VIEWDISTANCE;
         var to   = GlobalPosition - Vector3.Up * VIEWDISTANCE;
