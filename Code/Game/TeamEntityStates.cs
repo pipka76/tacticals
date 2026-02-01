@@ -4,5 +4,9 @@ public enum TeamEntityStates
 {
     IDLE,
     PATROL,
-    ONTHEWAY
+    ONTHEWAY,
+    TAKEOFF,
+    LANDING,
+    HOVER,
+    EXITING
 }

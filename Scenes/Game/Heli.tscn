@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://dsff2578bg40b"]
+
+[ext_resource type="PackedScene" uid="uid://nygqr22se08u" path="res://Assets/Game/SelectionRing.fbx" id="1_fsy66"]
+[ext_resource type="Script" uid="uid://1fpsr3npoopg" path="res://Code/Game/Heli.cs" id="1_in24a"]
+[ext_resource type="PackedScene" uid="uid://dmxla06cdpjp0" path="res://Assets/Game/Helicopter.fbx" id="2_in24a"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_v4mkw"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h7ahe"]
+size = Vector3(13.422119, 4.5625, 2.2868958)
+
+[node name="Heli" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 7
+script = ExtResource("1_in24a")
+
+[node name="SelectionRing" parent="." instance=ExtResource("1_fsy66")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+visible = false
+
+[node name="Helicopter" parent="." instance=ExtResource("2_in24a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5205009, 0)
+
+[node name="ServerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_v4mkw")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3441162, 2.5683594, -0.12071228)
+shape = SubResource("BoxShape3D_h7ahe")

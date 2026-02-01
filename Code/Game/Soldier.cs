@@ -8,6 +8,11 @@ public partial class Soldier : MovableTeamEntity
 	private const float MOVE_SPEED = 2.5f;
 	private RayCast3D _rayCast;
 	private AnimationPlayer _animPlayer;
+
+	public Soldier()
+	{
+		_maxPassengersCapacity = 0;
+	}
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -60,6 +65,8 @@ public partial class Soldier : MovableTeamEntity
 		{
 			if (_animPlayer.CurrentAnimation != "Idle")
 				_animPlayer.Play("Idle");
+			if (RaycastToTerrain(out var gnd, out _))
+				GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
 		}
 	}
 }

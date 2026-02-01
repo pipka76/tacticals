@@ -3,7 +3,7 @@ using tacticals.Code.Game;
 
 public partial class MovableTeamEntity : TeamEntity
 {
-    private Vector2 _moveToCoords;
+    protected Vector2 _moveToCoords;
 
     public Vector3 MoveToCoordinates
     {
@@ -13,7 +13,7 @@ public partial class MovableTeamEntity : TeamEntity
         }
     }
 
-    public void MoveTo(Vector2 coords)
+    public virtual void MoveTo(Vector2 coords)
     {
         SetNewState(TeamEntityStates.ONTHEWAY);
         _moveToCoords = coords;

@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using Godot.NativeInterop;
+using tacticals.Code.Game;
 
 public partial class Player : Node3D
 {
@@ -12,6 +13,12 @@ public partial class Player : Node3D
 	private float _moveToCooldown;
 	private List<TeamEntity> _myArmy;
 	private Vector3 _homeBaseCoords;
+
+	#region MouseCursors
+	private Texture2D _mouse_cursor_board;
+	private Texture2D _mouse_cursor_moveto;
+	private Texture2D _mouse_cursor_select;
+	#endregion
 	
 	private const float CAM_MOVE_SPEED = 50f;
 	private const float VIEW_DISTANCE = 1000f;
@@ -47,8 +54,15 @@ public partial class Player : Node3D
 		_myArmy = new List<TeamEntity>();
 		_inputs = GetNode<PlayerInput>("PlayerInput");
 		_godCamera = GetNode<Camera3D>("GodCamera");
-
+		_mouse_cursor_board = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_board.png");
+		_mouse_cursor_moveto = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_moveto.png");
+		_mouse_cursor_select = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_select.png");
 		DeployArmy();
+		
+		Input.SetCustomMouseCursor(_mouse_cursor_select, Input.CursorShape.Arrow, new Vector2(0, 8));
+		Input.SetCustomMouseCursor(_mouse_cursor_moveto, Input.CursorShape.Cross, new Vector2(8, 10));
+		Input.SetCustomMouseCursor(_mouse_cursor_board, Input.CursorShape.PointingHand, new Vector2(8, 100));
+		Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
 	}
 
 	private void DeployArmy()
@@ -71,6 +85,11 @@ public partial class Player : Node3D
 			var t = (Node3D)tank.Instantiate();
 			map.SpawnEntity(t);
 			_myArmy.Add((TeamEntity)t); 
+
+			var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
+			var h = (Node3D)heli.Instantiate();
+			map.SpawnEntity(h);
+			_myArmy.Add((TeamEntity)h); 
 
 			/*
 			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
@@ -138,6 +157,8 @@ public partial class Player : Node3D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
+	
 		var map = GetParent().GetParent() as IGameMap;
 		if (map != null)
 		{
@@ -151,41 +172,28 @@ public partial class Player : Node3D
 		
 		if (_inputs.IsSelecting)
 		{
-			if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)
+			if (_inputs.IsMoveArmy)
 			{
-				var nodeHit = MouseRaycastToEntity(0b1110);
-				if (nodeHit != null)
-				{
-					var entity = nodeHit as TeamEntity;
-					if (entity != null)
-					{
-						entity.IsSelected = !entity.IsSelected;
-						_selectCooldown = Time.GetTicksMsec() / 1000f;
-					}
-				}
+				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+				HandleMoveToCommand();
+				goto specialModeExit;
 			}
-		}
 
+			if (_inputs.IsExiting)
+			{
+				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+				HandleExitCommand();
+				goto specialModeExit;
+			}
+
+			HandleSelectCommand();
+		}
+		
+specialModeExit:
+		
 		if (_inputs.IsMoveArmy)
 		{
-			if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
-			{
-				var whereTo = MouseRaycastToTerrain();
-				if (whereTo != Vector3.Inf)
-				{
-					_moveToCooldown = Time.GetTicksMsec() / 1000f;
-					foreach (var entity in _myArmy)
-					{
-						if (!entity.IsSelected)
-							continue;
-
-						if (entity is MovableTeamEntity)
-						{
-							((MovableTeamEntity)entity).MoveTo(new Vector2(whereTo.X, whereTo.Z));
-						}
-					}
-				}
-			}
+			Input.SetDefaultCursorShape(Input.CursorShape.Cross);
 		}
 
 		if (_inputs.MapToggle)
@@ -198,5 +206,67 @@ public partial class Player : Node3D
         }
 		
 		this.Position += new Vector3(_inputs.PlayerMove.X, 0,  _inputs.PlayerMove.Y) * (float)delta * CAM_MOVE_SPEED;
+	}
+
+	private void HandleSelectCommand()
+	{
+		if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)
+		{
+			var nodeHit = MouseRaycastToEntity(0b1110);
+			if (nodeHit != null)
+			{
+				var entity = nodeHit as TeamEntity;
+				if (entity != null)
+				{
+					entity.IsSelected = !entity.IsSelected;
+					_selectCooldown = Time.GetTicksMsec() / 1000f;
+				}
+			}
+		}
+	}
+
+	private void HandleMoveToCommand()
+	{
+		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
+		{
+			var whereTo = MouseRaycastToTerrain();
+			if (whereTo != Vector3.Inf)
+			{
+				_moveToCooldown = Time.GetTicksMsec() / 1000f;
+				foreach (var entity in _myArmy)
+				{
+					if (!entity.IsSelected)
+						continue;
+
+					if (entity is MovableTeamEntity)
+					{
+						((MovableTeamEntity)entity).MoveTo(new Vector2(whereTo.X, whereTo.Z));
+					}
+				}
+			}
+		}
+	}
+	
+	private void HandleExitCommand()
+	{
+		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
+		{
+			var whereTo = MouseRaycastToTerrain();
+			if (whereTo != Vector3.Inf)
+			{
+				_moveToCooldown = Time.GetTicksMsec() / 1000f;
+				foreach (var entity in _myArmy)
+				{
+					if (!entity.IsSelected)
+						continue;
+
+					if (entity is MovableTeamEntity)
+					{
+						((MovableTeamEntity)entity).MoveTo(new Vector2(whereTo.X, whereTo.Z));
+						entity.SetNewState(TeamEntityStates.EXITING);
+					}
+				}
+			}
+		}
 	}
 }

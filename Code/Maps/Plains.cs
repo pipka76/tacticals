@@ -23,7 +23,7 @@ public partial class Plains : Node3D, IGameMap
     private void LoadResources()
     {
         _teamflag = GD.Load<PackedScene>("res://Scenes/Structures/TeamFlag.tscn");
-        _tank = GD.Load<PackedScene>("res://Scenes/Structures/Tank.tscn");
+        _tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
         _tower = GD.Load<PackedScene>("res://Scenes/Structures/Tower.tscn");
         _bunker = GD.Load<PackedScene>("res://Scenes/Structures/Bunker.tscn");
         _treeB1 = GD.Load<PackedScene>("res://Scenes/Biome/TreeB1.tscn");

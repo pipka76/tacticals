@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using tacticals.Code.Game;
 
@@ -7,7 +9,15 @@ public partial class TeamEntity : CharacterBody3D
     protected Node3D _selectorObject;
     protected TeamEntityStates _enityState;
     protected MultiplayerSynchronizer _synchronizer;
-
+    protected Godot.Collections.Dictionary<TeamObjectType, int> _passengers;
+    protected int _maxPassengersCapacity;
+    
+    protected TeamEntity()
+    {
+        _passengers = new Godot.Collections.Dictionary<TeamObjectType, int>();
+        _maxPassengersCapacity = 0;
+    }
+    
     public bool IsSelected {
         set
         {
@@ -23,6 +33,38 @@ public partial class TeamEntity : CharacterBody3D
             
             return _selectorObject.Visible;
         }
+    }
+
+    public void BoardPassenger(TeamEntity entity)
+    {
+        if (_maxPassengersCapacity >= _passengers.Sum(p => p.Value))
+            return;
+        
+        var actualCount = _passengers[entity.objectType];
+        _passengers[entity.objectType] = actualCount + 1;
+    }
+
+    public IReadOnlyDictionary<TeamObjectType, int> ExitPassengers(int count = 0)
+    {
+        var result = new Godot.Collections.Dictionary<TeamObjectType, int>();
+
+        if (_passengers.Sum(p => p.Value) == 0)
+            return result;
+
+        if (count == 0) // exit all
+            return _passengers;
+
+        int c = 0;
+        foreach (var p in _passengers)
+        {
+            result.Add(p.Key, p.Value);
+            c++;
+            _passengers[p.Key] -= 1;
+            if (c == count)
+                break;
+        }
+
+        return result;
     }
 
     protected void RotateTowards(Vector3 location)
@@ -42,12 +84,12 @@ public partial class TeamEntity : CharacterBody3D
         Rotation = new Vector3(0, targetAngle, 0);
     }
     
-    protected bool IsInState(TeamEntityStates state)
+    public bool IsInState(TeamEntityStates state)
     {
         return (_enityState == state);
     }
 
-    protected void SetNewState(TeamEntityStates newState)
+    public void SetNewState(TeamEntityStates newState)
     {
         _enityState = newState;
     }
@@ -68,6 +110,30 @@ public partial class TeamEntity : CharacterBody3D
     public virtual TeamObjectType GetTeamObjectType()
     {
         return objectType;
+    }
+    
+    protected Quaternion RotateMatchTerrain(Vector3 direction, Vector3 n, float weight)
+    {
+        var forwardOnPlane = direction - n * direction.Dot(n);
+        forwardOnPlane = forwardOnPlane.Normalized();
+
+        // Build an orthonormal basis: X = right, Y = up(normal), Z = -forward
+        var right = forwardOnPlane.Cross(n).Normalized();
+        var desiredBasis = new Basis(right, n, -forwardOnPlane).Orthonormalized();
+
+        // Smooth rotation (optional). For instant snap, just assign the basis.
+        var current = GlobalTransform;
+        var target = new Transform3D(desiredBasis, current.Origin);
+
+        // Slerp via quaternions for smoothness:
+        var qCurrent = current.Basis.GetRotationQuaternion();
+        var qTarget = desiredBasis.GetRotationQuaternion();
+        //var t = (float)(1.0 - Math.Exp(-12f * GetProcessDeltaTime()));
+
+        if (weight == 1f)
+            return qTarget;
+        
+        return qCurrent.Slerp(qTarget, weight);
     }
     
     protected bool RaycastToTerrain(out Vector3 hitPos, out Vector3 hitNormal)

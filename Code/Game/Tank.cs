@@ -8,6 +8,11 @@ public partial class Tank : MovableTeamEntity
     private const float MOVE_SPEED = 5f;
     private AnimationPlayer _animPlayer;
 
+    public Tank()
+    {
+        _maxPassengersCapacity = 3;
+    }
+
     public override void _Ready()
     {
         _selectorObject = GetNode<Node3D>("SelectionRing");
@@ -33,25 +38,7 @@ public partial class Tank : MovableTeamEntity
                 moveXZ.Y = gnd.Y;
                 GlobalPosition = moveXZ;
                 
-                // Project forward onto the plane of the terrain so it stays tangent to the slope.
-                var forwardOnPlane = direction - n * direction.Dot(n);
-                forwardOnPlane = forwardOnPlane.Normalized();
-
-                // Build an orthonormal basis: X = right, Y = up(normal), Z = -forward
-                var right = forwardOnPlane.Cross(n).Normalized();
-                var desiredBasis = new Basis(right, n, -forwardOnPlane).Orthonormalized();
-
-                // Smooth rotation (optional). For instant snap, just assign the basis.
-                var current = GlobalTransform;
-                var target = new Transform3D(desiredBasis, current.Origin);
-
-                // Slerp via quaternions for smoothness:
-                var qCurrent = current.Basis.GetRotationQuaternion();
-                var qTarget = desiredBasis.GetRotationQuaternion();
-                var t = (float)(1.0 - Math.Exp(-12f * GetProcessDeltaTime()));
-                var qNew = qCurrent.Slerp(qTarget, t);
-
-                GlobalTransform = new Transform3D(new Basis(qNew), current.Origin);
+                GlobalTransform = new Transform3D(new Basis(RotateMatchTerrain(direction, n,(float)(1.0 - Math.Exp(-12f * GetProcessDeltaTime())))), GlobalTransform.Origin);
             }
         }
         else
@@ -62,21 +49,27 @@ public partial class Tank : MovableTeamEntity
 		
         HandleAnimation();
     }
-
+    
     private void HandleAnimation()
     {
-        return;
-        /*
         if (IsInState(TeamEntityStates.ONTHEWAY))
         {
-            if (_animPlayer.CurrentAnimation != "Moving")
-                _animPlayer.Play("Moving");
+        //    if (_animPlayer.CurrentAnimation != "Moving")
+          //      _animPlayer.Play("Moving");
         }
         if (IsInState(TeamEntityStates.IDLE))
         {
-            if (_animPlayer.CurrentAnimation != "Idle")
-                _animPlayer.Play("Idle");
-        }*/
+            //if (_animPlayer.CurrentAnimation != "Idle")
+              //  _animPlayer.Play("Idle");
+              if (RaycastToTerrain(out var gnd, out var n))
+              {
+                  GlobalTransform =
+                      new Transform3D(
+                          new Basis(RotateMatchTerrain(Vector3.Forward, n, 1f)), GlobalTransform.Origin);
+                  GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
+              }
+
+        }
     }
 
 }
