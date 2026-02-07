@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://dcf77grrjqms7"]
+
+[ext_resource type="PackedScene" uid="uid://bs6ddw8i2d41a" path="res://Scenes/Maps/Minimap.tscn" id="1_uwkpe"]
+[ext_resource type="Script" uid="uid://d3m7js5e2u0yv" path="res://Code/Maps/CampainDemo.cs" id="1_wp650"]
+
+[node name="CampainDemo" type="Node3D"]
+script = ExtResource("1_wp650")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 50, 1000, 50)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="Entities" type="Node" parent="."]
+
+[node name="Players" type="Node" parent="."]
+
+[node name="Minimap" parent="." instance=ExtResource("1_uwkpe")]
+position = Vector2(50, 50)
