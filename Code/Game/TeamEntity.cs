@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -9,15 +10,41 @@ public partial class TeamEntity : CharacterBody3D
     protected Node3D _selectorObject;
     protected TeamEntityStates _enityState;
     protected MultiplayerSynchronizer _synchronizer;
-    protected Godot.Collections.Dictionary<TeamObjectType, int> _passengers;
+    protected List<TeamEntity> _passengers;
     protected int _maxPassengersCapacity;
+    private Queue<Tuple<TeamEntityStates, object>> _entityStateQueue;
+    protected TeamMembership _teamMembership;
     
     protected TeamEntity()
     {
-        _passengers = new Godot.Collections.Dictionary<TeamObjectType, int>();
+        _passengers = new List<TeamEntity>();
+        _entityStateQueue = new Queue<Tuple<TeamEntityStates, object>>(5);
         _maxPassengersCapacity = 0;
+        _teamMembership = TeamMembership.NONE;
+    }
+
+    public void SetMembership(TeamMembership team)
+    {
+        _teamMembership = team;
+        if (team != TeamMembership.OWN && team != TeamMembership.NONE)
+            AddToGroup(EntityGroup.ENEMY);
     }
     
+    public void EnqueueState(TeamEntityStates state, object arg = null, bool cleanFirst = false)
+    {
+        if (cleanFirst)
+            _entityStateQueue.Clear();
+        _entityStateQueue.Enqueue(new Tuple<TeamEntityStates, object>(state, arg));
+    }
+
+    protected Tuple<TeamEntityStates, object> GetNextState()
+    {
+        if (_entityStateQueue.Count == 0)
+            return new Tuple<TeamEntityStates, object>(TeamEntityStates.IDLE, null);
+            
+        return _entityStateQueue.Dequeue();
+    }
+
     public bool IsSelected {
         set
         {
@@ -35,36 +62,32 @@ public partial class TeamEntity : CharacterBody3D
         }
     }
 
-    public void BoardPassenger(TeamEntity entity)
+    public bool BoardPassenger(TeamEntity entity)
     {
-        if (_maxPassengersCapacity >= _passengers.Sum(p => p.Value))
-            return;
+        if (_maxPassengersCapacity <= _passengers.Count)
+            return false;
         
-        var actualCount = _passengers[entity.objectType];
-        _passengers[entity.objectType] = actualCount + 1;
+        _passengers.Add(entity);
+        return true;
     }
 
-    public IReadOnlyDictionary<TeamObjectType, int> ExitPassengers(int count = 0)
+    public IReadOnlyList<TeamEntity> ExitPassengers()
     {
-        var result = new Godot.Collections.Dictionary<TeamObjectType, int>();
-
-        if (_passengers.Sum(p => p.Value) == 0)
+        var result = new List<TeamEntity>();
+        if (_passengers.Count == 0)
             return result;
 
-        if (count == 0) // exit all
-            return _passengers;
+        result.AddRange(_passengers.ToArray());
+        _passengers.Clear();
+        return result;
+    }
 
-        int c = 0;
+    public void UpdatePassengersPosition(Vector3 pos)
+    {
         foreach (var p in _passengers)
         {
-            result.Add(p.Key, p.Value);
-            c++;
-            _passengers[p.Key] -= 1;
-            if (c == count)
-                break;
+            p.GlobalPosition = pos;
         }
-
-        return result;
     }
 
     protected void RotateTowards(Vector3 location)
@@ -112,7 +135,7 @@ public partial class TeamEntity : CharacterBody3D
         return objectType;
     }
     
-    protected Quaternion RotateMatchTerrain(Vector3 direction, Vector3 n, float weight)
+    protected Quaternion RotateMatchPlane(Vector3 direction, Vector3 n, float weight)
     {
         var forwardOnPlane = direction - n * direction.Dot(n);
         forwardOnPlane = forwardOnPlane.Normalized();
@@ -140,7 +163,7 @@ public partial class TeamEntity : CharacterBody3D
     {
         const float VIEWDISTANCE = 200f;
 
-        var from = GlobalPosition + Vector3.Up * VIEWDISTANCE;
+        var from = GlobalPosition + Vector3.Up * VIEWDISTANCE/2;
         var to   = GlobalPosition - Vector3.Up * VIEWDISTANCE;
 
         var space = GetWorld3D().DirectSpaceState;
@@ -166,5 +189,10 @@ public partial class TeamEntity : CharacterBody3D
         hitPos = (Vector3)result["position"];
         hitNormal = (Vector3)result["normal"];
         return true;
+    }
+
+    public void TakeHit(int pDamage, TeamEntity pShooter, Vector3 hitPos)
+    {
+        GD.Print($"Hit taken from: {pShooter.GetRid()}");
     }
 }

@@ -1,0 +1,95 @@
+[gd_resource type="Resource" script_class="SoundLibrary" load_steps=25 format=3 uid="uid://cdw0uqhxij1d6"]
+
+[ext_resource type="Script" uid="uid://c1jqklaqamamg" path="res://Code/Game/SoundEntry.cs" id="1_1gbm7"]
+[ext_resource type="AudioStream" uid="uid://ba4naqc6d7m4u" path="res://Assets/Sounds/tank_driving.mp3" id="2_06mi8"]
+[ext_resource type="Script" uid="uid://doimqsddt711p" path="res://Code/Game/SoundLibrary.cs" id="2_kovan"]
+[ext_resource type="Script" uid="uid://db1acjl4ofgp1" path="res://Code/Game/SoundEvent.cs" id="3_jljoi"]
+[ext_resource type="AudioStream" uid="uid://cpb2fqsel0qd2" path="res://Assets/Sounds/heli-take-off.mp3" id="4_jljoi"]
+[ext_resource type="AudioStream" uid="uid://dg75ualsm2fqf" path="res://Assets/Sounds/heli-hover.mp3" id="5_f6aq7"]
+[ext_resource type="AudioStream" uid="uid://ctt120hhbkg7d" path="res://Assets/Sounds/heli-flight.mp3" id="6_fywpj"]
+[ext_resource type="AudioStream" uid="uid://liohd2kop0ga" path="res://Assets/Sounds/heli-off.mp3" id="7_oxhqc"]
+[ext_resource type="AudioStream" uid="uid://co0e0gasxn05d" path="res://Assets/Sounds/soldier_walk.mp3" id="8_6yxb5"]
+[ext_resource type="AudioStream" uid="uid://ddcj4msvr8cqo" path="res://Assets/Sounds/handgun_shot.mp3" id="9_5uw71"]
+
+[sub_resource type="Resource" id="Resource_f6aq7"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("2_06mi8")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_jljoi"]
+script = ExtResource("1_1gbm7")
+Id = &"tank_driving"
+Event = SubResource("Resource_f6aq7")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_fywpj"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("4_jljoi")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_oxhqc"]
+script = ExtResource("1_1gbm7")
+Id = &"heli_take_off"
+Event = SubResource("Resource_fywpj")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_6yxb5"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("5_f6aq7")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_5uw71"]
+script = ExtResource("1_1gbm7")
+Id = &"heli_hover"
+Event = SubResource("Resource_6yxb5")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_wagfg"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("6_fywpj")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_j0c8u"]
+script = ExtResource("1_1gbm7")
+Id = &"heli_flight"
+Event = SubResource("Resource_wagfg")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_ygo2q"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("7_oxhqc")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_t0kma"]
+script = ExtResource("1_1gbm7")
+Id = &"heli_off"
+Event = SubResource("Resource_ygo2q")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_m0x4b"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("8_6yxb5")])
+VolumeDb = -10.0
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_dcwsl"]
+script = ExtResource("1_1gbm7")
+Id = &"soldier_walk"
+Event = SubResource("Resource_m0x4b")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_kqv52"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("9_5uw71")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_f4vbe"]
+script = ExtResource("1_1gbm7")
+Id = &"handgun_shot"
+Event = SubResource("Resource_kqv52")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[resource]
+script = ExtResource("2_kovan")
+Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe")])
+metadata/_custom_type_script = "uid://doimqsddt711p"

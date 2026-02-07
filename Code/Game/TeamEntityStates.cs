@@ -8,5 +8,6 @@ public enum TeamEntityStates
     TAKEOFF,
     LANDING,
     HOVER,
-    EXITING
+    EXITING,
+    ATTACK
 }

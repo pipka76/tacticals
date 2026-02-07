@@ -1,11 +1,14 @@
-[gd_scene load_steps=7 format=3 uid="uid://bu8kkxgcut3lq"]
+[gd_scene load_steps=10 format=3 uid="uid://bu8kkxgcut3lq"]
 
-[ext_resource type="Script" path="res://Code/Core/Main.cs" id="1_yoqn1"]
-[ext_resource type="Script" path="res://Code/Game/BattleServer.cs" id="2_d0tau"]
-[ext_resource type="Script" path="res://Code/Game/BattleNetwork.cs" id="3_g5eid"]
+[ext_resource type="Script" uid="uid://dbnuclq01lwxd" path="res://Code/Core/Main.cs" id="1_yoqn1"]
+[ext_resource type="Script" uid="uid://gv3afmotmn0i" path="res://Code/Game/BattleServer.cs" id="2_d0tau"]
+[ext_resource type="Script" uid="uid://qt6ijhxillg6" path="res://Code/Game/BattleNetwork.cs" id="3_g5eid"]
 [ext_resource type="PackedScene" uid="uid://dr80yp8c7dfvh" path="res://Scenes/Menus/LobbyMenu.tscn" id="3_r4p2y"]
 [ext_resource type="PackedScene" uid="uid://bertea36m5op7" path="res://Scenes/Menus/StartMenu.tscn" id="4_cja2m"]
 [ext_resource type="PackedScene" uid="uid://dx1papmc2pq23" path="res://Scenes/Menus/BattleMenu.tscn" id="5_cggsw"]
+[ext_resource type="Script" uid="uid://b37ikg1ve4j0j" path="res://Code/Game/AudioManager.cs" id="7_xlfh5"]
+[ext_resource type="Resource" uid="uid://cdw0uqhxij1d6" path="res://Assets/Sounds/SoundLibrary.tres" id="8_kmmkm"]
+[ext_resource type="Script" uid="uid://sxttjg4q76hi" path="res://Code/Game/ProjectileManager.cs" id="9_kmmkm"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_yoqn1")
@@ -27,3 +30,11 @@ visible = false
 visible = false
 offset_right = 1600.0
 offset_bottom = 1200.0
+
+[node name="Audio" type="Node" parent="."]
+script = ExtResource("7_xlfh5")
+Library = ExtResource("8_kmmkm")
+
+[node name="Projectiles" type="Node3D" parent="."]
+visible = false
+script = ExtResource("9_kmmkm")

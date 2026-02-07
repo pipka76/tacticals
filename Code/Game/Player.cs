@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot.NativeInterop;
 using tacticals.Code.Game;
 
@@ -23,6 +24,8 @@ public partial class Player : Node3D
 	private const float CAM_MOVE_SPEED = 50f;
 	private const float VIEW_DISTANCE = 1000f;
 	private const float CLICK_COOLDOWN = 0.2f;
+	private const float FORMATION_SPACING = 2f;   // distance between soldiers (XZ)
+	private const float FORMATION_JITTER = 0.35f;   // random jitter factor (0..1)
 	
 	// Set by the authority, synchronized on spawn.
 	[Export]
@@ -72,24 +75,68 @@ public partial class Player : Node3D
 		if (map != null)
 		{
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
-			var s = (Node3D)soldier.Instantiate();
-			map.SpawnEntity(s);
-			_myArmy.Add((TeamEntity)s);
+			for (int i = 0; i < 10; i++)
+			{
+				var s = (TeamEntity)soldier.Instantiate();
+				s.SetMembership(TeamMembership.OWN);
+				map.SpawnEntity(s);
+				_myArmy.Add(s);
+			}
 
-			var s2 = (Node3D)soldier.Instantiate();
-			map.SpawnEntity(s2);
-			_myArmy.Add((TeamEntity)s2);
+			// testing the enemy soldier
+			var enemySoldier = (TeamEntity)soldier.Instantiate();
+			enemySoldier.SetMembership(TeamMembership.RED);
+			var mesh = enemySoldier.GetNode<MeshInstance3D>("GeneralSkeleton/SoldierMesh");
+			// Get the material used in that surface (index 2 in your case)
+			var mat = mesh.GetActiveMaterial(2) as StandardMaterial3D;
+			if (mat != null)
+			{
+				// Duplicate so it’s not shared
+				var unique = (StandardMaterial3D)mat.Duplicate();
+				unique.AlbedoColor = Colors.Red;
 
+				// Assign the unique copy to this instance
+				mesh.SetSurfaceOverrideMaterial(2, unique);
+			}
+			map.SpawnEntity(enemySoldier);
+			enemySoldier.GlobalPosition = enemySoldier.GlobalPosition + new Vector3(100, 0, 100);
 			
 			var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
-			var t = (Node3D)tank.Instantiate();
+			var t = (TeamEntity)tank.Instantiate();
 			map.SpawnEntity(t);
-			_myArmy.Add((TeamEntity)t); 
+			_myArmy.Add(t); 
 
 			var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
-			var h = (Node3D)heli.Instantiate();
+			var h = (TeamEntity)heli.Instantiate();
 			map.SpawnEntity(h);
-			_myArmy.Add((TeamEntity)h); 
+			_myArmy.Add(h); 
+
+			var dest = map.GetMyBasePosition();
+			// Build ring-scatter slots around the destination
+			var slots = BuildRingScatterSlots(dest, 12, FORMATION_SPACING);
+
+			// Sort units by their current angle around the group's centroid,
+			// and slots by their angle around the destination. This reduces crossing.
+			var selected = _myArmy.Where(e => e is MovableTeamEntity).Cast<MovableTeamEntity>().ToList();
+			Vector2 srcCentroid = ComputeCentroidXZ(selected);
+			selected.Sort((a, b) =>
+			{
+				float aa = AngleOf(new Vector2(a.GlobalPosition.X, a.GlobalPosition.Z) - srcCentroid);
+				float ab = AngleOf(new Vector2(b.GlobalPosition.X, b.GlobalPosition.Z) - srcCentroid);
+				return aa.CompareTo(ab);
+			});
+
+			slots.Sort((p, q) =>
+			{
+				float ap = AngleOf(p - dest);
+				float aq = AngleOf(q - dest);
+				return ap.CompareTo(aq);
+			});
+			
+			for (int i = 0; i < selected.Count; i++)
+			{
+				selected[i].PortTo(slots[i]);
+			}
 
 			/*
 			var red = GD.Load<Material>("res://Assets/Game/red-team.tres");
@@ -131,6 +178,34 @@ public partial class Player : Node3D
 			}
 		}
 
+		return null;
+	}
+
+	private TeamEntity MouseRaycastToTeamEntity()
+	{
+		var mousePos = GetViewport().GetMousePosition();
+		var from = _godCamera.ProjectRayOrigin(mousePos);
+		var to = from + _godCamera.ProjectRayNormal(mousePos) * VIEW_DISTANCE;
+		var space = GetWorld3D().DirectSpaceState;
+		var rayQuery = new PhysicsRayQueryParameters3D();
+		rayQuery.From = from;
+		rayQuery.To = to;
+		rayQuery.CollisionMask = 0b011;
+		
+		var result = space.IntersectRay(rayQuery);
+		if (result.TryGetValue("collider", out var v))
+		{
+			if (v.AsGodotObject() is Node hit)
+			{
+				var team = hit.GetParentOrNull<TeamEntity>();
+				if (team != null) return team;
+
+				// If collider might be deeper than one level:
+				for (Node n = hit; n != null; n = n.GetParent())
+					if (n is TeamEntity t) return t;
+			}
+		}
+		
 		return null;
 	}
 
@@ -176,6 +251,13 @@ public partial class Player : Node3D
 			{
 				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
 				HandleMoveToCommand();
+				goto specialModeExit;
+			}
+
+			if (_inputs.IsBoarding)
+			{
+				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+				HandleBoardCommand();
 				goto specialModeExit;
 			}
 
@@ -225,28 +307,145 @@ specialModeExit:
 		}
 	}
 
+	private static float AngleOf(Vector2 v)
+	{
+		return Mathf.Atan2(v.Y, v.X);
+	}
+
+	private List<Vector2> BuildRingScatterSlots(Vector2 center, int count, float spacing)
+	{
+		// Concentric rings with slight randomness, good for "loose crowd".
+		var slots = new List<Vector2>(count);
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		// Always put one near the center (slightly jittered)
+		if (count <= 0) return slots;
+		slots.Add(center + new Vector2(
+			rng.RandfRange(-spacing, spacing) * 0.15f,
+			rng.RandfRange(-spacing, spacing) * 0.15f
+		));
+
+		int placed = 1;
+		int ring = 1;
+		while (placed < count)
+		{
+			float radius = ring * spacing;
+			// Number of slots on this ring based on circumference / spacing
+			int ringSlots = Mathf.Max(6, Mathf.FloorToInt((2.0f * Mathf.Pi * radius) / spacing));
+
+			for (int i = 0; i < ringSlots && placed < count; i++)
+			{
+				float baseAngle = (i / (float)ringSlots) * Mathf.Tau;
+				float angleJitter = rng.RandfRange(-1f, 1f) * (FORMATION_JITTER * 0.35f);
+				float rJitter = rng.RandfRange(-1f, 1f) * (FORMATION_JITTER * spacing * 0.25f);
+
+				float a = baseAngle + angleJitter;
+				float r = radius + rJitter;
+				var offset = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
+				slots.Add(center + offset);
+				placed++;
+			}
+
+			ring++;
+		}
+
+		return slots;
+	}
+
+	private static Vector2 ComputeCentroidXZ(List<MovableTeamEntity> units)
+	{
+		if (units.Count == 0) return Vector2.Zero;
+		Vector2 sum = Vector2.Zero;
+		foreach (var u in units)
+			sum += new Vector2(u.GlobalPosition.X, u.GlobalPosition.Z);
+		return sum / units.Count;
+	}
+
 	private void HandleMoveToCommand()
+	{
+		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) <= CLICK_COOLDOWN)
+			return;
+
+		var whereTo3 = MouseRaycastToTerrain();
+		if (whereTo3 == Vector3.Inf)
+			return;
+
+		// Collect selected movable entities
+		var selected = new List<MovableTeamEntity>();
+		foreach (var entity in _myArmy)
+		{
+			if (!entity.IsSelected)
+				continue;
+			if (entity is MovableTeamEntity m)
+				selected.Add(m);
+		}
+
+		if (selected.Count == 0)
+			return;
+
+		_moveToCooldown = Time.GetTicksMsec() / 1000f;
+
+		Vector2 dest = new Vector2(whereTo3.X, whereTo3.Z);
+
+		// Build ring-scatter slots around the destination
+		var slots = BuildRingScatterSlots(dest, selected.Count, FORMATION_SPACING);
+
+		// Sort units by their current angle around the group's centroid,
+		// and slots by their angle around the destination. This reduces crossing.
+		Vector2 srcCentroid = ComputeCentroidXZ(selected);
+		selected.Sort((a, b) =>
+		{
+			float aa = AngleOf(new Vector2(a.GlobalPosition.X, a.GlobalPosition.Z) - srcCentroid);
+			float ab = AngleOf(new Vector2(b.GlobalPosition.X, b.GlobalPosition.Z) - srcCentroid);
+			return aa.CompareTo(ab);
+		});
+
+		slots.Sort((p, q) =>
+		{
+			float ap = AngleOf(p - dest);
+			float aq = AngleOf(q - dest);
+			return ap.CompareTo(aq);
+		});
+
+		for (int i = 0; i < selected.Count; i++)
+		{
+			selected[i].MoveTo(slots[i]);
+		}
+	}
+
+	private void DeselectAllEntities()
+	{
+		foreach (var p in _myArmy)
+			p.IsSelected = false;
+	}
+
+	private void HandleBoardCommand()
 	{
 		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
 		{
-			var whereTo = MouseRaycastToTerrain();
-			if (whereTo != Vector3.Inf)
+			var interactWith = MouseRaycastToTeamEntity();
+			if (interactWith == null)
+				return;
+			if (interactWith is IPassengers iPass)
 			{
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
-				foreach (var entity in _myArmy)
+				foreach (var p in _myArmy)
 				{
-					if (!entity.IsSelected)
+					if (!p.IsSelected)
 						continue;
-
-					if (entity is MovableTeamEntity)
-					{
-						((MovableTeamEntity)entity).MoveTo(new Vector2(whereTo.X, whereTo.Z));
-					}
+					
+					if ((p.GlobalPosition - interactWith.GlobalPosition).Length() > 5f)
+						continue;
+					
+					if(iPass.BoardPassenger(p))
+						p.SetVisible(false);
 				}
+
+				DeselectAllEntities();
 			}
 		}
 	}
-	
 	private void HandleExitCommand()
 	{
 		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
@@ -260,10 +459,9 @@ specialModeExit:
 					if (!entity.IsSelected)
 						continue;
 
-					if (entity is MovableTeamEntity)
+					if (entity is TeamEntity and IPassengers iPass)
 					{
-						((MovableTeamEntity)entity).MoveTo(new Vector2(whereTo.X, whereTo.Z));
-						entity.SetNewState(TeamEntityStates.EXITING);
+						entity.EnqueueState(TeamEntityStates.EXITING, new Vector2(whereTo.X, whereTo.Z));
 					}
 				}
 			}

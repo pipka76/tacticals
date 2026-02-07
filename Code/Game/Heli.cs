@@ -2,13 +2,14 @@ using Godot;
 
 namespace tacticals.Code.Game;
 
-public partial class Heli : MovableTeamEntity
+public partial class Heli : MovableTeamEntity, IPassengers
 {
-    private const float CLIMB_SPEED = 10;
     private const float MOVE_SPEED = 10f;
     private const float FLIGHT_LEVEL = 100f;
+    private const float CLIMB_SPEED = 15f;
     private float _aboveGround;
-    private AnimationPlayer _animPlayer;
+    private AnimationPlayer _animPlayer;  
+    private SoundHandle? _sfxSound;
 
     public Heli()
     {
@@ -21,54 +22,220 @@ public partial class Heli : MovableTeamEntity
         _selectorObject = GetNode<Node3D>("SelectionRing");
         _synchronizer = GetNode<MultiplayerSynchronizer>("ServerSynchronizer");
         _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+        AddToGroup(EntityGroup.MACHINERY);
+        AddToGroup(EntityGroup.GROUND_UNIT);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        if (!IsInState(TeamEntityStates.IDLE)) 
+        HandleAnimation();
+        
+        if (RaycastToTerrain(out var gnd, out _))
+            GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y + _aboveGround, GlobalPosition.Z);
+
+        if (IsInState(TeamEntityStates.ONTHEWAY))
         {
-            GlobalRotation = Vector3.Zero;
+            UpdatePassengersPosition(GlobalPosition);
+            HandleOnTheWay(delta);
+            return;
         }
 
+        if (IsInState(TeamEntityStates.LANDING))
+        {
+            UpdatePassengersPosition(GlobalPosition);
+            HandleLanding(delta);
+            return;
+        }
+
+        if (IsInState(TeamEntityStates.EXITING))
+        {
+            UpdatePassengersPosition(GlobalPosition);
+            HandleExiting(delta);
+            return;
+        }
+
+        if (IsInState(TeamEntityStates.TAKEOFF))
+        {
+            UpdatePassengersPosition(GlobalPosition);
+            HandleTakeOff(delta);
+            return;
+        }
+
+        if (IsInState(TeamEntityStates.HOVER))
+        {
+            HandleHover();
+            return;
+        }
+        
+        HandleIdle();
+    }
+
+    private void HandleIdle()
+    {
+        TransitionToNextState();
+    }
+
+    private void HandleOnTheWay(double delta)
+    {
         var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
-        if ((IsInState(TeamEntityStates.HOVER) || IsInState(TeamEntityStates.ONTHEWAY)) && (MoveToCoordinates - globalPositionFlat).Length() > 0.1f)
+        if ((MoveToCoordinates - globalPositionFlat).Length() > 1f)
         {
             if (RaycastToTerrain(out var gnd, out _))
             {
                 var direction = (MoveToCoordinates - globalPositionFlat).Normalized();
+                
+                // 1) Face the move direction (Godot forward is -Z, so this makes -Z point to dir)
+                Basis face = Basis.LookingAt(direction, Vector3.Up);
+                // 2) Additional rotation (lean / match plane). This must return a rotation (Basis or Quaternion)
+                Basis extra = new Basis(
+                    RotateMatchPlane(
+                        Vector3.Forward,
+                        Vector3.Up.Rotated(Vector3.Left, 0.35f),
+                        1f
+                    )
+                );
+                // 3) Combine them
+                Basis finalBasis = face * extra; // local-space “extra” tilt
+                
                 //_rayCast.GlobalPosition = GlobalPosition;
                 //_rayCast.TargetPosition = GlobalPosition + direction * 30f;
                 //if(!_rayCast.IsColliding())
+                
                 var moveXZ = GlobalPosition + direction * (float)delta * MOVE_SPEED;
                 moveXZ.Y = gnd.Y + _aboveGround;
-                //float.Lerp()
                 GlobalPosition = moveXZ;
+                GlobalTransform = new Transform3D(finalBasis, GlobalTransform.Origin);
+            }
+
+            if (!_sfxSound.HasValue)
+                _sfxSound = Main.Current.Audio.Play3D("heli_flight", GlobalPosition, true);
+
+            return;
+        }
+
+        TransitionToNextState();
+    }
+
+    private void HandleHover()
+    {
+        if (!_sfxSound.HasValue)
+            _sfxSound = Main.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
+
+        TransitionToNextState(true);
+    }
+
+    private void HandleTakeOff(double delta)
+    {
+        if (_aboveGround < FLIGHT_LEVEL)
+        {
+            if (!_sfxSound.HasValue)
+                _sfxSound = Main.Current.Audio.Play3D("heli_take_off", GlobalPosition);
+            
+            _aboveGround += (float)delta * CLIMB_SPEED;
+        }
+        
+        if (_aboveGround >= FLIGHT_LEVEL)
+        {
+            RemoveFromGroup(EntityGroup.GROUND_UNIT);
+            AddToGroup(EntityGroup.AIR_UNIT);
+
+            _aboveGround = FLIGHT_LEVEL;
+            TransitionToNextState();
+        }
+    }
+
+    private void HandleLanding(double delta)
+    {
+        if (_aboveGround > 0)
+        {
+            if (!_sfxSound.HasValue)
+                _sfxSound = Main.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
+            
+            _aboveGround -= (float)delta * CLIMB_SPEED;
+            if (_aboveGround <= 0)
+            {
+                _aboveGround = 0;
             }
         }
-        else
-        {
-            if (IsInState(TeamEntityStates.ONTHEWAY) && _aboveGround == 0)
-                SetNewState(TeamEntityStates.TAKEOFF);
 
-            if (RaycastToTerrain(out var gnd, out _))
-                GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y + _aboveGround, GlobalPosition.Z);
+        if (_aboveGround == 0)
+        {
+            RemoveFromGroup(EntityGroup.AIR_UNIT);
+            AddToGroup(EntityGroup.GROUND_UNIT);
+            
+            if (RaycastToTerrain(out var gnd, out var n))
+            {
+                GlobalTransform =
+                    new Transform3D(
+                        new Basis(RotateMatchPlane(Vector3.Forward, n, 1f)), GlobalTransform.Origin);
+                GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
+            }
+         
+            if (_sfxSound.HasValue)
+            {
+                Main.Current.Audio.Stop(_sfxSound.Value);
+            }
+            Main.Current.Audio.Play3D("heli_off", GlobalPosition);
+            
+            TransitionToNextState();
         }
-		
-        HandleAnimation();
+    }
+    
+    private void HandleExiting(double delta)
+    {
+        if (_aboveGround > 0)
+        {
+            EnqueueState(TeamEntityStates.ONTHEWAY, _moveToCoords);
+            EnqueueState(TeamEntityStates.LANDING);
+            EnqueueState(TeamEntityStates.EXITING, _moveToCoords);
+        }
+
+        if (_aboveGround == 0)
+        {
+            var passengers = ExitPassengers();
+            foreach (var p in passengers)
+            {
+                p.SetVisible(true);
+            }
+        }
+
+        TransitionToNextState();
+    }
+
+    private void TransitionToNextState(bool ignoreIdle = false, bool stopSound = true)
+    {
+        var nextState = GetNextState();
+        if (ignoreIdle && (nextState.Item1 == TeamEntityStates.IDLE))
+            return;
+        if (nextState.Item1 == TeamEntityStates.ONTHEWAY || nextState.Item1 == TeamEntityStates.EXITING)
+            _moveToCoords = (Vector2)nextState.Item2;
+        SetNewState(nextState.Item1);
+
+        if (stopSound && _sfxSound.HasValue)
+        {
+            Main.Current.Audio.Stop(_sfxSound.Value);
+            _sfxSound = null;
+        }
     }
 
     public override void MoveTo(Vector2 coords)
     {
+        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+            return;
+
+        // this is command from player directly, so forget everything and listen! 
         _moveToCoords = coords;
-        RotateTowards(new Vector3(coords.X, 0, coords.Y));
 
         if (_aboveGround != FLIGHT_LEVEL)
         {
+            EnqueueState(TeamEntityStates.ONTHEWAY, coords, true);
+            EnqueueState(TeamEntityStates.HOVER, null);
             SetNewState(TeamEntityStates.TAKEOFF);
             return;
         }
 
+        EnqueueState(TeamEntityStates.HOVER, null, true);
         SetNewState(TeamEntityStates.ONTHEWAY);
     }
 
@@ -76,44 +243,14 @@ public partial class Heli : MovableTeamEntity
     {
         if (IsInState(TeamEntityStates.ONTHEWAY))
         {
-            //    if (_animPlayer.CurrentAnimation != "Moving")
-            //      _animPlayer.Play("Moving");
         }
 
-        if (IsInState(TeamEntityStates.TAKEOFF) && _aboveGround < FLIGHT_LEVEL)
+        if (IsInState(TeamEntityStates.TAKEOFF))
         {
-            _aboveGround += (float)GetProcessDeltaTime() * CLIMB_SPEED;
-            if (_aboveGround >= FLIGHT_LEVEL)
-            {
-                _aboveGround = FLIGHT_LEVEL;
-                SetNewState(TeamEntityStates.HOVER);
-            }
-        }
-
-        if (IsInState(TeamEntityStates.EXITING))
-            SetNewState(TeamEntityStates.LANDING);
-        
-        if (IsInState(TeamEntityStates.LANDING) && _aboveGround > 0)
-        {
-            _aboveGround -= (float)GetProcessDeltaTime() * CLIMB_SPEED;
-            if (_aboveGround <= 0)
-            {
-                _aboveGround = 0;
-                SetNewState(TeamEntityStates.IDLE);
-            }
         }
 
         if (IsInState(TeamEntityStates.IDLE))
         {
-            //if (_animPlayer.CurrentAnimation != "Idle")
-            //  _animPlayer.Play("Idle");
-            if (RaycastToTerrain(out var gnd, out var n))
-            {
-                GlobalTransform =
-                    new Transform3D(
-                        new Basis(RotateMatchTerrain(Vector3.Forward, n, 1f)), GlobalTransform.Origin);
-                GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
-            }
         }
     }
 }
