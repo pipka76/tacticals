@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://bognc3y054p77"]
+
+[ext_resource type="PackedScene" uid="uid://cijw5kn18ojmd" path="res://Assets/Game/Hangar.fbx" id="1_jsiwq"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_488ei"]
+size = Vector3(0.2364502, 1.8897705, 10.194336)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3b5qq"]
+size = Vector3(19.701874, 1.9072876, 0.58795166)
+
+[node name="Hangar" type="Node3D"]
+
+[node name="Hangar" parent="." instance=ExtResource("1_jsiwq")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.729826, 0.9417616, -0.00048828125)
+shape = SubResource("BoxShape3D_488ei")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0031280518, 0.955719, 5.3878326)
+shape = SubResource("BoxShape3D_3b5qq")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.003, 0.956, -5.388)
+shape = SubResource("BoxShape3D_3b5qq")

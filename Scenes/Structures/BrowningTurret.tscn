@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://bf4w8ir8u4bg8"]
+
+[ext_resource type="PackedScene" uid="uid://6tp8vaa050ap" path="res://Assets/Game/BrowningTurret.fbx" id="1_alt5t"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dnjqv"]
+size = Vector3(0.028442383, 1.2021484, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1goae"]
+size = Vector3(1.0411377, 0.29974365, 0.28987122)
+
+[node name="BrowningTurret" type="Node3D"]
+
+[node name="BrowningTurret" parent="." instance=ExtResource("1_alt5t")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19909114, 0.85418296, 0)
+shape = SubResource("BoxShape3D_dnjqv")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21038818, 1.0294743, 0.0075149536)
+shape = SubResource("BoxShape3D_1goae")
