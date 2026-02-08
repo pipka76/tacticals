@@ -15,6 +15,8 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	private const float MIN_CAMERA_DEG = -60.0f; // zoomed out: look slightly down
 	private const float MAX_CAMERA_DEG = -15.0f;  // zoomed in: pitch up (level up view)
 	private const float YAW_SENSITIVITY = 0.005f; // radians per pixel
+	private const float EDGE_YAW_PERCENT = 0.05f; // 5% of viewport width on each side
+	private const float EDGE_YAW_SPEED   = 1.75f; // radians/sec at the extreme edge
 	private float _groundLevel = 0;
 	
 	public Godot.Vector2 PlayerMove = Godot.Vector2.Zero;
@@ -49,13 +51,22 @@ public partial class PlayerInput : MultiplayerSynchronizer
 		if (!_processEnabled)
 			return;
 
-		// Always-on camera yaw from mouse movement
-		if (@event is InputEventMouseMotion mm)
-		{
-			// Positive mouse X => rotate right
-			CameraYaw -= mm.Relative.X * YAW_SENSITIVITY;
-			return;
-		}
+		// if (@event is InputEventMouseMotion mm)
+		// {
+		// 	// Positive mouse X => rotate right
+		// 	//CameraYaw -= mm.Relative.X * YAW_SENSITIVITY;
+		// 	var viewport = GetViewport();
+		// 	float width = viewport.GetVisibleRect().Size.X;
+		// 	float edge = width * 0.05f;
+		// 	float mouseX = viewport.GetMousePosition().X;
+		//
+		// 	if (mouseX <= edge || mouseX >= (width - edge))
+		// 	{
+		// 		// Positive mouse X => rotate right
+		// 		CameraYaw -= mm.Relative.X * YAW_SENSITIVITY;
+		// 	}
+		// 	return;
+		// }
 
 		// Zoom handling (trackpad)
 		if (@event is InputEventPanGesture pg)
@@ -107,6 +118,33 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	
 	public override void _Process(double delta)
 	{
+		// Edge-based camera yaw: rotate left when cursor is near the left edge,
+		// rotate right when cursor is near the right edge.
+		// This is continuous (doesn't require mouse movement).
+		var viewport = GetViewport();
+		float width = viewport.GetVisibleRect().Size.X;
+		if (width > 0f)
+		{
+			float edge = width * EDGE_YAW_PERCENT;
+			float mouseX = viewport.GetMousePosition().X;
+
+			// strength in [-1, 1]
+			float strength = 0f;
+			if (mouseX <= edge)
+			{
+				// left edge: strength goes 1 at x=0 -> 0 at x=edge
+				strength = 1f - Mathf.Clamp(mouseX / edge, 0f, 1f);
+			}
+			else if (mouseX >= (width - edge))
+			{
+				// right edge: strength goes 0 at x=width-edge -> 1 at x=width
+				strength = -Mathf.Clamp((mouseX - (width - edge)) / edge, 0f, 1f);
+			}
+
+			// Match existing convention: decreasing CameraYaw rotates right.
+			CameraYaw += strength * EDGE_YAW_SPEED * (float)delta;
+		}
+		
 		if (IsSelecting && !_possibleDragging && !IsDragging && Input.IsActionPressed("select_entity"))
 		{
 			_draggingBeginTime = Time.GetTicksMsec() / 1000f;

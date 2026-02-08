@@ -6,4 +6,11 @@
   <ItemGroup>
     <ProjectReference Include="..\tacticals-api-server\tactical-api-common\tactical-api-common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Code\Game\AudioManager.cs.uid" />
+    <Content Include="Code\Game\IPassengers.cs.uid" />
+    <Content Include="Code\Game\SoundEntry.cs.uid" />
+    <Content Include="Code\Game\SoundEvent.cs.uid" />
+    <Content Include="Code\Game\SoundLibrary.cs.uid" />
+  </ItemGroup>
 </Project>

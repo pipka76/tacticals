@@ -50,6 +50,18 @@ public partial class Plains : Node3D, IGameMap
         }
 	}
 
+    public Vector2 GetMyBasePosition()
+    {
+	    var b = FindFirstBase();
+	    if (b != Vector2I.Zero)
+	    {
+		    var p = _map[b.X][b.Y].GlobalPosition;
+		    return new Vector2(p.X, p.Z);
+	    }
+	    
+	    return Vector2.Zero;
+    }
+
     private Vector2I FindFirstBase()
 	{
 		for (int i = 0; i < _map.Length; i++)

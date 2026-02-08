@@ -129,6 +129,13 @@ public partial class LobbyMenu : Control, IGameMenu
         map.SpawnPlayer();
 	}
 
+	private void CreateNewCampainDemoBattle()
+	{
+		this.Visible = false;
+		var map = Main.Current.StartGame("res://Scenes/Maps/CampainDemo.tscn");
+		map.SpawnPlayer();
+	}
+
 	public void OnNavigateTo(NavigateContext context)
 	{
 	}

@@ -2,6 +2,7 @@ using Godot;
 
 public interface IGameMap
 {
+    Vector2 GetMyBasePosition();
     void SpawnPlayer();
     void SpawnEntity(Node3D entity);
     void GenerateLevel();

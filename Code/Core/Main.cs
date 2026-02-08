@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Linq;
+using tacticals.Code.Game;
 
 public partial class Main : Node
 {
@@ -14,6 +15,10 @@ public partial class Main : Node
 	private const int PORT = 20000;
 	private const string PORT_ARG = "--port=";
 	public static Main Current { get; internal set; }
+	
+	public AudioManager Audio { get; internal set; }
+	
+	public ProjectileManager Projectiles { get; internal set; }
 	
 	public override void _Ready()
 	{
@@ -35,6 +40,9 @@ public partial class Main : Node
 			GD.Print($"Automatically starting dedicated server on port {port}");
 			CallDeferred(nameof(StartServer));
 		}
+
+		Audio = this.GetNode<AudioManager>("Audio");
+		Projectiles = this.GetNode<ProjectileManager>("Projectiles");
 	}
 	
 	public void StartServer()
