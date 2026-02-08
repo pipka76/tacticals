@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dcf77grrjqms7"]
+[gd_scene load_steps=4 format=3 uid="uid://dcf77grrjqms7"]
 
 [ext_resource type="PackedScene" uid="uid://bs6ddw8i2d41a" path="res://Scenes/Maps/Minimap.tscn" id="1_uwkpe"]
 [ext_resource type="Script" uid="uid://d3m7js5e2u0yv" path="res://Code/Maps/CampainDemo.cs" id="1_wp650"]
+[ext_resource type="PackedScene" uid="uid://ci8c7vt1ha4d4" path="res://Scenes/Terrains/TestingFlatGround.tscn" id="3_sh1qw"]
 
 [node name="CampainDemo" type="Node3D"]
 script = ExtResource("1_wp650")
@@ -17,3 +18,5 @@ shadow_enabled = true
 
 [node name="Minimap" parent="." instance=ExtResource("1_uwkpe")]
 position = Vector2(50, 50)
+
+[node name="TestingFlatGround" parent="." instance=ExtResource("3_sh1qw")]
