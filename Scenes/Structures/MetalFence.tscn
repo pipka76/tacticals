@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://h5y3114xlasi"]
+
+[ext_resource type="PackedScene" uid="uid://dhpg1e7sg6jws" path="res://Assets/Game/MetalFence.fbx" id="1_krjnc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_u05u0"]
+size = Vector3(4.970642, 3.2192993, 0.10040283)
+
+[node name="MetalFence" type="Node3D"]
+
+[node name="MetalFence" parent="." instance=ExtResource("1_krjnc")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0049743652, 1.6125793, -0.0014953613)
+shape = SubResource("BoxShape3D_u05u0")

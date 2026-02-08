@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://ci8c7vt1ha4d4"]
+
+[ext_resource type="PackedScene" uid="uid://s5ckrjn5faui" path="res://Assets/Game/TestingGround.fbx" id="1_3l28s"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3l28s"]
+size = Vector3(250.82648, 1, 250.01294)
+
+[node name="TestingFlatGround" type="Node3D"]
+
+[node name="TestingGround" parent="." instance=ExtResource("1_3l28s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 125, 0, 125)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 125.41495, -0.5, 124.994995)
+shape = SubResource("BoxShape3D_3l28s")

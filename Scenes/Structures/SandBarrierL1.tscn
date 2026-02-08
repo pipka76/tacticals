@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://d2dluygo7uwg8"]
+
+[ext_resource type="PackedScene" uid="uid://6dcxf0bcv73d" path="res://Assets/Game/SandBarrierL1.fbx" id="1_iu3ty"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tqiwe"]
+size = Vector3(1, 0.85546875, 6.23938)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cf6u5"]
+size = Vector3(4.1850586, 0.79937744, 1)
+
+[node name="SandBarrierL1" type="Node3D"]
+
+[node name="SandBarrierL1" parent="." instance=ExtResource("1_iu3ty")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.44358158, -2.1190796)
+shape = SubResource("BoxShape3D_tqiwe")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5959473, 0.42520487, 0.552292)
+shape = SubResource("BoxShape3D_cf6u5")

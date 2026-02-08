@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bjuqpyr7l5dqp"]
+
+[ext_resource type="PackedScene" uid="uid://csuaejcl6xirp" path="res://Assets/Game/BunkerRect.fbx" id="1_r3xrt"]
+
+[node name="BunkerRect" type="Node3D"]
+
+[node name="BunkerRect" parent="." instance=ExtResource("1_r3xrt")]
