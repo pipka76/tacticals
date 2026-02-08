@@ -168,7 +168,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
             {
                 GlobalTransform =
                     new Transform3D(
-                        new Basis(RotateMatchPlane(Vector3.Forward, n, 1f)), GlobalTransform.Origin);
+                        new Basis(RotateMatchPlane(-GlobalTransform.Basis.Z.Normalized(), n, 1f)), GlobalTransform.Origin);
                 GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
             }
          

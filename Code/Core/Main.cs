@@ -130,8 +130,8 @@ public partial class Main : Node
 		var li = scene.Instantiate();
 		if (li is IGameMap map)
 		{
-			map.GenerateLevel();
 			mapRoot.AddChild(li);
+			map.GenerateLevel();
 
 			return map;
 		}

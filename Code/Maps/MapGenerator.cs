@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
+using Godot.Collections;
 using GodotPlugins.Game;
 using tacticals.Code.Maps;
 using tacticals.Code.Maps.Generators;
@@ -38,7 +39,7 @@ public class MapGenerator
         //biomes.SavePng("biometest.png");
         mgr.InitializeMap(_mapWidth, _mapHeight, 1f / MapConstants.BIOMEHEATMAPSCALE, new Vector2(0, 0));
 
-        InitMinimap(mm, biomes);
+        InitUsingHeatmap(mm, biomes);
         //var river = GenerateRiver();
         //river.Draw(mm);
         GenerateBases(mm, mgr);
@@ -50,6 +51,116 @@ public class MapGenerator
         //forestMap.Load("res://Assets/UI/TreeMap.png");
 
         GenerateForest(mm, biomes);
+
+        return mm;
+    }
+
+    private float[,] BuildHeightMapFromMeshes(Array<Node> surfaces)
+    {
+        // Height per map cell (i,j) in world units.
+        // This is a fast, coarse pass: bins transformed mesh vertices into map cells and keeps the max Y.
+        // If you need more accuracy (e.g., large triangles), follow up with a vertical raycast pass.
+        var heights = new float[_mapWidth, _mapHeight];
+        for (int i = 0; i < _mapWidth; i++)
+            for (int j = 0; j < _mapHeight; j++)
+                heights[i, j] = float.NegativeInfinity;
+
+        foreach (var n in surfaces)
+        {
+            if (n is not MeshInstance3D mi)
+                continue;
+            
+//            if (mi.Layers != 2)
+//                continue;
+            
+            var mesh = mi.Mesh;
+            if (mesh == null)
+                continue;
+
+            int surfaceCount = mesh.GetSurfaceCount();
+            for (int s = 0; s < surfaceCount; s++)
+            {
+                var arrays = mesh.SurfaceGetArrays(s);
+                if (arrays.Count == 0)
+                    continue;
+
+                // Vertex array
+                var verts = arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+                if (verts.Length == 0)
+                    continue;
+
+                // Transform vertices into world space
+                var xform = mi.GlobalTransform;
+                GD.Print($"inside={mi.IsInsideTree()} local={mi.Transform.Origin} global={mi.GlobalTransform.Origin}");
+                for (int k = 0; k < verts.Length; k++)
+                {
+                    Vector3 w = xform * verts[k];
+
+                    // Convert world XZ to map grid indices.
+                    // Assumes map origin at (0,0) in world XZ and each block is MapConstants.BLOCK_SIZE wide.
+                    int i = Mathf.FloorToInt(w.X / MapConstants.BLOCK_SIZE);
+                    int j = Mathf.FloorToInt(w.Z / MapConstants.BLOCK_SIZE);
+
+                    if (i < 0 || j < 0 || i >= _mapWidth || j >= _mapHeight)
+                        continue;
+
+                    if (w.Y > heights[i, j])
+                        heights[i, j] = w.Y;
+                }
+            }
+        }
+
+        // Replace untouched cells with 0 height.
+        for (int i = 0; i < _mapWidth; i++)
+        {
+            for (int j = 0; j < _mapHeight; j++)
+            {
+                if (float.IsNegativeInfinity(heights[i, j]))
+                    heights[i, j] = 0f;
+            }
+        }
+
+        return heights;
+    }
+
+    public MapBlock[][] MapExistingSurface(FlowFieldManager mgr, Array<Node> surfaces)
+    {
+        MapBlock[][] mm = new MapBlock[_mapWidth][];
+        for (int i = 0; i < _mapWidth; i++)
+            mm[i] = new MapBlock[_mapHeight];
+
+        // Build a coarse height map from mesh vertices.
+        // NOTE: This assumes your surface meshes are positioned in the same world XZ space as your map grid.
+        var heights = BuildHeightMapFromMeshes(surfaces);
+
+        // Flow field map init (same idea as GenerateMap)
+        mgr.InitializeMap(_mapWidth, _mapHeight, 1f, new Vector2(0, 0));
+
+        // Fill map blocks.
+        for (int i = 0; i < _mapWidth; i++)
+        {
+            for (int j = 0; j < _mapHeight; j++)
+            {
+                mm[i][j] = new MapBlock()
+                {
+                    BlockType = MapBlockType.PLAIN,
+                    StructureType = MapBlockStructureType.NONE,
+                    LayerIndex = 0,
+                    Coordinates = new Vector2I(i, j),
+                    BiomeInfo = new List<BiomeData>()
+                };
+
+                // Store ground height as a single BiomeData point centered in the block.
+                // If you rely on BIOMEHEATMAPSCALE micro-vertices per block, expand this similarly.
+                mm[i][j].BiomeInfo.Add(new BiomeData()
+                {
+                    Type = BiomeDataType.GROUND,
+                    // LocalCoord is interpreted elsewhere as local block coords.
+                    // Put height in Y; X/Z at block center.
+                    LocalCoord = new Vector3(MapConstants.BLOCK_SIZE * 0.5f, heights[i, j], MapConstants.BLOCK_SIZE * 0.5f)
+                });
+            }
+        }
 
         return mm;
     }
@@ -258,7 +369,7 @@ public class MapGenerator
         return n < 50;
     }
 
-    private void InitMinimap(MapBlock[][] mm, Image heatmap, float amplification = 300f)
+    private void InitUsingHeatmap(MapBlock[][] mm, Image heatmap, float amplification = 300f)
     {
         //int width = heatmap.GetWidth();
         //int height = heatmap.GetHeight();

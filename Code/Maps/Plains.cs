@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using tacticals.Code.Game;
 using tacticals.Code.Maps;
 using static MapBlock;
 
@@ -39,7 +40,7 @@ public partial class Plains : Node3D, IGameMap
         _riverT = GD.Load<PackedScene>("res://Scenes/Terrains/RiverTurn.tscn");
 	}
 
-    public void SpawnEntity(Node3D entity)
+    public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
 	{
 		var b = FindFirstBase();
         _entities.AddChild(entity);
@@ -49,6 +50,14 @@ public partial class Plains : Node3D, IGameMap
 	        //entity.SetScale(new Vector3(10,10,10));
         }
 	}
+
+    public IEnumerable<TeamEntity> GetEntities(TeamMembership? memberOf = null)
+    {
+	    if (!memberOf.HasValue)
+		    return _entities.GetChildren().Cast<TeamEntity>().AsEnumerable();
+
+	    return _entities.GetChildren().Cast<TeamEntity>().Where(te => te.IsMemberOf(memberOf.Value));
+    }
 
     public Vector2 GetMyBasePosition()
     {

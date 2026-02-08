@@ -9,11 +9,11 @@ public partial class Soldier : MovableTeamEntity
 	private RayCast3D _rayCast;
 	private AnimationPlayer _animPlayer;
 	private SoundHandle? _sfxSound;
-	private const float AWARE_RADIUS = 18f;
+	private const float AWARE_RADIUS = 50f;
 	private const float AWARE_CHECK_INTERVAL = 0.2f;
 	private double _awareT = 0.0;
 	private TeamEntity _enemyTarget;
-	private const float ATTACK_INTERVAL = 5.0f;
+	private const float ATTACK_INTERVAL = 3.0f;
 	private double _attackT = 0.0;
 
 	public Soldier()
@@ -42,6 +42,12 @@ public partial class Soldier : MovableTeamEntity
 	{
 		HandleAnimation();
 
+		if (_damageTaken > 0)
+		{
+			SetNewState(TeamEntityStates.TERMINATED);
+			return;
+		}
+
 		if (IsInState(TeamEntityStates.ONTHEWAY))
 		{
 			HandleOnTheWay(delta);
@@ -53,6 +59,9 @@ public partial class Soldier : MovableTeamEntity
 			HandleAttack(delta);
 			return;
 		}
+		
+		if (IsInState(TeamEntityStates.TERMINATED))
+			return;
 
 		HandleIdle(delta);
 	}
@@ -103,14 +112,16 @@ public partial class Soldier : MovableTeamEntity
 	private void FireOnTarget(Vector3 target)
 	{
 		Main.Current.Audio.Play3D("handgun_shot", GlobalPosition);
+		var weapPos = GlobalPosition + Vector3.Up * 1.3f;
 		Main.Current.Projectiles.Spawn(new Projectile()
 		{
 			Shooter = this,
-			Pos = GlobalPosition,
-			Vel = (target - GlobalPosition).Normalized() * 300f,
+			Pos = weapPos,
+			Vel = (target - weapPos).Normalized() * 300f,
 			Mask = 0b111,
 			ShooterRid = GetRid(),
-			Life = 1
+			Life = 1,
+			Damage = 10
 		});
 	}
 
@@ -166,7 +177,7 @@ public partial class Soldier : MovableTeamEntity
 			if (cv.AsGodotObject() is not Node hitNode)
 				continue;
 
-			// Walk up to your root entity type (like you did before)
+			// Walk up to your root entity type
 			TeamEntity? entity = null;
 			for (Node n = hitNode; n != null; n = n.GetParent())
 			{
@@ -177,9 +188,12 @@ public partial class Soldier : MovableTeamEntity
 
 			if (entity == this) 
 				continue;
+			
+			if (entity.IsInState(TeamEntityStates.TERMINATED))
+				continue;
 
-			// Filter enemies: use your own logic here
-			if (!entity.IsInGroup(EntityGroup.ENEMY)) // or TEAM check
+			// Filter enemies
+			if (entity.IsMemberOf(_teamMembership))
 				continue;
 
 			// Approx aim point: enemy center-ish
@@ -291,6 +305,12 @@ public partial class Soldier : MovableTeamEntity
 			if (_animPlayer.CurrentAnimation != "Walking")
 				_animPlayer.Play("Walking");
 		}
+
+		if (IsInState(TeamEntityStates.TERMINATED))
+		{
+			Visible = false;
+		}
+
 		if (IsInState(TeamEntityStates.IDLE))
 		{
 			if (_animPlayer.CurrentAnimation != "Idle")

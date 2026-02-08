@@ -1,4 +1,4 @@
-[gd_resource type="Resource" load_steps=25 format=3 uid="uid://cdw0uqhxij1d6"]
+[gd_resource type="Resource" script_class="SoundLibrary" load_steps=25 format=3 uid="uid://cdw0uqhxij1d6"]
 
 [ext_resource type="Script" uid="uid://c1jqklaqamamg" path="res://Code/Game/SoundEntry.cs" id="1_1gbm7"]
 [ext_resource type="AudioStream" uid="uid://ba4naqc6d7m4u" path="res://Assets/Sounds/tank_driving.mp3" id="2_06mi8"]
@@ -91,5 +91,5 @@ metadata/_custom_type_script = "uid://c1jqklaqamamg"
 
 [resource]
 script = ExtResource("2_kovan")
-Sounds = [SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe")]
+Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe")])
 metadata/_custom_type_script = "uid://doimqsddt711p"

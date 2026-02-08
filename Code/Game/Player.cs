@@ -12,7 +12,7 @@ public partial class Player : Node3D
 	private Camera3D _godCamera;
 	private float _selectCooldown;
 	private float _moveToCooldown;
-	private List<TeamEntity> _myArmy;
+	private List<TeamEntity> _mySelected;
 	private Vector3 _homeBaseCoords;
 
 	#region MouseCursors
@@ -54,7 +54,7 @@ public partial class Player : Node3D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		_myArmy = new List<TeamEntity>();
+		_mySelected = new List<TeamEntity>();
 		_inputs = GetNode<PlayerInput>("PlayerInput");
 		_godCamera = GetNode<Camera3D>("GodCamera");
 		_mouse_cursor_board = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_board.png");
@@ -74,42 +74,46 @@ public partial class Player : Node3D
 		var map = GetParent().GetParent() as IGameMap;
 		if (map != null)
 		{
+			var army = new List<TeamEntity>();
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 3; i++)
 			{
 				var s = (TeamEntity)soldier.Instantiate();
 				s.SetMembership(TeamMembership.OWN);
-				map.SpawnEntity(s);
-				_myArmy.Add(s);
+				map.SpawnEntity(s, new Vector2(200, 20));
+				army.Add(s);
 			}
 
 			// testing the enemy soldier
-			var enemySoldier = (TeamEntity)soldier.Instantiate();
-			enemySoldier.SetMembership(TeamMembership.RED);
-			var mesh = enemySoldier.GetNode<MeshInstance3D>("GeneralSkeleton/SoldierMesh");
-			// Get the material used in that surface (index 2 in your case)
-			var mat = mesh.GetActiveMaterial(2) as StandardMaterial3D;
-			if (mat != null)
+			for (int i = 0; i < 3; i++)
 			{
-				// Duplicate so it’s not shared
-				var unique = (StandardMaterial3D)mat.Duplicate();
-				unique.AlbedoColor = Colors.Red;
+				var enemySoldier = (TeamEntity)soldier.Instantiate();
+				enemySoldier.SetMembership(TeamMembership.RED);
+				var mesh = enemySoldier.GetNode<MeshInstance3D>("GeneralSkeleton/SoldierMesh");
+				// Get the material used in that surface (index 2 in your case)
+				var mat = mesh.GetActiveMaterial(2) as StandardMaterial3D;
+				if (mat != null)
+				{
+					// Duplicate so it’s not shared
+					var unique = (StandardMaterial3D)mat.Duplicate();
+					unique.AlbedoColor = Colors.Red;
 
-				// Assign the unique copy to this instance
-				mesh.SetSurfaceOverrideMaterial(2, unique);
+					// Assign the unique copy to this instance
+					mesh.SetSurfaceOverrideMaterial(2, unique);
+				}
+
+				map.SpawnEntity(enemySoldier, new Vector2(133, 76 + i*20));
 			}
-			map.SpawnEntity(enemySoldier);
-			enemySoldier.GlobalPosition = enemySoldier.GlobalPosition + new Vector3(100, 0, 100);
 			
-			var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
-			var t = (TeamEntity)tank.Instantiate();
-			map.SpawnEntity(t);
-			_myArmy.Add(t); 
-
-			var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
-			var h = (TeamEntity)heli.Instantiate();
-			map.SpawnEntity(h);
-			_myArmy.Add(h); 
+			// var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
+			// var t = (TeamEntity)tank.Instantiate();
+			// map.SpawnEntity(t);
+			// _myArmy.Add(t); 
+			//
+			// var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
+			// var h = (TeamEntity)heli.Instantiate();
+			// map.SpawnEntity(h);
+			// _myArmy.Add(h); 
 
 			var dest = map.GetMyBasePosition();
 			// Build ring-scatter slots around the destination
@@ -117,7 +121,7 @@ public partial class Player : Node3D
 
 			// Sort units by their current angle around the group's centroid,
 			// and slots by their angle around the destination. This reduces crossing.
-			var selected = _myArmy.Where(e => e is MovableTeamEntity).Cast<MovableTeamEntity>().ToList();
+			var selected = army.Where(e => e is MovableTeamEntity).Cast<MovableTeamEntity>().ToList();
 			Vector2 srcCentroid = ComputeCentroidXZ(selected);
 			selected.Sort((a, b) =>
 			{
@@ -372,13 +376,17 @@ specialModeExit:
 			return;
 
 		// Collect selected movable entities
+		var map = GetParent().GetParent() as IGameMap;
 		var selected = new List<MovableTeamEntity>();
-		foreach (var entity in _myArmy)
+		if (map != null)
 		{
-			if (!entity.IsSelected)
-				continue;
-			if (entity is MovableTeamEntity m)
-				selected.Add(m);
+			foreach (var entity in map.GetEntities())
+			{
+				if (!entity.IsSelected)
+					continue;
+				if (entity is MovableTeamEntity m)
+					selected.Add(m);
+			}
 		}
 
 		if (selected.Count == 0)
@@ -416,8 +424,12 @@ specialModeExit:
 
 	private void DeselectAllEntities()
 	{
-		foreach (var p in _myArmy)
-			p.IsSelected = false;
+		var map = GetParent().GetParent() as IGameMap;
+		if (map != null)
+		{
+			foreach (var p in map.GetEntities())
+				p.IsSelected = false;
+		}
 	}
 
 	private void HandleBoardCommand()
@@ -430,7 +442,8 @@ specialModeExit:
 			if (interactWith is IPassengers iPass)
 			{
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
-				foreach (var p in _myArmy)
+				var map = GetParent().GetParent() as IGameMap;
+				foreach (var p in map.GetEntities())
 				{
 					if (!p.IsSelected)
 						continue;
@@ -454,7 +467,8 @@ specialModeExit:
 			if (whereTo != Vector3.Inf)
 			{
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
-				foreach (var entity in _myArmy)
+				var map = GetParent().GetParent() as IGameMap;
+				foreach (var entity in map.GetEntities(TeamMembership.OWN))
 				{
 					if (!entity.IsSelected)
 						continue;

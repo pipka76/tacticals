@@ -14,12 +14,14 @@ public partial class TeamEntity : CharacterBody3D
     protected int _maxPassengersCapacity;
     private Queue<Tuple<TeamEntityStates, object>> _entityStateQueue;
     protected TeamMembership _teamMembership;
+    protected int _damageTaken;
     
     protected TeamEntity()
     {
         _passengers = new List<TeamEntity>();
         _entityStateQueue = new Queue<Tuple<TeamEntityStates, object>>(5);
         _maxPassengersCapacity = 0;
+        _damageTaken = 0;
         _teamMembership = TeamMembership.NONE;
     }
 
@@ -66,6 +68,11 @@ public partial class TeamEntity : CharacterBody3D
     {
         if (_maxPassengersCapacity <= _passengers.Count)
             return false;
+
+        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+            return false;
+        if (_teamMembership == TeamMembership.NONE)
+            _teamMembership = TeamMembership.OWN;
         
         _passengers.Add(entity);
         return true;
@@ -77,8 +84,14 @@ public partial class TeamEntity : CharacterBody3D
         if (_passengers.Count == 0)
             return result;
 
+        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+            return result;
+
         result.AddRange(_passengers.ToArray());
+
         _passengers.Clear();
+        _teamMembership = TeamMembership.NONE;
+
         return result;
     }
 
@@ -193,6 +206,11 @@ public partial class TeamEntity : CharacterBody3D
 
     public void TakeHit(int pDamage, TeamEntity pShooter, Vector3 hitPos)
     {
-        GD.Print($"Hit taken from: {pShooter.GetRid()}");
+        _damageTaken += pDamage;
+    }
+
+    public bool IsMemberOf(TeamMembership memberOf)
+    {
+        return _teamMembership == memberOf;
     }
 }

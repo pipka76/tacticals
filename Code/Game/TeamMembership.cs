@@ -6,5 +6,6 @@ public enum TeamMembership
     RED,
     BLUE,
     GREEN,
-    NONE
+    NONE,
+    ALL
 }

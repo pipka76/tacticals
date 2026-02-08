@@ -1,5 +1,9 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using tacticals.Code.Game;
+using tacticals.Code.Maps;
 
 public partial class CampainDemo :  Node3D, IGameMap
 {
@@ -17,8 +21,10 @@ public partial class CampainDemo :  Node3D, IGameMap
 
     public void GenerateLevel()
     {
-//        var mm = new MapGenerator(100, 100);
-//        _map = mm.GenerateMap(_mgr);
+        var mm = new MapGenerator(100, 100);
+        var gm = GetNode<Node3D>("TestingFlatGround");
+        var meshes = gm.FindChildren("*", "MeshInstance3D", recursive: true, owned: false);
+        _map = mm.MapExistingSurface(_mgr, meshes);
 
         LoadResources();
 		
@@ -38,17 +44,36 @@ public partial class CampainDemo :  Node3D, IGameMap
     {
     }
 
+    public IEnumerable<TeamEntity> GetEntities(TeamMembership? memberOf = null)
+    {
+        if (!memberOf.HasValue)
+            return _entities.GetChildren().Cast<TeamEntity>().AsEnumerable();
+
+        return _entities.GetChildren().Cast<TeamEntity>().Where(te => te.IsMemberOf(memberOf.Value));
+    }
+
     public Vector2 GetMyBasePosition()
     {
-        return Vector2.Zero;
+        return new Vector2(50, 5);
     }
 
     public void SpawnPlayer()
     {
+        var player = (Player)_playerScene.Instantiate();
+        GetNode<Node>("Players").AddChild(player);
+        var b = new Vector2I(220/MapConstants.BLOCK_SIZE,50/MapConstants.BLOCK_SIZE);
+        if (b != Vector2I.Zero)
+        {
+            var basePos = _map[b.X][b.Y].GlobalPosition;
+            player.GlobalPosition = new Vector3(basePos.X, 0, basePos.Z);
+        }
     }
 
-    public void SpawnEntity(Node3D entity)
+    public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
     {
+        var b = new Vector2I((int)(globalFlatPosition.X / MapConstants.BLOCK_SIZE),(int)(globalFlatPosition.Y/MapConstants.BLOCK_SIZE));
+        _entities.AddChild(entity);
+        entity.GlobalPosition = new Vector3(globalFlatPosition.X, _map[b.X][b.Y].GlobalPosition.Y, globalFlatPosition.Y);
     }
 
     public void ImportLevelData(string data)
@@ -60,4 +85,5 @@ public partial class CampainDemo :  Node3D, IGameMap
     {
         return 0;
     }
+
 }

@@ -2,13 +2,13 @@
 
 [ext_resource type="PackedScene" uid="uid://bs6ddw8i2d41a" path="res://Scenes/Maps/Minimap.tscn" id="1_uwkpe"]
 [ext_resource type="Script" uid="uid://d3m7js5e2u0yv" path="res://Code/Maps/CampainDemo.cs" id="1_wp650"]
-[ext_resource type="PackedScene" uid="uid://ci8c7vt1ha4d4" path="res://Scenes/Terrains/TestingFlatGround.tscn" id="3_sh1qw"]
-[ext_resource type="PackedScene" uid="uid://h5y3114xlasi" path="res://Scenes/Structures/MetalFence.tscn" id="4_qd6lr"]
+[ext_resource type="PackedScene" uid="uid://banb4au60mhrx" path="res://Scenes/Terrains/TestingFlatGround.tscn" id="3_sh1qw"]
+[ext_resource type="PackedScene" path="res://Scenes/Structures/MetalFence.tscn" id="4_qd6lr"]
 [ext_resource type="PackedScene" uid="uid://lji4vqdx85sq" path="res://Scenes/Structures/Tower.tscn" id="5_rbsug"]
-[ext_resource type="PackedScene" uid="uid://bjuqpyr7l5dqp" path="res://Scenes/Structures/BunkerRect.tscn" id="6_ug4jj"]
-[ext_resource type="PackedScene" uid="uid://d2dluygo7uwg8" path="res://Scenes/Structures/SandBarrierL1.tscn" id="7_rbsug"]
-[ext_resource type="PackedScene" uid="uid://bf4w8ir8u4bg8" path="res://Scenes/Structures/BrowningTurret.tscn" id="8_ug4jj"]
-[ext_resource type="PackedScene" uid="uid://bognc3y054p77" path="res://Scenes/Structures/Hangar.tscn" id="9_kfnyu"]
+[ext_resource type="PackedScene" path="res://Scenes/Structures/BunkerRect.tscn" id="6_ug4jj"]
+[ext_resource type="PackedScene" path="res://Scenes/Structures/SandBarrierL1.tscn" id="7_rbsug"]
+[ext_resource type="PackedScene" path="res://Scenes/Structures/BrowningTurret.tscn" id="8_ug4jj"]
+[ext_resource type="PackedScene" path="res://Scenes/Structures/Hangar.tscn" id="9_kfnyu"]
 [ext_resource type="PackedScene" uid="uid://dc01ia723pg05" path="res://Scenes/Game/Tank.tscn" id="10_m21sx"]
 [ext_resource type="PackedScene" uid="uid://dsff2578bg40b" path="res://Scenes/Game/Heli.tscn" id="11_xjk7d"]
 [ext_resource type="PackedScene" uid="uid://cg0suhqi22elq" path="res://Scenes/Biome/TreeC6.tscn" id="12_cpv1w"]
@@ -23,10 +23,16 @@ script = ExtResource("1_wp650")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 50, 1000, 50)
-light_energy = 2.0
+light_energy = 0.592
 shadow_enabled = true
 
 [node name="Entities" type="Node" parent="."]
+
+[node name="Tank" parent="Entities" instance=ExtResource("10_m21sx")]
+transform = Transform3D(-0.7132504, 0, -0.7009093, 0, 1, 0, 0.7009093, 0, -0.7132504, 81.48246, 0.04998474, 172.68431)
+
+[node name="Heli" parent="Entities" instance=ExtResource("11_xjk7d")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 135.53436, 0.088325605, 135.84596)
 
 [node name="Players" type="Node" parent="."]
 
@@ -271,12 +277,6 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 99.7
 
 [node name="Tower3" parent="." instance=ExtResource("5_rbsug")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.33788, -1.4823171e-05, 122.6102)
-
-[node name="Tank" parent="." instance=ExtResource("10_m21sx")]
-transform = Transform3D(-0.7132504, 0, -0.7009093, 0, 1, 0, 0.7009093, 0, -0.7132504, 81.48246, 0.04998474, 172.68431)
-
-[node name="Heli" parent="." instance=ExtResource("11_xjk7d")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 135.53436, 0.088325605, 135.84596)
 
 [node name="TreeC6" parent="." instance=ExtResource("12_cpv1w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 162.65329, 0.023709448, 81.10346)
