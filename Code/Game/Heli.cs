@@ -194,8 +194,10 @@ public partial class Heli : MovableTeamEntity, IPassengers
         if (_aboveGround == 0)
         {
             var passengers = ExitPassengers();
+            var exitDir = (new Vector3(_moveToCoords.X, GlobalPosition.Y, _moveToCoords.Y) - GlobalPosition).Normalized();
             foreach (var p in passengers)
             {
+                p.GlobalPosition = p.GlobalPosition + exitDir * 5f;
                 p.SetVisible(true);
             }
         }
@@ -221,9 +223,6 @@ public partial class Heli : MovableTeamEntity, IPassengers
 
     public override void MoveTo(Vector2 coords)
     {
-        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
-            return;
-
         // this is command from player directly, so forget everything and listen! 
         _moveToCoords = coords;
 

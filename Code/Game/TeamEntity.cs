@@ -22,13 +22,13 @@ public partial class TeamEntity : CharacterBody3D
         _entityStateQueue = new Queue<Tuple<TeamEntityStates, object>>(5);
         _maxPassengersCapacity = 0;
         _damageTaken = 0;
-        _teamMembership = TeamMembership.NONE;
+        _teamMembership = TeamMembership.NEUTRAL;
     }
 
-    public void SetMembership(TeamMembership team)
+    public void SetMembership(TeamMembership team, bool enemyTeam = false)
     {
         _teamMembership = team;
-        if (team != TeamMembership.OWN && team != TeamMembership.NONE)
+        if (enemyTeam)
             AddToGroup(EntityGroup.ENEMY);
     }
     
@@ -69,10 +69,10 @@ public partial class TeamEntity : CharacterBody3D
         if (_maxPassengersCapacity <= _passengers.Count)
             return false;
 
-        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+        if (_teamMembership != TeamMembership.NEUTRAL && !entity.IsMemberOf(_teamMembership))
             return false;
-        if (_teamMembership == TeamMembership.NONE)
-            _teamMembership = TeamMembership.OWN;
+        _teamMembership = entity.Team;
+        entity.SetNewState(TeamEntityStates.BOARDED);
         
         _passengers.Add(entity);
         return true;
@@ -84,14 +84,14 @@ public partial class TeamEntity : CharacterBody3D
         if (_passengers.Count == 0)
             return result;
 
-        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
-            return result;
-
         result.AddRange(_passengers.ToArray());
 
         _passengers.Clear();
-        _teamMembership = TeamMembership.NONE;
+        _teamMembership = TeamMembership.NEUTRAL;
 
+        foreach (var e in result)
+            e.SetNewState(TeamEntityStates.IDLE);
+        
         return result;
     }
 
@@ -207,10 +207,17 @@ public partial class TeamEntity : CharacterBody3D
     public void TakeHit(int pDamage, TeamEntity pShooter, Vector3 hitPos)
     {
         _damageTaken += pDamage;
+        HitTaken(pDamage, pShooter, hitPos);
+    }
+    
+    protected virtual void HitTaken(int pDamage, TeamEntity pShooter, Vector3 hitPos)
+    {
     }
 
     public bool IsMemberOf(TeamMembership memberOf)
     {
         return _teamMembership == memberOf;
     }
+
+    public TeamMembership Team => _teamMembership;
 }

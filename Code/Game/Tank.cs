@@ -49,8 +49,10 @@ public partial class Tank : MovableTeamEntity, IPassengers
     private void HandleExiting(double delta)
     {
         var passengers = ExitPassengers();
+        var exitDir = (new Vector3(_moveToCoords.X, GlobalPosition.Y, _moveToCoords.Y) - GlobalPosition).Normalized();
         foreach (var p in passengers)
         {
+            p.GlobalPosition = p.GlobalPosition + exitDir * 5f;
             p.SetVisible(true);
         }
 
@@ -120,6 +122,14 @@ public partial class Tank : MovableTeamEntity, IPassengers
     private void HandleIdle()
     {
         TransitionToNextState();
+    }
+    
+    protected override void HitTaken(int pDamage, TeamEntity pShooter, Vector3 hitPos)
+    {
+        if (pDamage < 50)
+            Main.Current.Audio.Play3D("metal_ricochet", GlobalPosition);
+        else
+            Main.Current.Audio.Play3D("metal_hit_heavy", GlobalPosition);
     }
 
     private void HandleAnimation()

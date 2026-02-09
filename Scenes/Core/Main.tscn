@@ -36,5 +36,5 @@ script = ExtResource("7_xlfh5")
 Library = ExtResource("8_kmmkm")
 
 [node name="Projectiles" type="Node3D" parent="."]
-visible = false
 script = ExtResource("9_kmmkm")
+DebugDrawProjectiles = true

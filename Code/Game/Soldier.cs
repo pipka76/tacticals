@@ -59,9 +59,12 @@ public partial class Soldier : MovableTeamEntity
 			HandleAttack(delta);
 			return;
 		}
-		
-		if (IsInState(TeamEntityStates.TERMINATED))
+
+		if (IsInState(TeamEntityStates.BOARDED) || IsInState(TeamEntityStates.TERMINATED))
+		{
+			Mute();
 			return;
+		}
 
 		HandleIdle(delta);
 	}
@@ -76,7 +79,7 @@ public partial class Soldier : MovableTeamEntity
 		_attackT = ATTACK_INTERVAL;
 
 		// Target can disappear (freed) or be unset.
-		if (_enemyTarget == null || !GodotObject.IsInstanceValid(_enemyTarget))
+		if (_enemyTarget == null || !GodotObject.IsInstanceValid(_enemyTarget) || _enemyTarget.IsInState(TeamEntityStates.TERMINATED) || _enemyTarget.IsMemberOf(TeamMembership.NEUTRAL))
 		{
 			_enemyTarget = null;
 			TransitionToNextState();
@@ -111,13 +114,18 @@ public partial class Soldier : MovableTeamEntity
 
 	private void FireOnTarget(Vector3 target)
 	{
+		var inaccX = Random.Shared.Next(-(int)target.X, (int)target.X);
+		var inaccY = Random.Shared.Next(-(int)target.Y, (int)target.Y);
+		var inaccZ = Random.Shared.Next(-(int)target.Z, (int)target.Z);
+		
 		Main.Current.Audio.Play3D("handgun_shot", GlobalPosition);
 		var weapPos = GlobalPosition + Vector3.Up * 1.3f;
+		var fireDirection = (target - weapPos).Normalized() * 300f;
 		Main.Current.Projectiles.Spawn(new Projectile()
 		{
 			Shooter = this,
 			Pos = weapPos,
-			Vel = (target - weapPos).Normalized() * 300f,
+			Vel = new Vector3(fireDirection.X + inaccX/50f, fireDirection.Y + inaccY/50f, fireDirection.Z + inaccZ/50f),
 			Mask = 0b111,
 			ShooterRid = GetRid(),
 			Life = 1,
@@ -156,7 +164,7 @@ public partial class Soldier : MovableTeamEntity
 			Shape = sphere,
 			Transform = new Transform3D(Basis.Identity, GlobalPosition),
 			// Set to whatever layers your "units" exist on
-			CollisionMask = 0b011, 
+			CollisionMask = 0b0110, 
 			CollideWithAreas = true,
 			CollideWithBodies = true
 		};
@@ -193,7 +201,7 @@ public partial class Soldier : MovableTeamEntity
 				continue;
 
 			// Filter enemies
-			if (entity.IsMemberOf(_teamMembership))
+			if (entity.IsMemberOf(_teamMembership) || entity.IsMemberOf(TeamMembership.NEUTRAL))
 				continue;
 
 			// Approx aim point: enemy center-ish
@@ -273,8 +281,7 @@ public partial class Soldier : MovableTeamEntity
 				GlobalPosition = move;
 			}
 
-			if (!_sfxSound.HasValue)
-				_sfxSound = Main.Current.Audio.Play3D("soldier_walk", GlobalPosition, true);
+			Mute();
 
 			return;
 		}
@@ -291,11 +298,22 @@ public partial class Soldier : MovableTeamEntity
 			_moveToCoords = (Vector2)nextState.Item2;
 		SetNewState(nextState.Item1);
 
-		if (stopSound && _sfxSound.HasValue)
+		if (stopSound) Mute();
+	}
+
+	private void Mute()
+	{
+		if (_sfxSound.HasValue)
 		{
 			Main.Current.Audio.Stop(_sfxSound.Value);
 			_sfxSound = null;
 		}
+	}
+
+	protected override void HitTaken(int pDamage, TeamEntity pShooter, Vector3 hitPos)
+	{
+		Mute();
+		Main.Current.Audio.Play3D("soldier_died", GlobalPosition);
 	}
 
 	private void HandleAnimation()

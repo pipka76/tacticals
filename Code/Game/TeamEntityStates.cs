@@ -10,5 +10,6 @@ public enum TeamEntityStates
     HOVER,
     EXITING,
     ATTACK,
+    BOARDED,
     TERMINATED
 }

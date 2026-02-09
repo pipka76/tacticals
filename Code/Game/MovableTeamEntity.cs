@@ -50,7 +50,7 @@ public partial class MovableTeamEntity : TeamEntity
 
     public virtual void PortTo(Vector2 coords)
     {
-        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+        if (_teamMembership == TeamMembership.NEUTRAL)
             return;
             
         if (RaycastToTerrain(out var gnd, out _))
@@ -59,7 +59,7 @@ public partial class MovableTeamEntity : TeamEntity
 
     public virtual void MoveTo(Vector2 coords)
     {
-        if (_teamMembership != TeamMembership.OWN && _teamMembership != TeamMembership.NONE)
+        if (_teamMembership == TeamMembership.NEUTRAL)
             return;
 
         SetNewState(TeamEntityStates.ONTHEWAY);

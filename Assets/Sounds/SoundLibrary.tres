@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SoundLibrary" load_steps=25 format=3 uid="uid://cdw0uqhxij1d6"]
+[gd_resource type="Resource" script_class="SoundLibrary" load_steps=36 format=3 uid="uid://cdw0uqhxij1d6"]
 
 [ext_resource type="Script" uid="uid://c1jqklaqamamg" path="res://Code/Game/SoundEntry.cs" id="1_1gbm7"]
 [ext_resource type="AudioStream" uid="uid://ba4naqc6d7m4u" path="res://Assets/Sounds/tank_driving.mp3" id="2_06mi8"]
@@ -10,6 +10,11 @@
 [ext_resource type="AudioStream" uid="uid://liohd2kop0ga" path="res://Assets/Sounds/heli-off.mp3" id="7_oxhqc"]
 [ext_resource type="AudioStream" uid="uid://co0e0gasxn05d" path="res://Assets/Sounds/soldier_walk.mp3" id="8_6yxb5"]
 [ext_resource type="AudioStream" uid="uid://ddcj4msvr8cqo" path="res://Assets/Sounds/handgun_shot.mp3" id="9_5uw71"]
+[ext_resource type="AudioStream" uid="uid://bxfsnp8mkxs36" path="res://Assets/Sounds/soldier_died.mp3" id="10_wagfg"]
+[ext_resource type="AudioStream" uid="uid://bpgaj8ejojj8b" path="res://Assets/Sounds/metal_ricochet1.mp3" id="11_t0kma"]
+[ext_resource type="AudioStream" uid="uid://l884a30m0ms5" path="res://Assets/Sounds/metal_ricochet2.mp3" id="12_m0x4b"]
+[ext_resource type="AudioStream" uid="uid://dpb8ubedcfiib" path="res://Assets/Sounds/metal_ricochet3.mp3" id="13_dcwsl"]
+[ext_resource type="AudioStream" uid="uid://fw1qvp2ssxac" path="res://Assets/Sounds/metal_ricochet_heavy1.mp3" id="14_m0x4b"]
 
 [sub_resource type="Resource" id="Resource_f6aq7"]
 script = ExtResource("3_jljoi")
@@ -89,7 +94,40 @@ Id = &"handgun_shot"
 Event = SubResource("Resource_kqv52")
 metadata/_custom_type_script = "uid://c1jqklaqamamg"
 
+[sub_resource type="Resource" id="Resource_7bo74"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("10_wagfg")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_m6usm"]
+script = ExtResource("1_1gbm7")
+Id = &"soldier_died"
+Event = SubResource("Resource_7bo74")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_7d3fq"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("11_t0kma"), ExtResource("12_m0x4b"), ExtResource("13_dcwsl")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_v4mxj"]
+script = ExtResource("1_1gbm7")
+Id = &"metal_ricochet"
+Event = SubResource("Resource_7d3fq")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
+[sub_resource type="Resource" id="Resource_2ptfj"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("14_m0x4b")])
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_stoke"]
+script = ExtResource("1_1gbm7")
+Id = &"metal_hit_heavy"
+Event = SubResource("Resource_2ptfj")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
 [resource]
 script = ExtResource("2_kovan")
-Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe")])
+Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe"), SubResource("Resource_m6usm"), SubResource("Resource_v4mxj"), SubResource("Resource_stoke")])
 metadata/_custom_type_script = "uid://doimqsddt711p"

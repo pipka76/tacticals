@@ -12,9 +12,9 @@ public partial class Player : Node3D
 	private Camera3D _godCamera;
 	private float _selectCooldown;
 	private float _moveToCooldown;
-	private List<TeamEntity> _mySelected;
 	private Vector3 _homeBaseCoords;
-
+	private TeamMembership _myTeam;
+	
 	#region MouseCursors
 	private Texture2D _mouse_cursor_board;
 	private Texture2D _mouse_cursor_moveto;
@@ -54,7 +54,7 @@ public partial class Player : Node3D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		_mySelected = new List<TeamEntity>();
+		_myTeam = TeamMembership.BLUE;
 		_inputs = GetNode<PlayerInput>("PlayerInput");
 		_godCamera = GetNode<Camera3D>("GodCamera");
 		_mouse_cursor_board = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_board.png");
@@ -79,8 +79,8 @@ public partial class Player : Node3D
 			for (int i = 0; i < 3; i++)
 			{
 				var s = (TeamEntity)soldier.Instantiate();
-				s.SetMembership(TeamMembership.OWN);
-				map.SpawnEntity(s, new Vector2(200, 20));
+				s.SetMembership(_myTeam);
+				map.SpawnEntity(s, new Vector2(200, 200));
 				army.Add(s);
 			}
 
@@ -88,7 +88,7 @@ public partial class Player : Node3D
 			for (int i = 0; i < 3; i++)
 			{
 				var enemySoldier = (TeamEntity)soldier.Instantiate();
-				enemySoldier.SetMembership(TeamMembership.RED);
+				enemySoldier.SetMembership(TeamMembership.RED, true);
 				var mesh = enemySoldier.GetNode<MeshInstance3D>("GeneralSkeleton/SoldierMesh");
 				// Get the material used in that surface (index 2 in your case)
 				var mat = mesh.GetActiveMaterial(2) as StandardMaterial3D;
@@ -380,7 +380,7 @@ specialModeExit:
 		var selected = new List<MovableTeamEntity>();
 		if (map != null)
 		{
-			foreach (var entity in map.GetEntities())
+			foreach (var entity in map.GetEntities(_myTeam))
 			{
 				if (!entity.IsSelected)
 					continue;
@@ -443,7 +443,7 @@ specialModeExit:
 			{
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
 				var map = GetParent().GetParent() as IGameMap;
-				foreach (var p in map.GetEntities())
+				foreach (var p in map.GetEntities(_myTeam))
 				{
 					if (!p.IsSelected)
 						continue;
@@ -468,7 +468,7 @@ specialModeExit:
 			{
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
 				var map = GetParent().GetParent() as IGameMap;
-				foreach (var entity in map.GetEntities(TeamMembership.OWN))
+				foreach (var entity in map.GetEntities(_myTeam))
 				{
 					if (!entity.IsSelected)
 						continue;
