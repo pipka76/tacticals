@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=4 uid="uid://cxnkm4n3kvxkb"]
+[gd_scene load_steps=16 format=4 uid="uid://cxnkm4n3kvxkb"]
 
 [ext_resource type="Script" uid="uid://b2eea733iqj0f" path="res://Code/Game/Soldier.cs" id="1_quuc0"]
 [ext_resource type="PackedScene" uid="uid://nygqr22se08u" path="res://Assets/Game/SelectionRing.fbx" id="2_dmp1f"]
+[ext_resource type="Animation" uid="uid://st3b824aig2e" path="res://Assets/Animations/Death1.res" id="3_hifgf"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_n3hgi"]
 properties/0/path = NodePath(".:position")
@@ -783,6 +784,7 @@ tracks/35/keys = PackedFloat32Array(0, 1, 0.001171285, 0.99861276, -0.05251193, 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_rsnsr"]
 _data = {
 &"Aiming": SubResource("Animation_hifgf"),
+&"Death1": ExtResource("3_hifgf"),
 &"Idle": SubResource("Animation_jyu3v"),
 &"Walking": SubResource("Animation_oo314")
 }
