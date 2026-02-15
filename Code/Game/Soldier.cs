@@ -15,7 +15,8 @@ public partial class Soldier : MovableTeamEntity
 	private TeamEntity _enemyTarget;
 	private const float ATTACK_INTERVAL = 3.0f;
 	private double _attackT = 0.0;
-
+	private string _lastAnimation = string.Empty;
+	
 	public Soldier()
 	{
 		_maxPassengersCapacity = 0;
@@ -316,25 +317,36 @@ public partial class Soldier : MovableTeamEntity
 		Main.Current.Audio.Play3D("soldier_died", GlobalPosition);
 	}
 
+	private void PlayAnimationOnce(string animationName)
+	{
+		if (_lastAnimation == animationName)
+			return;
+        
+		_animPlayer.Play(animationName);
+	}
+	
 	private void HandleAnimation()
 	{
 		if (IsInState(TeamEntityStates.ONTHEWAY))
 		{
-			if (_animPlayer.CurrentAnimation != "Walking")
+			if (_lastAnimation != "Walking")
 				_animPlayer.Play("Walking");
 		}
 
 		if (IsInState(TeamEntityStates.TERMINATED))
 		{
-			Visible = false;
+			PlayAnimationOnce("Death");
 		}
 
 		if (IsInState(TeamEntityStates.IDLE))
 		{
-			if (_animPlayer.CurrentAnimation != "Idle")
+			if (_lastAnimation != "Idle")
 				_animPlayer.Play("Idle");
 			if (RaycastToTerrain(out var gnd, out _))
 				GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
 		}
+		
+		if(!string.IsNullOrEmpty(_animPlayer.CurrentAnimation))
+			_lastAnimation = _animPlayer.CurrentAnimation;
 	}
 }

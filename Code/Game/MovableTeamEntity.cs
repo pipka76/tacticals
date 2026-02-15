@@ -61,7 +61,9 @@ public partial class MovableTeamEntity : TeamEntity
     {
         if (_teamMembership == TeamMembership.NEUTRAL)
             return;
-
+        if (IsInState(TeamEntityStates.TERMINATED))
+            return;
+        
         SetNewState(TeamEntityStates.ONTHEWAY);
         _moveToCoords = coords;
         RotateTowards(new Vector3(coords.X, 0, coords.Y));
