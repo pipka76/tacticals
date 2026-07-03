@@ -37,10 +37,10 @@ public partial class Soldier : MovableTeamEntity
 		AddToGroup(EntityGroup.SOLDIERS);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta)
 	{
-		HandleAnimation();
+        HandleAnimation();
 
 		if (_damageTaken > 0)
 		{
@@ -144,6 +144,7 @@ public partial class Soldier : MovableTeamEntity
 			if (enemy != null)
 			{
 				_enemyTarget = enemy as TeamEntity;
+				_attackT = 1.5f;
 				SetNewState(TeamEntityStates.ATTACK);
 				return;
 			}
@@ -210,7 +211,10 @@ public partial class Soldier : MovableTeamEntity
 			if (d2 >= bestD2)
 				continue;
 
-			if (!HasLineOfSight(space, myEye, entity, enemyPos))
+            if (!IsInFieldOfView(myEye, enemyPos, 60f)) // total cone angle
+                continue;
+
+            if (!HasLineOfSight(space, myEye, entity, enemyPos))
 				continue;
 
 			best = entity;
@@ -219,8 +223,21 @@ public partial class Soldier : MovableTeamEntity
 
 		return best;
 	}
-	
-	private bool HasLineOfSight(PhysicsDirectSpaceState3D space, Vector3 from, Node3D enemyRoot, Vector3 enemyAim)
+
+    private bool IsInFieldOfView(Vector3 myEye, Vector3 enemyPos, float AngleDeg)
+    {
+        // Reconstruct forward the same way RotateTowards sets it
+        float yaw = GlobalRotation.Y;
+        var forward = new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw));
+
+        // Flatten enemy direction to XZ plane
+        var toEnemy = new Vector3(enemyPos.X - myEye.X, 0, enemyPos.Z - myEye.Z).Normalized();
+
+        float dot = forward.Dot(toEnemy);
+        return dot >= Mathf.Cos(Mathf.DegToRad(AngleDeg / 2));
+    }
+
+    private bool HasLineOfSight(PhysicsDirectSpaceState3D space, Vector3 from, Node3D enemyRoot, Vector3 enemyAim)
 	{
 		var ray = new PhysicsRayQueryParameters3D
 		{
