@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bu8kkxgcut3lq"]
+[gd_scene format=3 uid="uid://bu8kkxgcut3lq"]
 
 [ext_resource type="Script" uid="uid://dbnuclq01lwxd" path="res://Code/Core/Main.cs" id="1_yoqn1"]
 [ext_resource type="Script" uid="uid://gv3afmotmn0i" path="res://Code/Game/BattleServer.cs" id="2_d0tau"]
@@ -9,32 +9,36 @@
 [ext_resource type="Script" uid="uid://b37ikg1ve4j0j" path="res://Code/Game/AudioManager.cs" id="7_xlfh5"]
 [ext_resource type="Resource" uid="uid://cdw0uqhxij1d6" path="res://Assets/Sounds/SoundLibrary.tres" id="8_kmmkm"]
 [ext_resource type="Script" uid="uid://sxttjg4q76hi" path="res://Code/Game/ProjectileManager.cs" id="9_kmmkm"]
+[ext_resource type="Script" uid="uid://3s7ca3a7facs" path="res://Code/Game/GameDebug.cs" id="10_02typ"]
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" unique_id=1986508080]
 script = ExtResource("1_yoqn1")
 
-[node name="BattleServer" type="Node" parent="."]
+[node name="BattleServer" type="Node" parent="." unique_id=54478079]
 script = ExtResource("2_d0tau")
 
-[node name="BattleNetwork" type="Node" parent="."]
+[node name="BattleNetwork" type="Node" parent="." unique_id=1774690039]
 script = ExtResource("3_g5eid")
 
-[node name="Map" type="Node" parent="."]
+[node name="Map" type="Node" parent="." unique_id=906260403]
 
-[node name="StartMenu" parent="." instance=ExtResource("4_cja2m")]
+[node name="StartMenu" parent="." unique_id=471488572 instance=ExtResource("4_cja2m")]
 
-[node name="LobbyMenu" parent="." instance=ExtResource("3_r4p2y")]
+[node name="LobbyMenu" parent="." unique_id=1506074902 instance=ExtResource("3_r4p2y")]
 visible = false
 
-[node name="BattleMenu" parent="." instance=ExtResource("5_cggsw")]
+[node name="BattleMenu" parent="." unique_id=851189898 instance=ExtResource("5_cggsw")]
 visible = false
 offset_right = 1600.0
 offset_bottom = 1200.0
 
-[node name="Audio" type="Node" parent="."]
+[node name="Audio" type="Node" parent="." unique_id=1741079697]
 script = ExtResource("7_xlfh5")
 Library = ExtResource("8_kmmkm")
 
-[node name="Projectiles" type="Node3D" parent="."]
+[node name="Projectiles" type="Node3D" parent="." unique_id=1236730709]
 script = ExtResource("9_kmmkm")
 DebugDrawProjectiles = true
+
+[node name="Debug" type="Node" parent="." unique_id=88372595]
+script = ExtResource("10_02typ")
