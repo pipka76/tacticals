@@ -12,7 +12,7 @@ public partial class Soldier : MovableTeamEntity
 	private SoundHandle? _sfxSound;
 	private const float AWARE_RADIUS = 50f;
 	private const float AWARE_CHECK_INTERVAL = 0.2f;
-	private const float LOOKOUT_INTERVAL = 10f;
+	private const float LOOKOUT_INTERVAL = 15f;
 	private const float LOOKOUT_DURATION = 8f;
 	private double _awareT = 0.0;
 	private TeamEntity _enemyTarget;
@@ -56,19 +56,22 @@ public partial class Soldier : MovableTeamEntity
 
 		if (IsInState(TeamEntityStates.ONTHEWAY))
 		{
+			ResetLookout();
 			HandleOnTheWay(delta);
 			return;
 		}
 
 		if (IsInState(TeamEntityStates.ATTACK))
 		{
-			HandleAttack(delta);
+            ResetLookout();
+            HandleAttack(delta);
 			return;
 		}
 
 		if (IsInState(TeamEntityStates.BOARDED) || IsInState(TeamEntityStates.TERMINATED))
 		{
-			Mute();
+            ResetLookout();
+            Mute();
 			return;
 		}
 
@@ -173,6 +176,13 @@ public partial class Soldier : MovableTeamEntity
         }
 
         TransitionToNextState();
+	}
+
+	private void ResetLookout()
+	{
+		_lookoutT = 0.0;
+		_eyeAngle = 0.0;
+		_lookoutD = LOOKOUT_DURATION;
 	}
 	
 	private Node3D? FindVisibleEnemy(float radius)
