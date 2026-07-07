@@ -158,17 +158,18 @@ public partial class Soldier : MovableTeamEntity
 
         _lookoutT -= delta;
         if (_lookoutT <= 0.0)
-		{
-            double t = delta / LOOKOUT_DURATION; // Adjust the divisor to control the speed of the oscillation
+        {
+            _lookoutD -= delta;
+
+            double t = 1.0 - (_lookoutD / LOOKOUT_DURATION); // 0.0 → 1.0 over the duration
             _eyeAngle = (Math.PI / 2) * Math.Sin(2 * Math.PI * t);
 
-			_lookoutD -= delta;
-			if (_lookoutD >= 0.0)
-			{
-				_lookoutD = LOOKOUT_DURATION;
-				_lookoutT = LOOKOUT_INTERVAL;
-				_eyeAngle = 0.0;
-			}
+            if (_lookoutD <= 0.0)
+            {
+                _lookoutD = LOOKOUT_DURATION;
+                _lookoutT = LOOKOUT_INTERVAL;
+                _eyeAngle = 0.0;
+            }
         }
 
         TransitionToNextState();
@@ -248,7 +249,7 @@ public partial class Soldier : MovableTeamEntity
     private bool IsInFieldOfView(Vector3 myEye, Vector3 enemyPos, float AngleDeg)
     {
         // Reconstruct forward the same way RotateTowards sets it
-        float yaw = GlobalRotation.Y;
+        float yaw = (float)_eyeAngle + GlobalRotation.Y;
         var forward = new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw));
 
         // Flatten enemy direction to XZ plane
