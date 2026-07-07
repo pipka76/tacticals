@@ -5,16 +5,20 @@ namespace tacticals.Code.Game;
 
 public partial class Soldier : MovableTeamEntity
 {
-	private const float MOVE_SPEED = 2.5f;
+	private const float SOLDIER_FOV = 60f;
+    private const float MOVE_SPEED = 2.5f;
 	private RayCast3D _rayCast;
 	private AnimationPlayer _animPlayer;
 	private SoundHandle? _sfxSound;
 	private const float AWARE_RADIUS = 50f;
 	private const float AWARE_CHECK_INTERVAL = 0.2f;
+	private const float LOOKOUT_INTERVAL = 10f;
 	private double _awareT = 0.0;
 	private TeamEntity _enemyTarget;
 	private const float ATTACK_INTERVAL = 3.0f;
 	private double _attackT = 0.0;
+	private double _eyeAngle = 0.0;
+	private double _lookoutT = 0.0;
 
 	public Soldier()
 	{
@@ -149,8 +153,16 @@ public partial class Soldier : MovableTeamEntity
 				return;
 			}
 		}
-		
-		TransitionToNextState();
+
+        _lookoutT -= delta;
+        if (_lookoutT <= 0.0)
+		{
+            double t = delta / 15;
+            double raw = Math.Sin(2 * Math.PI * t);
+            _eyeAngle = (Math.PI / 2) * raw * raw * raw;
+        }
+
+        TransitionToNextState();
 	}
 	
 	private Node3D? FindVisibleEnemy(float radius)
@@ -211,7 +223,7 @@ public partial class Soldier : MovableTeamEntity
 			if (d2 >= bestD2)
 				continue;
 
-            if (!IsInFieldOfView(myEye, enemyPos, 60f)) // total cone angle
+            if (!IsInFieldOfView(myEye, enemyPos, SOLDIER_FOV)) // total cone angle
                 continue;
 
             if (!HasLineOfSight(space, myEye, entity, enemyPos))
@@ -335,6 +347,9 @@ public partial class Soldier : MovableTeamEntity
 
 	private void HandleAnimation()
 	{
+        float yaw = GlobalRotation.Y;
+		GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
+
 		if (IsInState(TeamEntityStates.ONTHEWAY))
 		{
 			if (_animPlayer.CurrentAnimation != "Walking")

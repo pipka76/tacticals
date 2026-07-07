@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Godot;
 
 public partial class PlayerInput : MultiplayerSynchronizer
@@ -26,7 +27,8 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public bool IsBoarding;
 	public bool IsExiting;
 	public bool MapToggle;
-	public float CameraFov = 50f;
+	public bool DebugToggle;
+    public float CameraFov = 50f;
 	public float CameraDegX = MIN_CAMERA_DEG;
 	public float CameraY = MAX_CAMERA_Y;
 	public float CameraYaw = 0f;
@@ -175,5 +177,8 @@ public partial class PlayerInput : MultiplayerSynchronizer
 		// Rotate movement by camera yaw so WASD is relative to where the camera is looking.
 		var move3 = new Vector3(move.X, 0f, move.Y).Rotated(Vector3.Up, CameraYaw);
 		PlayerMove = new Vector2(move3.X, move3.Z);
-	}
+
+        if (Input.IsActionJustReleased("debug_toggle"))
+            DebugToggle = !DebugToggle;
+    }
 }
