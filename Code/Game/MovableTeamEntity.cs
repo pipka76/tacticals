@@ -10,6 +10,9 @@ public partial class MovableTeamEntity : TeamEntity
     protected const float ARRIVE_SLOW_RADIUS = 2.0f;    // start slowing down near slot
     protected const float MIN_SPEED_FACTOR = 0.25f;     // never fully stop while moving
     protected Vector2 _moveToCoords;
+    protected List<Vector3> _preparePatrolCheckpoints = new List<Vector3>();
+    protected List<Vector3> _patrolCheckpoints = new List<Vector3>();
+    private int _patrolCheckpointsIndex = 0;
 
     public Vector3 MoveToCoordinates
     {
@@ -65,5 +68,28 @@ public partial class MovableTeamEntity : TeamEntity
         SetNewState(TeamEntityStates.ONTHEWAY);
         _moveToCoords = coords;
         RotateTowards(new Vector3(coords.X, 0, coords.Y));
+    }
+
+    public virtual void AddPatrolCheckpoint(Vector3 point)
+    {
+        _preparePatrolCheckpoints.Add(point);
+    }
+
+    public virtual void OnBeginPatrol()
+    {
+        _patrolCheckpointsIndex = 0;
+        _patrolCheckpoints.Clear();
+        _patrolCheckpoints.AddRange(_preparePatrolCheckpoints);
+        _preparePatrolCheckpoints.Clear();
+        SetNewState(TeamEntityStates.PATROL);
+    }
+
+    protected Vector3? GetPatrolCheckpoint(bool next = false)
+    {
+        if (_patrolCheckpoints.Count == 0) return null;
+        if (_patrolCheckpointsIndex >= _patrolCheckpoints.Count)
+            _patrolCheckpointsIndex = 0;
+        if (next) _patrolCheckpointsIndex++;
+        return _patrolCheckpoints[_patrolCheckpointsIndex];
     }
 }

@@ -27,7 +27,21 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public bool IsBoarding;
 	public bool IsExiting;
 	public bool IsPatrolArmy;
-	public bool MapToggle;
+	private bool _IsPatrolArmyReleased;
+    public bool IsPatrolArmyReleased 
+	{ 
+		get 
+		{
+			if (_IsPatrolArmyReleased)
+			{
+				_IsPatrolArmyReleased = false;
+				return true;
+            }
+
+			return _IsPatrolArmyReleased;
+        } 
+	}
+    public bool MapToggle;
 	public bool DebugToggle;
     public float CameraFov = 50f;
 	public float CameraDegX = MIN_CAMERA_DEG;
@@ -172,10 +186,14 @@ public partial class PlayerInput : MultiplayerSynchronizer
 			IsBoarding = Input.IsActionPressed("board_entity");
 			IsExiting = Input.IsActionPressed("exit_entity");
 			IsPatrolArmy = Input.IsActionPressed("patrol_army");
-//		else
-//			IsSelecting = false;
-		
-		var move = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
+
+        if (Input.IsActionJustReleased("patrol_army"))
+            _IsPatrolArmyReleased = true;
+
+        //		else
+        //			IsSelecting = false;
+
+        var move = Input.GetVector("cam_left", "cam_right", "cam_forward", "cam_backward");
 		// Rotate movement by camera yaw so WASD is relative to where the camera is looking.
 		var move3 = new Vector3(move.X, 0f, move.Y).Rotated(Vector3.Up, CameraYaw);
 		PlayerMove = new Vector2(move3.X, move3.Z);

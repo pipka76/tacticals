@@ -14,7 +14,8 @@ public partial class GameDebug : Node
 	}
 
 	private List<FovRecord> _fovRegister = new List<FovRecord>();
-	private ImmediateMesh _immediateMesh;
+	private List<Vector3[]> _patrolRegister = new List<Vector3[]>();
+    private ImmediateMesh _immediateMesh;
 	private MeshInstance3D _meshInstance;
 
 	public static GameDebug Current {  get; internal set; }
@@ -49,24 +50,47 @@ public partial class GameDebug : Node
 		_immediateMesh.ClearSurfaces();
 		if (PlayerInput.Current.DebugToggle)
 		{
+            _immediateMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+            
 			DrawFOV();
-		}
-		_fovRegister.Clear();
+			DrawPatrolPaths();
+
+            _immediateMesh.SurfaceEnd();
+        }
+        _fovRegister.Clear();
+        _patrolRegister.Clear();
 	}
 
-	private void DrawLine(Vector3 from, Vector3 to, Color color)
+    private void DrawPatrolPaths()
+    {
+        if (_fovRegister.Count == 0)
+            return;
+
+        foreach (var record in _patrolRegister)
+        {
+			for (int i = 0; i < record.Length; i++)
+			{
+				DrawLine(record[i] + Vector3.Up*0.1f, record[(i + 1) % record.Length] + Vector3.Up * 0.1f, Colors.Purple);
+            }
+        }
+    }
+
+    private void DrawLine(Vector3 from, Vector3 to, Color color)
 	{
 		_immediateMesh.SurfaceSetColor(color);
 		_immediateMesh.SurfaceAddVertex(from);
 		_immediateMesh.SurfaceAddVertex(to);
 	}
 
-	public void DrawFOV()
+	public void RegisterPatrolPath(Vector3[] points)
+	{
+		_patrolRegister.Add(points);
+	}
+
+    private void DrawFOV()
 	{
 		if (_fovRegister.Count == 0)
 			return;
-
-		_immediateMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
 
 		foreach (var record in _fovRegister)
 		{
@@ -82,7 +106,5 @@ public partial class GameDebug : Node
 			DrawLine(record.From, record.From + leftEdge * rayLength, Colors.White);
 			DrawLine(record.From, record.From + rightEdge * rayLength, Colors.White);
 		}
-
-		_immediateMesh.SurfaceEnd();
 	}
 }

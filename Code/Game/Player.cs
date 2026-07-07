@@ -12,7 +12,8 @@ public partial class Player : Node3D
 	private Camera3D _godCamera;
 	private float _selectCooldown;
 	private float _moveToCooldown;
-	private Vector3 _homeBaseCoords;
+	private float _patrolCmdCooldown;
+    private Vector3 _homeBaseCoords;
 	private TeamMembership _myTeam;
 	
 	#region MouseCursors
@@ -272,12 +273,24 @@ public partial class Player : Node3D
 				goto specialModeExit;
 			}
 
-			HandleSelectCommand();
+			if (_inputs.IsPatrolArmy)
+			{
+                Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+                HandlePatrolCommand();
+                goto specialModeExit;
+            }
+
+            HandleSelectCommand();
 		}
-		
-specialModeExit:
-		
-		if (_inputs.IsMoveArmy)
+
+    specialModeExit:
+        
+		if (_inputs.IsPatrolArmyReleased)
+        {
+            HandlePatrolMode();
+        }
+
+        if (_inputs.IsMoveArmy)
 		{
 			Input.SetDefaultCursorShape(Input.CursorShape.Cross);
 		}
@@ -294,7 +307,66 @@ specialModeExit:
 		this.Position += new Vector3(_inputs.PlayerMove.X, 0,  _inputs.PlayerMove.Y) * (float)delta * CAM_MOVE_SPEED;
 	}
 
-	private void HandleSelectCommand()
+    private void HandlePatrolMode()
+    {
+        // Collect selected movable entities
+        var map = GetParent().GetParent() as IGameMap;
+        var selected = new List<MovableTeamEntity>();
+        if (map != null)
+        {
+            foreach (var entity in map.GetEntities(_myTeam))
+            {
+                if (!entity.IsSelected)
+                    continue;
+                if (entity is MovableTeamEntity m)
+                    selected.Add(m);
+            }
+        }
+
+        if (selected.Count == 0)
+            return;
+
+        for (int i = 0; i < selected.Count; i++)
+        {
+            selected[i].OnBeginPatrol();
+        }
+    }
+
+    private void HandlePatrolCommand()
+    {
+        if ((Time.GetTicksMsec() / 1000f - _patrolCmdCooldown) <= CLICK_COOLDOWN)
+            return;
+
+        var whereTo3 = MouseRaycastToTerrain();
+        if (whereTo3 == Vector3.Inf)
+            return;
+
+        // Collect selected movable entities
+        var map = GetParent().GetParent() as IGameMap;
+        var selected = new List<MovableTeamEntity>();
+        if (map != null)
+        {
+            foreach (var entity in map.GetEntities(_myTeam))
+            {
+                if (!entity.IsSelected)
+                    continue;
+                if (entity is MovableTeamEntity m)
+                    selected.Add(m);
+            }
+        }
+
+        if (selected.Count == 0)
+            return;
+
+        _patrolCmdCooldown = Time.GetTicksMsec() / 1000f;
+
+        for (int i = 0; i < selected.Count; i++)
+        {
+            selected[i].AddPatrolCheckpoint(whereTo3);
+        }
+    }
+
+    private void HandleSelectCommand()
 	{
 		if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)
 		{

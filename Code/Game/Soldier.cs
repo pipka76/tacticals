@@ -63,7 +63,7 @@ public partial class Soldier : MovableTeamEntity
 
 		if (IsInState(TeamEntityStates.PATROL)) 
 		{
-			HandlePatrol();
+			HandlePatrol(delta);
 			return;
 		}
 
@@ -84,10 +84,76 @@ public partial class Soldier : MovableTeamEntity
 		HandleIdle(delta);
 	}
 
-    private void HandlePatrol()
+    private void HandlePatrol(double delta)
 	{
+		var moveTo = GetPatrolCheckpoint();
 
-	}
+		repeat:
+		if (moveTo == null)
+			return;
+
+		GameDebug.Current.RegisterPatrolPath(_patrolCheckpoints.ToArray());
+
+        var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+		if ((moveTo.Value - globalPositionFlat).Length() > 1f)
+		{
+			if (RaycastToTerrain(out var gnd, out _))
+			{
+				// Desired direction to our assigned slot/target (MoveToCoordinates)
+				var toTarget = (moveTo.Value - globalPositionFlat);
+				float dist = toTarget.Length();
+				var desired = dist > 0.0001f ? (toTarget / dist) : Vector3.Zero;
+
+				// Local steering to keep a loose crowd spacing
+				var separation = ComputeSeparation(globalPositionFlat, EntityGroup.GROUND_UNIT);
+				var steer = desired + separation * SEPARATION_WEIGHT;
+				steer.Y = 0;
+				if (steer.LengthSquared() < 0.000001f)
+					return;
+				steer = steer.Normalized();
+
+				// Arrival: slow down near target to avoid jitter/pile-ups
+				float speedFactor = 1.0f;
+				if (dist < ARRIVE_SLOW_RADIUS)
+				{
+					speedFactor = Mathf.Clamp(dist / ARRIVE_SLOW_RADIUS, MIN_SPEED_FACTOR, 1.0f);
+				}
+
+				var move = GlobalPosition + steer * (float)delta * (MOVE_SPEED * speedFactor);
+				move.Y = gnd.Y;
+				GlobalPosition = move;
+
+				RotateTowards(moveTo.Value);
+			}
+
+			//Mute();
+		}
+		else
+		{
+            moveTo = GetPatrolCheckpoint(true);
+			goto repeat;
+        }
+		HandleLookout(delta, 8, 5);
+    }
+
+	private void HandleLookout(double delta, double duration = LOOKOUT_DURATION, double interval = LOOKOUT_INTERVAL)
+	{
+        _lookoutT -= delta;
+        if (_lookoutT <= 0.0)
+        {
+            _lookoutD -= delta;
+
+            double t = 1.0 - (_lookoutD / duration); // 0.0 → 1.0 over the duration
+            _eyeAngle = (Math.PI / 2) * Math.Sin(2 * Math.PI * t);
+
+            if (_lookoutD <= 0.0)
+            {
+                _lookoutD = duration;
+                _lookoutT = interval;
+                _eyeAngle = 0.0;
+            }
+        }
+    }
 
     private void HandleAttack(double delta)
 	{
@@ -170,21 +236,7 @@ public partial class Soldier : MovableTeamEntity
 			}
 		}
 
-        _lookoutT -= delta;
-        if (_lookoutT <= 0.0)
-        {
-            _lookoutD -= delta;
-
-            double t = 1.0 - (_lookoutD / LOOKOUT_DURATION); // 0.0 → 1.0 over the duration
-            _eyeAngle = (Math.PI / 2) * Math.Sin(2 * Math.PI * t);
-
-            if (_lookoutD <= 0.0)
-            {
-                _lookoutD = LOOKOUT_DURATION;
-                _lookoutT = LOOKOUT_INTERVAL;
-                _eyeAngle = 0.0;
-            }
-        }
+		HandleLookout(delta);
 
         TransitionToNextState();
 	}
@@ -381,7 +433,7 @@ public partial class Soldier : MovableTeamEntity
         float yaw = (float)_eyeAngle + GlobalRotation.Y;
 		GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
 
-		if (IsInState(TeamEntityStates.ONTHEWAY))
+		if (IsInState(TeamEntityStates.ONTHEWAY) || IsInState(TeamEntityStates.PATROL))
 		{
 			if (_animPlayer.CurrentAnimation != "Walking")
 				_animPlayer.Play("Walking");
