@@ -30,6 +30,7 @@ public partial class GameDebug : Node
 		
 		StandardMaterial3D material = new StandardMaterial3D();
 		material.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
+		material.VertexColorUseAsAlbedo = true;
 		_meshInstance.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
 		material.DisableReceiveShadows = true;
 		_meshInstance.MaterialOverride = material;

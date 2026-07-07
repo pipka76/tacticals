@@ -102,8 +102,12 @@ public partial class Player : Node3D
 					// Assign the unique copy to this instance
 					mesh.SetSurfaceOverrideMaterial(2, unique);
 				}
-
-				map.SpawnEntity(enemySoldier, new Vector2(133, 76 + i*20));
+				//((Soldier)enemySoldier).AddPatrolCheckpoint();
+				//((Soldier)enemySoldier).AddPatrolCheckpoint();
+				//((Soldier)enemySoldier).AddPatrolCheckpoint();
+				//((Soldier)enemySoldier).AddPatrolCheckpoint();
+				//((Soldier)enemySoldier).SetNewState(TeamEntityStates.PATROL);
+                map.SpawnEntity(enemySoldier, new Vector2(133, 76 + i*20));
 			}
 			
 			// var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
