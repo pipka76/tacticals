@@ -26,6 +26,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public bool IsDragging;
 	public bool IsBoarding;
 	public bool IsExiting;
+	public bool IsPatrolArmy;
 	public bool MapToggle;
 	public bool DebugToggle;
     public float CameraFov = 50f;
@@ -170,6 +171,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 			IsMoveArmy = Input.IsActionPressed("move_army");
 			IsBoarding = Input.IsActionPressed("board_entity");
 			IsExiting = Input.IsActionPressed("exit_entity");
+			IsPatrolArmy = Input.IsActionPressed("patrol_army");
 //		else
 //			IsSelecting = false;
 		

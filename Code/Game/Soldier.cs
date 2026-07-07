@@ -61,6 +61,12 @@ public partial class Soldier : MovableTeamEntity
 			return;
 		}
 
+		if (IsInState(TeamEntityStates.PATROL)) 
+		{
+			HandlePatrol();
+			return;
+		}
+
 		if (IsInState(TeamEntityStates.ATTACK))
 		{
             ResetLookout();
@@ -78,7 +84,12 @@ public partial class Soldier : MovableTeamEntity
 		HandleIdle(delta);
 	}
 
-	private void HandleAttack(double delta)
+    private void HandlePatrol()
+	{
+
+	}
+
+    private void HandleAttack(double delta)
 	{
 		// Fire in ~5s intervals as long as target remains in range + visible.
 		_attackT -= delta;
