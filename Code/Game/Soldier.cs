@@ -13,12 +13,14 @@ public partial class Soldier : MovableTeamEntity
 	private const float AWARE_RADIUS = 50f;
 	private const float AWARE_CHECK_INTERVAL = 0.2f;
 	private const float LOOKOUT_INTERVAL = 10f;
+	private const float LOOKOUT_DURATION = 8f;
 	private double _awareT = 0.0;
 	private TeamEntity _enemyTarget;
 	private const float ATTACK_INTERVAL = 3.0f;
 	private double _attackT = 0.0;
 	private double _eyeAngle = 0.0;
 	private double _lookoutT = 0.0;
+	private double _lookoutD = 0.0;
 
 	public Soldier()
 	{
@@ -157,9 +159,16 @@ public partial class Soldier : MovableTeamEntity
         _lookoutT -= delta;
         if (_lookoutT <= 0.0)
 		{
-            double t = delta / 15;
-            double raw = Math.Sin(2 * Math.PI * t);
-            _eyeAngle = (Math.PI / 2) * raw * raw * raw;
+            double t = delta / LOOKOUT_DURATION; // Adjust the divisor to control the speed of the oscillation
+            _eyeAngle = (Math.PI / 2) * Math.Sin(2 * Math.PI * t);
+
+			_lookoutD -= delta;
+			if (_lookoutD >= 0.0)
+			{
+				_lookoutD = LOOKOUT_DURATION;
+				_lookoutT = LOOKOUT_INTERVAL;
+				_eyeAngle = 0.0;
+			}
         }
 
         TransitionToNextState();
@@ -347,7 +356,7 @@ public partial class Soldier : MovableTeamEntity
 
 	private void HandleAnimation()
 	{
-        float yaw = GlobalRotation.Y;
+        float yaw = (float)_eyeAngle + GlobalRotation.Y;
 		GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
 
 		if (IsInState(TeamEntityStates.ONTHEWAY))

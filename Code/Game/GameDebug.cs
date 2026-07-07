@@ -29,8 +29,8 @@ public partial class GameDebug : Node
 		
 		StandardMaterial3D material = new StandardMaterial3D();
 		material.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
-        _meshInstance.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
-        material.DisableReceiveShadows = true;
+		_meshInstance.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
+		material.DisableReceiveShadows = true;
 		_meshInstance.MaterialOverride = material;
 		
 		AddChild(_meshInstance);
@@ -41,20 +41,20 @@ public partial class GameDebug : Node
 		_fovRegister.Add(new GameDebug.FovRecord() { From = from, FovAngle = angle, Forward = forward, FovDistance = distance});
 	}
 
-    public override void _Process(double delta)
+	public override void _Process(double delta)
 	{
 		if (PlayerInput.Current == null)
 			return;
 
-        _immediateMesh.ClearSurfaces();
-        if (PlayerInput.Current.DebugToggle)
+		_immediateMesh.ClearSurfaces();
+		if (PlayerInput.Current.DebugToggle)
 		{
 			DrawFOV();
-        }
-        _fovRegister.Clear();
-    }
+		}
+		_fovRegister.Clear();
+	}
 
-    private void DrawLine(Vector3 from, Vector3 to, Color color)
+	private void DrawLine(Vector3 from, Vector3 to, Color color)
 	{
 		_immediateMesh.SurfaceSetColor(color);
 		_immediateMesh.SurfaceAddVertex(from);
