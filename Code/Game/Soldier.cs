@@ -47,8 +47,12 @@ public partial class Soldier : MovableTeamEntity
     public override void _Process(double delta)
 	{
         HandleAnimation();
+		if (IsInState(TeamEntityStates.TERMINATED))
+			return;
+        
+		ReportDebug();
 
-		if (_damageTaken > 0)
+        if (_damageTaken > 0)
 		{
 			SetNewState(TeamEntityStates.TERMINATED);
 			return;
@@ -74,7 +78,7 @@ public partial class Soldier : MovableTeamEntity
 			return;
 		}
 
-		if (IsInState(TeamEntityStates.BOARDED) || IsInState(TeamEntityStates.TERMINATED))
+		if (IsInState(TeamEntityStates.BOARDED))
 		{
             ResetLookout();
             Mute();
@@ -134,6 +138,11 @@ public partial class Soldier : MovableTeamEntity
 			goto repeat;
         }
 		HandleLookout(delta, 8, 5);
+		if (CheckForEnemies(delta))
+		{
+			SetNewState(TeamEntityStates.ATTACK);
+			EnqueueState(TeamEntityStates.PATROL);
+		}
     }
 
 	private void HandleLookout(double delta, double duration = LOOKOUT_DURATION, double interval = LOOKOUT_INTERVAL)
@@ -219,25 +228,30 @@ public partial class Soldier : MovableTeamEntity
 		});
 	}
 
+	private bool CheckForEnemies(double delta)
+	{
+        _awareT -= delta;
+        if (_awareT <= 0.0)
+        {
+            _awareT = AWARE_CHECK_INTERVAL;
+
+            var enemy = FindVisibleEnemy(AWARE_RADIUS);
+            if (enemy != null)
+            {
+                _enemyTarget = enemy as TeamEntity;
+                _attackT = 1.5f;
+                return true;
+            }
+        }
+
+		return false;
+    }
+
 	private void HandleIdle(double delta)
 	{
-		_awareT -= delta;
-		if (_awareT <= 0.0)
-		{
-			_awareT = AWARE_CHECK_INTERVAL;
-
-			var enemy = FindVisibleEnemy(AWARE_RADIUS);
-			if (enemy != null)
-			{
-				_enemyTarget = enemy as TeamEntity;
-				_attackT = 1.5f;
-				SetNewState(TeamEntityStates.ATTACK);
-				return;
-			}
-		}
-
-		HandleLookout(delta);
-
+		if(CheckForEnemies(delta))
+            EnqueueState(TeamEntityStates.ATTACK);
+        HandleLookout(delta);
         TransitionToNextState();
 	}
 
@@ -428,11 +442,14 @@ public partial class Soldier : MovableTeamEntity
 		Main.Current.Audio.Play3D("soldier_died", GlobalPosition);
 	}
 
-	private void HandleAnimation()
+	private void ReportDebug()
 	{
         float yaw = (float)_eyeAngle + GlobalRotation.Y;
-		GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
+        GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
+    }
 
+    private void HandleAnimation()
+	{
 		if (IsInState(TeamEntityStates.ONTHEWAY) || IsInState(TeamEntityStates.PATROL))
 		{
 			if (_animPlayer.CurrentAnimation != "Walking")

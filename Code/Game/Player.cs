@@ -103,27 +103,41 @@ public partial class Player : Node3D
 					mesh.SetSurfaceOverrideMaterial(2, unique);
 				}
 				map.SpawnEntity(enemySoldier, new Vector2(133 - i*18, 76 + i*30));
+				if (i == 2 || i == 1)
+				{
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 75));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(80, 0, 75));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 115));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 167));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 167));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 125));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 125));
+                }
+                else
+				{
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 167));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 125));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 125));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 75));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(80, 0, 75));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 115));
+                    ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 167));
+                }
+                ((Soldier)enemySoldier).OnBeginPatrol();
                 ((Soldier)enemySoldier).SetNewState(TeamEntityStates.PATROL);
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 75));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(80, 0, 75));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 115));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 167));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 167));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 125));
-                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 125));
             }
-			
-			// var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
-			// var t = (TeamEntity)tank.Instantiate();
-			// map.SpawnEntity(t);
-			// _myArmy.Add(t); 
-			//
-			// var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
-			// var h = (TeamEntity)heli.Instantiate();
-			// map.SpawnEntity(h);
-			// _myArmy.Add(h); 
 
-			var dest = map.GetMyBasePosition();
+            // var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
+            // var t = (TeamEntity)tank.Instantiate();
+            // map.SpawnEntity(t);
+            // _myArmy.Add(t); 
+            //
+            // var heli = GD.Load<PackedScene>("res://Scenes/Game/Heli.tscn");
+            // var h = (TeamEntity)heli.Instantiate();
+            // map.SpawnEntity(h);
+            // _myArmy.Add(h); 
+
+            var dest = map.GetMyBasePosition();
 			// Build ring-scatter slots around the destination
 			var slots = BuildRingScatterSlots(dest, 12, FORMATION_SPACING);
 
