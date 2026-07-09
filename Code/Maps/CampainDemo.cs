@@ -54,7 +54,7 @@ public partial class CampainDemo :  Node3D, IGameMap
 
     public Vector2 GetMyBasePosition()
     {
-        return new Vector2(80, 70);
+        return new Vector2(70, 60);
     }
 
     public void SpawnPlayer()

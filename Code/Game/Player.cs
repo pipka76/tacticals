@@ -86,7 +86,7 @@ public partial class Player : Node3D
 			}
 
 			// testing the enemy soldier
-			for (int i = 0; i < 3; i++)
+			for (int i = 0; i < 4; i++)
 			{
 				var enemySoldier = (TeamEntity)soldier.Instantiate();
 				enemySoldier.SetMembership(TeamMembership.RED, true);
@@ -102,13 +102,16 @@ public partial class Player : Node3D
 					// Assign the unique copy to this instance
 					mesh.SetSurfaceOverrideMaterial(2, unique);
 				}
-				//((Soldier)enemySoldier).AddPatrolCheckpoint();
-				//((Soldier)enemySoldier).AddPatrolCheckpoint();
-				//((Soldier)enemySoldier).AddPatrolCheckpoint();
-				//((Soldier)enemySoldier).AddPatrolCheckpoint();
-				//((Soldier)enemySoldier).SetNewState(TeamEntityStates.PATROL);
-                map.SpawnEntity(enemySoldier, new Vector2(133, 76 + i*20));
-			}
+				map.SpawnEntity(enemySoldier, new Vector2(133 - i*18, 76 + i*30));
+                ((Soldier)enemySoldier).SetNewState(TeamEntityStates.PATROL);
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 75));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(80, 0, 75));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 115));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(76.3f, 0, 167));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 167));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(120, 0, 125));
+                ((Soldier)enemySoldier).AddPatrolCheckpoint(new Vector3(135, 0, 125));
+            }
 			
 			// var tank = GD.Load<PackedScene>("res://Scenes/Game/Tank.tscn");
 			// var t = (TeamEntity)tank.Instantiate();

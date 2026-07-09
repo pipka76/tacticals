@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" uid="uid://bwhs5omi0dbja" path="res://Scenes/Biome/TreeC4.tscn" id="16_1m8xm"]
 [ext_resource type="PackedScene" uid="uid://dv1g8lqlkwofo" path="res://Scenes/Biome/TreeC2.tscn" id="17_ugdf6"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_uwkgb"]
+
 [node name="CampainDemo" type="Node3D" unique_id=568710814]
 script = ExtResource("1_wp650")
 
@@ -331,3 +333,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 175.15802, 0.0310142, 106.932
 
 [node name="TreeC18" parent="." unique_id=964952824 instance=ExtResource("17_ugdf6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 185.48297, 0.027894618, 97.8983)
+
+[node name="Pivot" type="CollisionShape3D" parent="." unique_id=1393895947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 76.30703, 0, 116.98065)
+shape = SubResource("BoxShape3D_uwkgb")
