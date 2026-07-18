@@ -16,7 +16,6 @@ public class MapGenerator
     private readonly int _mapHeight;
     private int _structureID;
     private const int HEATRADIUS = 10;
-    Random _r = new Random();
     
     public MapGenerator(int mapWidth, int mapHeight)
     {
@@ -216,7 +215,7 @@ public class MapGenerator
     }
     private string ChooseTree(string treeType)
     {
-        int r = _r.Next(0, 120);
+        int r = Random.Shared.Next(0, 120);
         switch (treeType)
         {
             case "conifer":
