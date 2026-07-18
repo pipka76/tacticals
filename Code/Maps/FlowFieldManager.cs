@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using tacticals.Code.Maps;
 
 /// <summary>
 /// Immutable key for caching a flow field. Extend this with whatever makes fields differ in your game
@@ -61,6 +62,12 @@ public sealed class FlowFieldData
 
     /// <summary>Per-cell bitmask of the domains allowed to enter. Owned by FlowFieldManager.</summary>
     private readonly byte[] _passable;
+
+    /// <summary>
+    /// Per-cell step cost, currently uniform 1.0 everywhere.
+    /// Do NOT wire terrain into this: difficult terrain must slow units down, not reroute them,
+    /// so that the player drives route choice. Terrain lives in FlowFieldManager._moveFactor.
+    /// </summary>
     private readonly float[] _baseCost;
 
     private readonly float[] _integration;
@@ -277,7 +284,8 @@ public sealed class FlowFieldData
 }
 
 /// <summary>
-/// Owns the map grid (blocked + base costs) and caches FlowFieldData per (goal, agent profile, diagonal mode).
+/// Owns the map grid (passability, step cost, terrain speed) and caches FlowFieldData per
+/// (goal, movement domain, diagonal mode).
 /// Owned by the map (see IGameMap implementations) - plain C# object, deliberately not a Node:
 /// it uses no scene-tree facilities, and as an unparented Node it would leak on every level load.
 /// </summary>
@@ -292,6 +300,13 @@ public sealed class FlowFieldManager
     // Map state. One byte per cell holding a MovementDomain bitmask of who may enter it.
     private byte[] _passable;
     private float[] _baseCost;
+
+    /// <summary>
+    /// Per-cell ground movement-speed multiplier, 1.0 = unimpeded.
+    /// Deliberately NOT read by the Dijkstra integration pass and deliberately not handed to
+    /// FlowFieldData: terrain slows units down, it never changes which route they take.
+    /// </summary>
+    private float[] _moveFactor;
 
     /// <summary>Increments whenever map passability/cost changes.</summary>
     public int MapVersion { get; private set; } = 0;
@@ -313,11 +328,13 @@ public sealed class FlowFieldManager
         int n = width * height;
         _passable = new byte[n];
         _baseCost = new float[n];
+        _moveFactor = new float[n];
 
         for (int i = 0; i < n; i++)
         {
             _passable[i] = (byte)MovementDomain.All;
             _baseCost[i] = 1f;
+            _moveFactor[i] = 1f;
         }
 
         _cache.Clear();
@@ -332,6 +349,7 @@ public sealed class FlowFieldManager
         {
             _passable[i] = (byte)MovementDomain.All;
             _baseCost[i] = 1f;
+            _moveFactor[i] = 1f;
         }
 
         _cache.Clear();
@@ -384,6 +402,34 @@ public sealed class FlowFieldManager
         _baseCost[idx] = clamped;
         MapVersion++;
     }
+
+    /// <summary>
+    /// Slows ground movement through the cell. Takes the strongest (lowest) factor seen, so
+    /// overlapping features compound rather than the last writer winning.
+    /// Does NOT bump MapVersion - this is not pathfinding state, and invalidating every cached
+    /// field over a speed tweak would be pure waste.
+    /// </summary>
+    public void SetMoveFactor(Vector2I cell, float factor)
+    {
+        if (!IsInitialized) return;
+        if (!InBounds(cell)) return;
+
+        int idx = Idx(cell);
+        float clamped = Mathf.Clamp(factor, MapConstants.MOVE_FACTOR_MIN, 1f);
+        if (clamped < _moveFactor[idx])
+            _moveFactor[idx] = clamped;
+    }
+
+    /// <summary>Ground movement-speed multiplier for the cell. 1.0 when uninitialized or out of bounds.</summary>
+    public float GetMoveFactor(Vector2I cell)
+    {
+        if (!IsInitialized) return 1f;
+        if (!InBounds(cell)) return 1f;
+        return _moveFactor[Idx(cell)];
+    }
+
+    /// <summary>Ground movement-speed multiplier at a world XZ position.</summary>
+    public float GetMoveFactorWorld(Vector2 worldXZ) => GetMoveFactor(WorldToCell(worldXZ));
 
     /// <summary>True if the given domain may enter the cell. Out of bounds is never passable.</summary>
     public bool IsPassable(Vector2I cell, MovementDomain domain)

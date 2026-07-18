@@ -19,7 +19,13 @@ public partial class Main : Node
 	public AudioManager Audio { get; internal set; }
 	
 	public ProjectileManager Projectiles { get; internal set; }
-	
+
+	/// <summary>
+	/// The level currently loaded under the "Map" node, or null in the menus and during a
+	/// scene swap. Entities should reach the map through this rather than walking the node tree.
+	/// </summary>
+	public IGameMap Map { get; private set; }
+
 	public override void _Ready()
 	{
 		Current = this;
@@ -118,6 +124,9 @@ public partial class Main : Node
 
 	private IGameMap ChangeLevel(PackedScene scene)
 	{
+		// Drop the handle before freeing, so nothing dereferences a disposed level mid-teardown.
+		Map = null;
+
 		// Remove old level if any.
 		var mapRoot = GetNode("Map");
 		foreach (Node child in mapRoot.GetChildren())
@@ -133,6 +142,7 @@ public partial class Main : Node
 			mapRoot.AddChild(li);
 			map.GenerateLevel();
 
+			Map = map;
 			return map;
 		}
 

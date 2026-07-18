@@ -69,10 +69,13 @@ public class MapGenerator
     }
 
     /// <summary>
-    /// Publishes the map's *terrain* passability to the flow field:
+    /// Publishes the map's *terrain* passability to the flow field. Passability is binary here -
+    /// only two block types close anything off:
     ///   RESTRICTED - closed to everyone.
     ///   AIR_ONLY   - closed to ground units, open to air.
-    ///   trees      - close only the cell they stand in, and only to ground units; a Heli flies over.
+    /// Everything else, forest and river included, stays passable to ground units. Difficult
+    /// terrain slows units down instead of diverting them, so that the player decides the route
+    /// (see MapConstants.MOVE_FACTOR_* and FlowFieldManager.SetMoveFactor).
     /// This is generation-time state only. Structures are built during play by player commands and
     /// must register their own footprint against the live FlowFieldManager as they are placed.
     /// </summary>
@@ -92,6 +95,9 @@ public class MapGenerator
                     case MapBlockType.AIR_ONLY:
                         BlockWholeMapBlock(mgr, i, j, MovementDomain.Ground);
                         break;
+                    case MapBlockType.RIVER:
+                        SetMoveFactorForMapBlock(mgr, i, j, MapConstants.MOVE_FACTOR_RIVER);
+                        break;
                 }
 
                 if (block.BiomeInfo == null)
@@ -102,12 +108,26 @@ public class MapGenerator
                     if (bd.Type == BiomeDataType.GROUND)
                         continue;
 
-                    // Derive the cell from the tree's actual world position rather than from (i,j),
-                    // so this stays correct whatever offset the placement pass applies.
+                    // Slow the cell the tree PHYSICALLY occupies, derived from its world position.
+                    // Do not attribute this to block (i,j): GenerateForest offsets LocalCoord by
+                    // -BLOCK_SIZE/2, so a tree recorded here actually stands in the previous block.
+                    // Rendering uses this same world position, so the cell is the one the player sees.
                     var world = block.GlobalPosition + bd.LocalCoord;
-                    mgr.Block(mgr.WorldToCell(new Vector2(world.X, world.Z)), MovementDomain.Ground);
+                    mgr.SetMoveFactor(mgr.WorldToCell(new Vector2(world.X, world.Z)), MapConstants.MOVE_FACTOR_FOREST);
                 }
             }
+        }
+    }
+
+    /// <summary>Applies a terrain speed factor to every pathfinding cell covered by map block (i,j).</summary>
+    private void SetMoveFactorForMapBlock(FlowFieldManager mgr, int i, int j, float factor)
+    {
+        const int s = MapConstants.PATHFIND_SCALE;
+
+        for (int k = 0; k < s; k++)
+        {
+            for (int l = 0; l < s; l++)
+                mgr.SetMoveFactor(new Vector2I(i * s + k, j * s + l), factor);
         }
     }
 

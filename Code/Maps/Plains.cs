@@ -15,7 +15,9 @@ public partial class Plains : Node3D, IGameMap
 	private MapBlock[][] _map;
 	private PackedScene _grassP, _riverS, _riverT;
 	private FlowFieldManager _mgr = new FlowFieldManager();
-	
+
+	public FlowFieldManager PathField => _mgr;
+
 	public override void _Ready()
 	{
 		_entities = GetNode<Node>("Entities");

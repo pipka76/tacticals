@@ -51,6 +51,83 @@ public partial class MovableTeamEntity : TeamEntity
         return sep;
     }
 
+    /// <summary>Outcome of a single StepTowards call. Callers treat the two failures differently.</summary>
+    protected enum StepResult
+    {
+        /// <summary>Position was updated.</summary>
+        Moved,
+
+        /// <summary>No terrain underneath the unit. Nothing moved, but the caller carries on.</summary>
+        NoGround,
+
+        /// <summary>Steering collapsed (target reached / separation cancelled out). Caller bails out entirely.</summary>
+        Degenerate
+    }
+
+    /// <summary>
+    /// Shared ground steering for one frame: heads towards <paramref name="targetFlat"/>, blends in
+    /// crowd separation, eases off on arrival, applies the terrain speed penalty and writes the
+    /// position back down onto the terrain.
+    /// The arrival test, state transitions, sound and rotation stay with the caller; they differ per unit.
+    /// </summary>
+    protected StepResult StepTowards(
+        Vector3 targetFlat,
+        double delta,
+        float moveSpeed,
+        out Vector3 steer,
+        out Vector3 groundNormal,
+        string separationGroup = EntityGroup.GROUND_UNIT)
+    {
+        steer = Vector3.Zero;
+        groundNormal = Vector3.Up;
+
+        if (!RaycastToTerrain(out var gnd, out var n))
+            return StepResult.NoGround;
+
+        groundNormal = n.Normalized();
+
+        var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+
+        // Desired direction to our assigned slot/target
+        var toTarget = (targetFlat - globalPositionFlat);
+        float dist = toTarget.Length();
+        var desired = dist > 0.0001f ? (toTarget / dist) : Vector3.Zero;
+
+        // Local steering to keep a loose crowd spacing
+        var separation = ComputeSeparation(globalPositionFlat, separationGroup);
+        steer = desired + separation * SEPARATION_WEIGHT;
+        steer.Y = 0;
+        if (steer.LengthSquared() < 0.000001f)
+            return StepResult.Degenerate;
+        steer = steer.Normalized();
+
+        // Arrival: slow down near target to avoid jitter/pile-ups
+        float speedFactor = 1.0f;
+        if (dist < ARRIVE_SLOW_RADIUS)
+        {
+            speedFactor = Mathf.Clamp(dist / ARRIVE_SLOW_RADIUS, MIN_SPEED_FACTOR, 1.0f);
+        }
+
+        var move = GlobalPosition + steer * (float)delta * (moveSpeed * speedFactor * TerrainSpeedFactor());
+        move.Y = gnd.Y;
+        GlobalPosition = move;
+
+        return StepResult.Moved;
+    }
+
+    /// <summary>
+    /// Terrain speed multiplier at the unit's current position, 1.0 on open ground.
+    /// Air units are exempt - a Heli at flight level ignores what is underneath it.
+    /// </summary>
+    protected virtual float TerrainSpeedFactor()
+    {
+        if (IsInGroup(EntityGroup.AIR_UNIT))
+            return 1f;
+
+        var pathField = Main.Current?.Map?.PathField;
+        return pathField?.GetMoveFactorWorld(new Vector2(GlobalPosition.X, GlobalPosition.Z)) ?? 1f;
+    }
+
     public virtual void PortTo(Vector2 coords)
     {
         if (_teamMembership == TeamMembership.NEUTRAL)

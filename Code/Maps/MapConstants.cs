@@ -18,5 +18,14 @@ namespace tacticals.Code.Maps
         /// Independent of BIOMEHEATMAPSCALE - that one drives terrain/biome sampling.
         /// </summary>
         public const int PATHFIND_SCALE = 4; // 15 / 4 = 3.75 world units per cell
+
+        /// <summary>
+        /// Ground movement-speed multipliers for difficult terrain. 1.0 = unimpeded.
+        /// These affect speed ONLY - they never enter flow-field path cost, so units slow down
+        /// crossing forest but are not rerouted around it. The player picks the route.
+        /// </summary>
+        public const float MOVE_FACTOR_MIN = 0.25f;    // hard floor, however much terrain stacks up
+        public const float MOVE_FACTOR_FOREST = 0.5f;  // cell containing a tree
+        public const float MOVE_FACTOR_RIVER = 0.4f;   // river block
     }
 }
