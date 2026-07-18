@@ -365,8 +365,15 @@ public partial class Soldier : MovableTeamEntity
 		var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
 		if ((MoveToCoordinates - globalPositionFlat).Length() > 1f)
 		{
-			if (StepTowards(MoveToCoordinates, delta, MOVE_SPEED, out _, out _) == StepResult.Degenerate)
+			var step = StepTowards(MoveToCoordinates, delta, MOVE_SPEED, out _, out _);
+			if (step == StepResult.Degenerate)
 				return;
+
+			// Face the leg we are walking, every frame, the same way patrol does. Rotating only
+			// when the order is issued leaves the soldier strafing every waypoint after the first,
+			// since TransitionToNextState swaps the target without touching rotation.
+			if (step == StepResult.Moved)
+				RotateTowards(MoveToCoordinates);
 
 			Mute();
 
