@@ -91,14 +91,23 @@ public partial class Soldier : MovableTeamEntity
     private void HandlePatrol(double delta)
 	{
 		var moveTo = GetPatrolCheckpoint();
-
-		repeat:
 		if (moveTo == null)
 			return;
 
-		GameDebug.Current.RegisterPatrolPath(_patrolCheckpoints.ToArray());
+		GameDebug.Current?.RegisterPatrolPath(_patrolCheckpoints.ToArray());
 
         var globalPositionFlat = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+
+		// Skip past any checkpoints we are already standing on. Bounded by the checkpoint count:
+		// a lone checkpoint under our feet (or several bunched together) would otherwise spin here
+		// forever, since the walk wraps around and never runs out.
+		for (int guard = _patrolCheckpoints.Count;
+		     guard > 0 && (moveTo.Value - globalPositionFlat).Length() <= 1f;
+		     guard--)
+		{
+			moveTo = GetPatrolCheckpoint(true);
+		}
+
 		if ((moveTo.Value - globalPositionFlat).Length() > 1f)
 		{
 			// NOTE: the Degenerate early-out skips HandleLookout/CheckForEnemies below. That is
@@ -112,11 +121,7 @@ public partial class Soldier : MovableTeamEntity
 
 			//Mute();
 		}
-		else
-		{
-            moveTo = GetPatrolCheckpoint(true);
-			goto repeat;
-        }
+
 		HandleLookout(delta, 8, 5);
 		if (CheckForEnemies(delta))
 		{

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace tacticals.Code.Game;
@@ -221,21 +222,26 @@ public partial class Heli : MovableTeamEntity, IPassengers
         }
     }
 
-    public override void MoveTo(Vector2 coords)
+    public override void MoveAlong(IReadOnlyList<Vector2> waypoints)
     {
-        // this is command from player directly, so forget everything and listen! 
-        _moveToCoords = coords;
-
-        if (_aboveGround != FLIGHT_LEVEL)
-        {
-            EnqueueState(TeamEntityStates.ONTHEWAY, coords, true);
-            EnqueueState(TeamEntityStates.HOVER, null);
-            SetNewState(TeamEntityStates.TAKEOFF);
+        if (waypoints == null || waypoints.Count == 0)
             return;
-        }
 
-        EnqueueState(TeamEntityStates.HOVER, null, true);
-        SetNewState(TeamEntityStates.ONTHEWAY);
+        // this is command from player directly, so forget everything and listen!
+        ClearPendingStates();
+        _moveToCoords = waypoints[0];
+
+        // Grounded, the first leg has to wait behind the climb, so it gets queued with the rest.
+        // Already at altitude, the first leg starts immediately and only the rest are queued.
+        bool grounded = _aboveGround != FLIGHT_LEVEL;
+
+        for (int i = grounded ? 0 : 1; i < waypoints.Count; i++)
+            EnqueueState(TeamEntityStates.ONTHEWAY, waypoints[i]);
+
+        // Settle into a hover once the last leg is done, rather than dropping straight to IDLE.
+        EnqueueState(TeamEntityStates.HOVER, null);
+
+        SetNewState(grounded ? TeamEntityStates.TAKEOFF : TeamEntityStates.ONTHEWAY);
     }
 
     private void HandleAnimation()

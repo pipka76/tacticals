@@ -39,6 +39,12 @@ public partial class TeamEntity : CharacterBody3D
         _entityStateQueue.Enqueue(new Tuple<TeamEntityStates, object>(state, arg));
     }
 
+    /// <summary>Drops everything still queued, without touching the state the entity is in right now.</summary>
+    protected void ClearPendingStates()
+    {
+        _entityStateQueue.Clear();
+    }
+
     protected Tuple<TeamEntityStates, object> GetNextState()
     {
         if (_entityStateQueue.Count == 0)

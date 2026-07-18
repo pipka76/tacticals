@@ -23,6 +23,21 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public Godot.Vector2 PlayerMove = Godot.Vector2.Zero;
 	public bool IsSelecting;
 	public bool IsMoveArmy;
+	private bool _IsMoveArmyReleased;
+	/// <summary>True once per release of "move_army"; reading it consumes the flag.</summary>
+	public bool IsMoveArmyReleased
+	{
+		get
+		{
+			if (_IsMoveArmyReleased)
+			{
+				_IsMoveArmyReleased = false;
+				return true;
+			}
+
+			return _IsMoveArmyReleased;
+		}
+	}
 	public bool IsDragging;
 	public bool IsBoarding;
 	public bool IsExiting;
@@ -189,6 +204,9 @@ public partial class PlayerInput : MultiplayerSynchronizer
 
         if (Input.IsActionJustReleased("patrol_army"))
             _IsPatrolArmyReleased = true;
+
+        if (Input.IsActionJustReleased("move_army"))
+            _IsMoveArmyReleased = true;
 
         //		else
         //			IsSelecting = false;

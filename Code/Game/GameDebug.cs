@@ -13,8 +13,14 @@ public partial class GameDebug : Node
 		public float FovDistance { get; set; }
 	}
 
+	private class PathRecord
+	{
+		public Vector3[] Points { get; set; }
+		public bool Loop { get; set; }
+	}
+
 	private List<FovRecord> _fovRegister = new List<FovRecord>();
-	private List<Vector3[]> _patrolRegister = new List<Vector3[]>();
+	private List<PathRecord> _patrolRegister = new List<PathRecord>();
     private ImmediateMesh _immediateMesh;
 	private MeshInstance3D _meshInstance;
 
@@ -64,14 +70,22 @@ public partial class GameDebug : Node
 
     private void DrawPatrolPaths()
     {
-        if (_fovRegister.Count == 0)
+        if (_patrolRegister.Count == 0)
             return;
 
         foreach (var record in _patrolRegister)
         {
-			for (int i = 0; i < record.Length; i++)
-			{
-				DrawLine(record[i] + Vector3.Up*0.1f, record[(i + 1) % record.Length] + Vector3.Up * 0.1f, Colors.Purple);
+            var points = record.Points;
+            if (points == null || points.Length < 2)
+                continue;
+
+            // A one-shot move route stops at its last waypoint; a patrol circuit closes the loop.
+            int segments = record.Loop ? points.Length : points.Length - 1;
+            var color = record.Loop ? Colors.Purple : Colors.Cyan;
+
+            for (int i = 0; i < segments; i++)
+            {
+                DrawLine(points[i] + Vector3.Up * 0.1f, points[(i + 1) % points.Length] + Vector3.Up * 0.1f, color);
             }
         }
     }
@@ -83,9 +97,19 @@ public partial class GameDebug : Node
 		_immediateMesh.SurfaceAddVertex(to);
 	}
 
+	/// <summary>A closed patrol circuit - the last point links back to the first.</summary>
 	public void RegisterPatrolPath(Vector3[] points)
 	{
-		_patrolRegister.Add(points);
+		RegisterPath(points, true);
+	}
+
+	/// <summary>
+	/// Draws a route for one frame. Set <paramref name="loop"/> false for a one-shot move order,
+	/// which ends at its last waypoint instead of closing back on itself.
+	/// </summary>
+	public void RegisterPath(Vector3[] points, bool loop)
+	{
+		_patrolRegister.Add(new PathRecord { Points = points, Loop = loop });
 	}
 
     private void DrawFOV()

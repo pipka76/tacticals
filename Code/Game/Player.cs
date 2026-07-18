@@ -13,6 +13,8 @@ public partial class Player : Node3D
 	private float _selectCooldown;
 	private float _moveToCooldown;
 	private float _patrolCmdCooldown;
+	/// <summary>Waypoints collected while "move_army" is held, committed on release.</summary>
+	private readonly List<Vector3> _moveWaypoints = new List<Vector3>();
     private Vector3 _homeBaseCoords;
 	private TeamMembership _myTeam;
 	
@@ -312,15 +314,24 @@ public partial class Player : Node3D
 		}
 
     specialModeExit:
-        
+
 		if (_inputs.IsPatrolArmyReleased)
         {
             HandlePatrolMode();
         }
 
+        if (_inputs.IsMoveArmyReleased)
+        {
+            HandleMoveMode();
+        }
+
         if (_inputs.IsMoveArmy)
 		{
 			Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+
+			// Show the route being laid down while the button is held (debug overlay only).
+			if (_moveWaypoints.Count > 0)
+				GameDebug.Current?.RegisterPath(_moveWaypoints.ToArray(), false);
 		}
 
 		if (_inputs.MapToggle)
@@ -466,6 +477,10 @@ public partial class Player : Node3D
 		return sum / units.Count;
 	}
 
+	/// <summary>
+	/// Records one waypoint per click while "move_army" is held. Nothing is issued to the units
+	/// until the button is released - see HandleMoveMode.
+	/// </summary>
 	private void HandleMoveToCommand()
 	{
 		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) <= CLICK_COOLDOWN)
@@ -473,6 +488,21 @@ public partial class Player : Node3D
 
 		var whereTo3 = MouseRaycastToTerrain();
 		if (whereTo3 == Vector3.Inf)
+			return;
+
+		_moveToCooldown = Time.GetTicksMsec() / 1000f;
+
+		_moveWaypoints.Add(whereTo3);
+	}
+
+	/// <summary>
+	/// Fired when "move_army" is released: sends the selected units through the collected
+	/// waypoints in order, once. Intermediate waypoints are shared by the whole group; only the
+	/// final one is spread into formation slots, so the group travels together and forms up on arrival.
+	/// </summary>
+	private void HandleMoveMode()
+	{
+		if (_moveWaypoints.Count == 0)
 			return;
 
 		// Collect selected movable entities
@@ -490,11 +520,14 @@ public partial class Player : Node3D
 		}
 
 		if (selected.Count == 0)
+		{
+			// Nothing to command - drop the waypoints rather than leaking them into the next order.
+			_moveWaypoints.Clear();
 			return;
+		}
 
-		_moveToCooldown = Time.GetTicksMsec() / 1000f;
-
-		Vector2 dest = new Vector2(whereTo3.X, whereTo3.Z);
+		var last = _moveWaypoints[_moveWaypoints.Count - 1];
+		Vector2 dest = new Vector2(last.X, last.Z);
 
 		// Build ring-scatter slots around the destination
 		var slots = BuildRingScatterSlots(dest, selected.Count, FORMATION_SPACING);
@@ -516,10 +549,18 @@ public partial class Player : Node3D
 			return ap.CompareTo(aq);
 		});
 
+		// Legs shared by everyone: every waypoint except the last.
+		var sharedLegs = new List<Vector2>(_moveWaypoints.Count);
+		for (int i = 0; i < _moveWaypoints.Count - 1; i++)
+			sharedLegs.Add(new Vector2(_moveWaypoints[i].X, _moveWaypoints[i].Z));
+
 		for (int i = 0; i < selected.Count; i++)
 		{
-			selected[i].MoveTo(slots[i]);
+			var route = new List<Vector2>(sharedLegs) { slots[i] };
+			selected[i].MoveAlong(route);
 		}
+
+		_moveWaypoints.Clear();
 	}
 
 	private void DeselectAllEntities()

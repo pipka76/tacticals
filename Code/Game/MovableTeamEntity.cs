@@ -139,12 +139,31 @@ public partial class MovableTeamEntity : TeamEntity
 
     public virtual void MoveTo(Vector2 coords)
     {
+        MoveAlong(new[] { coords });
+    }
+
+    /// <summary>
+    /// Walks the unit through <paramref name="waypoints"/> in order and stops at the last one.
+    /// Same idea as patrol, but traversed once instead of looping.
+    /// This is a direct player order, so anything still queued is discarded first.
+    /// Legs after the first ride on the existing state queue: arriving at one ONTHEWAY target
+    /// dequeues the next, which TransitionToNextState already unpacks into _moveToCoords.
+    /// </summary>
+    public virtual void MoveAlong(IReadOnlyList<Vector2> waypoints)
+    {
         if (_teamMembership == TeamMembership.NEUTRAL)
             return;
+        if (waypoints == null || waypoints.Count == 0)
+            return;
+
+        ClearPendingStates();
+
+        for (int i = 1; i < waypoints.Count; i++)
+            EnqueueState(TeamEntityStates.ONTHEWAY, waypoints[i]);
 
         SetNewState(TeamEntityStates.ONTHEWAY);
-        _moveToCoords = coords;
-        RotateTowards(new Vector3(coords.X, 0, coords.Y));
+        _moveToCoords = waypoints[0];
+        RotateTowards(new Vector3(waypoints[0].X, 0, waypoints[0].Y));
     }
 
     public virtual void AddPatrolCheckpoint(Vector3 point)
@@ -164,9 +183,13 @@ public partial class MovableTeamEntity : TeamEntity
     protected Vector3? GetPatrolCheckpoint(bool next = false)
     {
         if (_patrolCheckpoints.Count == 0) return null;
+
+        // Advance first, then wrap. Wrapping before the increment let the last checkpoint step
+        // the index to Count and index past the end of the list.
+        if (next) _patrolCheckpointsIndex++;
         if (_patrolCheckpointsIndex >= _patrolCheckpoints.Count)
             _patrolCheckpointsIndex = 0;
-        if (next) _patrolCheckpointsIndex++;
+
         return _patrolCheckpoints[_patrolCheckpointsIndex];
     }
 }
