@@ -42,13 +42,9 @@ public partial class Plains : Node3D, IGameMap
 
     public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
 	{
-		var b = FindFirstBase();
-        _entities.AddChild(entity);
-        if (b != Vector2I.Zero)
-        {
-	        entity.GlobalPosition = _map[b.X][b.Y].GlobalPosition;
-	        //entity.SetScale(new Vector3(10,10,10));
-        }
+		var b = new Vector2I((int)(globalFlatPosition.X / MapConstants.BLOCK_SIZE),(int)(globalFlatPosition.Y/MapConstants.BLOCK_SIZE));
+		_entities.AddChild(entity);
+		entity.GlobalPosition = new Vector3(globalFlatPosition.X, _map[b.X][b.Y].GlobalPosition.Y, globalFlatPosition.Y);
 	}
 
     public IEnumerable<TeamEntity> GetEntities(TeamMembership? memberOf = null)
@@ -58,33 +54,7 @@ public partial class Plains : Node3D, IGameMap
 
 	    return _entities.GetChildren().Cast<TeamEntity>().Where(te => te.IsMemberOf(memberOf.Value));
     }
-
-    public Vector2 GetMyBasePosition()
-    {
-	    var b = FindFirstBase();
-	    if (b != Vector2I.Zero)
-	    {
-		    var p = _map[b.X][b.Y].GlobalPosition;
-		    return new Vector2(p.X, p.Z);
-	    }
-	    
-	    return Vector2.Zero;
-    }
-
-    private Vector2I FindFirstBase()
-	{
-		for (int i = 0; i < _map.Length; i++)
-		{
-			for (int j = 0; j < _map[i].Length; j++)
-			{
-				if (_map[i][j].StructureType == MapBlockStructureType.BASE)
-					return new Vector2I(i, j);
-			}
-		}
-
-		return Vector2I.Zero;
-	}
-
+    
 	public void GenerateLevel()
 	{
 		var mm = new MapGenerator(100, 100);
@@ -167,33 +137,33 @@ public partial class Plains : Node3D, IGameMap
 						break;
 				}
 
-				switch (map[i][j].StructureType)
-				{
-					case MapBlockStructureType.BASE:
-                        var tf = (Node3D)_teamflag.Instantiate();
-                        tf.Position = map[i][j].GlobalPosition;
-                        if (tf != null)
-                            this.AddChild(tf);
-                        break;
-					case MapBlockStructureType.TANK:
-                        var t = (Node3D)_tank.Instantiate();
-                        t.Position = map[i][j].GlobalPosition;
-                        if (t != null)
-                            this.AddChild(t);
-                        break;
-                    case MapBlockStructureType.TOWER:
-                        var to = (Node3D)_tower.Instantiate();
-                        to.Position = map[i][j].GlobalPosition;
-                        if (to != null)
-                            this.AddChild(to);
-                        break;
-                    case MapBlockStructureType.BUNKER:
-                        var b = (Node3D)_bunker.Instantiate();
-                        b.Position = map[i][j].GlobalPosition;
-                        if (b != null)
-                            this.AddChild(b);
-                        break;
-                }
+				// switch (map[i][j].StructureType)
+				// {
+				// 	case MapBlockStructureType.BASE:
+    //                     var tf = (Node3D)_teamflag.Instantiate();
+    //                     tf.Position = map[i][j].GlobalPosition;
+    //                     if (tf != null)
+    //                         this.AddChild(tf);
+    //                     break;
+				// 	case MapBlockStructureType.TANK:
+    //                     var t = (Node3D)_tank.Instantiate();
+    //                     t.Position = map[i][j].GlobalPosition;
+    //                     if (t != null)
+    //                         this.AddChild(t);
+    //                     break;
+    //                 case MapBlockStructureType.TOWER:
+    //                     var to = (Node3D)_tower.Instantiate();
+    //                     to.Position = map[i][j].GlobalPosition;
+    //                     if (to != null)
+    //                         this.AddChild(to);
+    //                     break;
+    //                 case MapBlockStructureType.BUNKER:
+    //                     var b = (Node3D)_bunker.Instantiate();
+    //                     b.Position = map[i][j].GlobalPosition;
+    //                     if (b != null)
+    //                         this.AddChild(b);
+    //                     break;
+    //             }
 				
 				// generate biomes
 				if (map[i][j].BiomeInfo != null)
@@ -504,15 +474,10 @@ public partial class Plains : Node3D, IGameMap
         return null;
 	}
 
-	public void SpawnPlayer()
+	public void SpawnPlayer(Vector2 globalFlatPosition)
 	{
 		var player = (Player)_playerScene.Instantiate();
 		GetNode<Node>("Players").AddChild(player);
-		var b = FindFirstBase();
-		if (b != Vector2I.Zero)
-		{
-			var basePos = _map[b.X][b.Y].GlobalPosition;
-			player.GlobalPosition = new Vector3(basePos.X, 0, basePos.Z);
-		}
+		player.GlobalPosition = new Vector3(globalFlatPosition.X, 0, globalFlatPosition.Y);
 	}
 }

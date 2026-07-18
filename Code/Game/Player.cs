@@ -137,7 +137,7 @@ public partial class Player : Node3D
             // map.SpawnEntity(h);
             // _myArmy.Add(h); 
 
-            var dest = map.GetMyBasePosition();
+            var dest = GetMyBasePosition();
 			// Build ring-scatter slots around the destination
 			var slots = BuildRingScatterSlots(dest, 12, FORMATION_SPACING);
 
@@ -181,6 +181,13 @@ public partial class Player : Node3D
 				_myArmy.Add((TeamEntity)s);
 			}*/
 		}
+	}
+
+	private Vector2 GetMyBasePosition()
+	{
+		// TODO
+		// for testing only
+		return new Vector2(20, 20);
 	}
 
 	private Node MouseRaycastToEntity(uint collisionMask)

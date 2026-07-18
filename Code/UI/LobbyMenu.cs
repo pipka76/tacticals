@@ -126,14 +126,14 @@ public partial class LobbyMenu : Control, IGameMenu
 	{
         this.Visible = false;
         var map = Main.Current.StartGame("res://Scenes/Maps/Plains.tscn");
-        map.SpawnPlayer();
+        map.SpawnPlayer(new Vector2(0,0));
 	}
 
 	private void CreateNewCampainDemoBattle()
 	{
 		this.Visible = false;
 		var map = Main.Current.StartGame("res://Scenes/Maps/CampainDemo.tscn");
-		map.SpawnPlayer();
+		map.SpawnPlayer(new Vector2(0,0));
 	}
 
 	public void OnNavigateTo(NavigateContext context)

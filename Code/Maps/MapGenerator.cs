@@ -4,18 +4,14 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
 using Godot.Collections;
-using GodotPlugins.Game;
 using tacticals.Code.Maps;
 using tacticals.Code.Maps.Generators;
-using tacticals.Code.Maps.Spawners;
 using static MapBlock;
 
 public class MapGenerator
 {
     private readonly int _mapWidth;
     private readonly int _mapHeight;
-    private int _structureID;
-    private const int HEATRADIUS = 10;
     
     public MapGenerator(int mapWidth, int mapHeight)
     {
@@ -36,22 +32,95 @@ public class MapGenerator
 
         var biomes = ForestHeatmapGenerator.GenerateBiomes(new Vector2I(_mapWidth * MapConstants.BIOMEHEATMAPSCALE, _mapHeight * MapConstants.BIOMEHEATMAPSCALE));
         //biomes.SavePng("biometest.png");
-        mgr.InitializeMap(_mapWidth, _mapHeight, 1f / MapConstants.BIOMEHEATMAPSCALE, new Vector2(0, 0));
+        InitializeFlowField(mgr);
 
         InitUsingHeatmap(mm, biomes);
         //var river = GenerateRiver();
         //river.Draw(mm);
-        GenerateBases(mm, mgr);
+        GenerateBases(mm);
 
-        // structures
-        GenerateStructures(mm, mgr);
-        
         //var forestMap = new Image();
         //forestMap.Load("res://Assets/UI/TreeMap.png");
 
         GenerateForest(mm, biomes);
 
+        // Everything that occupies ground is on the map by now - publish it to the flow field.
+        RegisterObstacles(mm, mgr);
+
         return mm;
+    }
+
+    /// <summary>
+    /// Sizes the flow field grid so it covers the whole map in world units.
+    /// The grid is PATHFIND_SCALE cells per map block, each BLOCK_SIZE / PATHFIND_SCALE units across,
+    /// so total coverage is (_mapWidth * BLOCK_SIZE) x (_mapHeight * BLOCK_SIZE) - the map's real extent.
+    /// Origin is world zero because map block (i,j) spans [i*BLOCK_SIZE, (i+1)*BLOCK_SIZE) - the same
+    /// convention used by GetTerrainHeight, SpawnEntity and BuildHeightMapFromMeshes.
+    /// </summary>
+    private void InitializeFlowField(FlowFieldManager mgr)
+    {
+        const int s = MapConstants.PATHFIND_SCALE;
+
+        mgr.InitializeMap(
+            _mapWidth * s,
+            _mapHeight * s,
+            (float)MapConstants.BLOCK_SIZE / s,
+            Vector2.Zero);
+    }
+
+    /// <summary>
+    /// Publishes the map's *terrain* passability to the flow field:
+    ///   RESTRICTED - closed to everyone.
+    ///   AIR_ONLY   - closed to ground units, open to air.
+    ///   trees      - close only the cell they stand in, and only to ground units; a Heli flies over.
+    /// This is generation-time state only. Structures are built during play by player commands and
+    /// must register their own footprint against the live FlowFieldManager as they are placed.
+    /// </summary>
+    private void RegisterObstacles(MapBlock[][] map, FlowFieldManager mgr)
+    {
+        for (int i = 0; i < map.Length; i++)
+        {
+            for (int j = 0; j < map[i].Length; j++)
+            {
+                var block = map[i][j];
+
+                switch (block.BlockType)
+                {
+                    case MapBlockType.RESTRICTED:
+                        BlockWholeMapBlock(mgr, i, j, MovementDomain.All);
+                        break;
+                    case MapBlockType.AIR_ONLY:
+                        BlockWholeMapBlock(mgr, i, j, MovementDomain.Ground);
+                        break;
+                }
+
+                if (block.BiomeInfo == null)
+                    continue;
+
+                foreach (var bd in block.BiomeInfo)
+                {
+                    if (bd.Type == BiomeDataType.GROUND)
+                        continue;
+
+                    // Derive the cell from the tree's actual world position rather than from (i,j),
+                    // so this stays correct whatever offset the placement pass applies.
+                    var world = block.GlobalPosition + bd.LocalCoord;
+                    mgr.Block(mgr.WorldToCell(new Vector2(world.X, world.Z)), MovementDomain.Ground);
+                }
+            }
+        }
+    }
+
+    /// <summary>Closes every pathfinding cell covered by map block (i,j) to the given domains.</summary>
+    private void BlockWholeMapBlock(FlowFieldManager mgr, int i, int j, MovementDomain domains)
+    {
+        const int s = MapConstants.PATHFIND_SCALE;
+
+        for (int k = 0; k < s; k++)
+        {
+            for (int l = 0; l < s; l++)
+                mgr.Block(new Vector2I(i * s + k, j * s + l), domains);
+        }
     }
 
     private float[,] BuildHeightMapFromMeshes(Array<Node> surfaces)
@@ -133,7 +202,7 @@ public class MapGenerator
         var heights = BuildHeightMapFromMeshes(surfaces);
 
         // Flow field map init (same idea as GenerateMap)
-        mgr.InitializeMap(_mapWidth, _mapHeight, 1f, new Vector2(0, 0));
+        InitializeFlowField(mgr);
 
         // Fill map blocks.
         for (int i = 0; i < _mapWidth; i++)
@@ -143,7 +212,6 @@ public class MapGenerator
                 mm[i][j] = new MapBlock()
                 {
                     BlockType = MapBlockType.PLAIN,
-                    StructureType = MapBlockStructureType.NONE,
                     LayerIndex = 0,
                     Coordinates = new Vector2I(i, j),
                     BiomeInfo = new List<BiomeData>()
@@ -160,6 +228,11 @@ public class MapGenerator
                 });
             }
         }
+
+        // No-op for the current authored map (it carries no structures or biome props), but keeps
+        // both generation paths on the same contract. Obstacles for authored geometry still need
+        // to be derived from its collision shapes - see note in CLAUDE.md.
+        RegisterObstacles(mm, mgr);
 
         return mm;
     }
@@ -183,8 +256,6 @@ public class MapGenerator
                 float mapY = (float)y / MapConstants.BIOMEHEATMAPSCALE;
 
                 if (mm[(int)mapX][(int)mapY].BlockType != MapBlockType.PLAIN)
-                    continue;
-                if (mm[(int)mapX][(int)mapY].StructureType != MapBlockStructureType.NONE)
                     continue;
                 
                 if (mm[(int)mapX][(int)mapY].BiomeInfo == null)
@@ -244,58 +315,6 @@ public class MapGenerator
         return (Math.Abs(color.R - Mid.R) + Math.Abs(color.G - Mid.G) + Math.Abs(color.B - Mid.B)) < colorRange;
     }
 
-    private void GenerateStructures(MapBlock[][] map, FlowFieldManager mgr)
-    {
-        var rnd = new Random(); 
-        var spw = new Spawner();
-
-        spw.RegisterLimit(MapBlockStructureType.TANK, 5);
-        spw.RegisterLimit(MapBlockStructureType.TOWER, 10);
-        spw.RegisterLimit(MapBlockStructureType.BUNKER, 10);
-
-        while (true)
-        {
-            int i = rnd.Next(0, map.Length);
-            int j = rnd.Next(0, map[0].Length);
-
-            if(map[i][j].StructurePlacable(MapBlockStructureType.TANK))
-            {
-                if(spw.SpawnAt(map, i, j, MapBlockStructureType.TANK, 1f))
-                    AddHeat(map, i, j, HEATRADIUS);
-            }
-
-
-            if (map[i][j].StructurePlacable(MapBlockStructureType.TOWER))
-            {
-                if (spw.SpawnAt(map, i, j, MapBlockStructureType.TOWER, 1f))
-                {
-                    AddHeat(map, i, j, HEATRADIUS);
-                    mgr.SetBlocked(new Vector2I(i * MapConstants.BLOCK_SIZE, j), true);
-                }
-            }
-
-            if (map[i][j].StructurePlacable(MapBlockStructureType.BUNKER))
-            {
-                if (spw.SpawnAt(map, i, j, MapBlockStructureType.BUNKER, 1f))
-                    AddHeat(map, i, j, HEATRADIUS);
-            }
-
-            if (spw.IsLimitReached())
-                break;
-        }
-    }
-
-    private void SetWholeBlockBlocked(FlowFieldManager mgr, int i, int j)
-    {
-        for (int k = 0; k < MapConstants.BIOMEHEATMAPSCALE; k++)
-        {
-            for (int l = 0; l < MapConstants.BIOMEHEATMAPSCALE; l++)
-            {
-                mgr.SetBlocked(new Vector2I(i * (MapConstants.BLOCK_SIZE * MapConstants.BIOMEHEATMAPSCALE), j * MapConstants.BLOCK_SIZE), true);
-            }
-        }
-    }
-
     private void AddHeat(MapBlock[][] map,int i, int j, int radius)
     {
         int iMax, jMax, iMin, jMin;
@@ -343,16 +362,9 @@ public class MapGenerator
         return river;
     }
 
-    private void GenerateBases(MapBlock[][] mm, FlowFieldManager mgr)
+    private void GenerateBases(MapBlock[][] mm)
     {
-        mm[20][20].StructureType = MapBlockStructureType.BASE;
-        mm[20][20].StructureID = _structureID++;
-        mm[mm.Length - 20][20].StructureType = MapBlockStructureType.BASE;
-        mm[mm.Length - 20][20].StructureID = _structureID++;
-        mm[20][mm[0].Length - 20].StructureType = MapBlockStructureType.BASE;
-        mm[20][mm[0].Length - 20].StructureID = _structureID++;
-        mm[mm.Length - 20][mm[0].Length - 20].StructureType = MapBlockStructureType.BASE;
-        mm[mm.Length - 20][mm[0].Length - 20].StructureID = _structureID++;
+        // TODO
     }
 
     private float GetRandomProb()
@@ -373,7 +385,6 @@ public class MapGenerator
         //int width = heatmap.GetWidth();
         //int height = heatmap.GetHeight();
         
-        _structureID = 0;
         for (int i = 0; i < _mapWidth; i++)
         {
             for (int j = 0; j < _mapHeight; j++)
@@ -395,7 +406,6 @@ public class MapGenerator
                 mm[i][j] = new MapBlock()
                 {
                     BlockType = MapBlockType.PLAIN,
-                    StructureType = MapBlockStructureType.NONE,
                     LayerIndex = 0,
                     Coordinates = new Vector2I(i, j),
                     BiomeInfo = bd  

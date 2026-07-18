@@ -2,5 +2,7 @@ public enum MapBlockType
 {
     PLAIN,
     RIVER,
-    MOUNTAIN
+    MOUNTAIN,
+    RESTRICTED,
+    AIR_ONLY
 }

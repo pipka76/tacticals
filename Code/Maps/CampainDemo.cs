@@ -51,22 +51,12 @@ public partial class CampainDemo :  Node3D, IGameMap
 
         return _entities.GetChildren().Cast<TeamEntity>().Where(te => te.IsMemberOf(memberOf.Value));
     }
-
-    public Vector2 GetMyBasePosition()
-    {
-        return new Vector2(30, 30);
-    }
-
-    public void SpawnPlayer()
+    
+    public void SpawnPlayer(Vector2 globalFlatPosition)
     {
         var player = (Player)_playerScene.Instantiate();
         GetNode<Node>("Players").AddChild(player);
-        var b = new Vector2I(220/MapConstants.BLOCK_SIZE,50/MapConstants.BLOCK_SIZE);
-        if (b != Vector2I.Zero)
-        {
-            var basePos = _map[b.X][b.Y].GlobalPosition;
-            player.GlobalPosition = new Vector3(basePos.X, 0, basePos.Z);
-        }
+        player.GlobalPosition = new Vector3(globalFlatPosition.X, 0, globalFlatPosition.Y);
     }
 
     public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
