@@ -21,10 +21,23 @@ public partial class GameDebug : Node
 
 	private List<FovRecord> _fovRegister = new List<FovRecord>();
 	private List<PathRecord> _patrolRegister = new List<PathRecord>();
+	// Rect2 is a struct, so these two stay allocation-free even with thousands of cells a frame.
+	private List<Rect2> _blockedAreaRegister = new List<Rect2>();
+	private List<Rect2> _blockedCellRegister = new List<Rect2>();
     private ImmediateMesh _immediateMesh;
 	private MeshInstance3D _meshInstance;
 
+	private const float BLOCKED_LIFT = 0.15f;    // keep the overlay off the terrain surface
+	private const float BLOCKED_HATCH_SPACING = 1.5f;
+	private const float BLOCKED_POST_HEIGHT = 2.0f;
+
 	public static GameDebug Current {  get; internal set; }
+
+	/// <summary>
+	/// Whether the debug overlay is currently being drawn. Check this before doing expensive
+	/// work to build a registration - registers are filled every frame regardless of the toggle.
+	/// </summary>
+	public bool IsEnabled => PlayerInput.Current?.DebugToggle ?? false;
 
 	public override void _Ready()
 	{
@@ -61,11 +74,14 @@ public partial class GameDebug : Node
             
 			DrawFOV();
 			DrawPatrolPaths();
+			DrawBlockedAreas();
 
             _immediateMesh.SurfaceEnd();
         }
         _fovRegister.Clear();
         _patrolRegister.Clear();
+        _blockedAreaRegister.Clear();
+        _blockedCellRegister.Clear();
 	}
 
     private void DrawPatrolPaths()
@@ -110,6 +126,148 @@ public partial class GameDebug : Node
 	public void RegisterPath(Vector3[] points, bool loop)
 	{
 		_patrolRegister.Add(new PathRecord { Points = points, Loop = loop });
+	}
+
+	/// <summary>
+	/// Draws a world-space footprint as a hatched, fenced area for one frame.
+	/// This shows the area you ASKED to block. To see what is actually blocked after the
+	/// footprint has been rasterised onto the pathfinding grid, use RegisterBlockedCells -
+	/// the two differ whenever a rect does not land on cell boundaries.
+	/// </summary>
+	public void RegisterBlockedArea(Rect2 worldArea)
+	{
+		_blockedAreaRegister.Add(worldArea);
+	}
+
+	/// <summary>
+	/// Draws every grid cell currently closed to <paramref name="domain"/> - the ground truth
+	/// that units actually collide with, rasterisation and all. This is the one to trust when
+	/// checking placement.
+	/// Skips the whole scan when the overlay is off, so it is safe to call every frame.
+	/// </summary>
+	public void RegisterBlockedCells(FlowFieldManager pathField, MovementDomain domain, int maxCells = 3000)
+	{
+		if (!IsEnabled || pathField == null || !pathField.IsInitialized)
+			return;
+
+		float size = pathField.CellSize;
+		var extent = new Vector2(size, size);
+
+		for (int y = 0; y < pathField.Height; y++)
+		{
+			for (int x = 0; x < pathField.Width; x++)
+			{
+				var cell = new Vector2I(x, y);
+				if (pathField.IsPassable(cell, domain))
+					continue;
+
+				if (_blockedCellRegister.Count >= maxCells)
+					return;      // truncate rather than stall the frame
+
+				_blockedCellRegister.Add(new Rect2(pathField.CellToWorldCenter(cell) - extent * 0.5f, extent));
+			}
+		}
+	}
+
+	private void DrawBlockedAreas()
+	{
+		foreach (var area in _blockedAreaRegister)
+		{
+			DrawRectOutline(area, Colors.OrangeRed);
+			DrawRectHatch(area, BLOCKED_HATCH_SPACING, Colors.OrangeRed);
+			DrawCornerPosts(area, Colors.OrangeRed);
+		}
+
+		// Cells are small and numerous: outline plus a single diagonal reads as hatching at
+		// map scale without flooding the mesh.
+		foreach (var cell in _blockedCellRegister)
+		{
+			DrawRectOutline(cell, Colors.Orange);
+			DrawGroundLine(cell.Position, cell.End, Colors.Orange);
+		}
+	}
+
+	private void DrawRectOutline(Rect2 area, Color color)
+	{
+		var a = area.Position;
+		var b = new Vector2(area.End.X, area.Position.Y);
+		var c = area.End;
+		var d = new Vector2(area.Position.X, area.End.Y);
+
+		DrawGroundLine(a, b, color);
+		DrawGroundLine(b, c, color);
+		DrawGroundLine(c, d, color);
+		DrawGroundLine(d, a, color);
+	}
+
+	/// <summary>45-degree hatching, clipped to the rect. Hatch lines satisfy x - z = k.</summary>
+	private void DrawRectHatch(Rect2 area, float spacing, Color color)
+	{
+		float x0 = area.Position.X, x1 = area.End.X;
+		float z0 = area.Position.Y, z1 = area.End.Y;
+
+		for (float k = x0 - z1; k <= x1 - z0; k += spacing)
+		{
+			if (TryClipDiagonal(x0, x1, z0, z1, k, out var from, out var to))
+				DrawGroundLine(from, to, color);
+		}
+	}
+
+	/// <summary>Vertical posts at the corners, so the area stays readable from a top-down camera.</summary>
+	private void DrawCornerPosts(Rect2 area, Color color)
+	{
+		Vector2[] corners =
+		{
+			area.Position,
+			new Vector2(area.End.X, area.Position.Y),
+			area.End,
+			new Vector2(area.Position.X, area.End.Y)
+		};
+
+		foreach (var corner in corners)
+		{
+			float y = GroundAt(corner);
+			DrawLine(new Vector3(corner.X, y, corner.Y), new Vector3(corner.X, y + BLOCKED_POST_HEIGHT, corner.Y), color);
+		}
+	}
+
+	/// <summary>Clips the line x - z = k to the rect, returning the two edge crossings.</summary>
+	private static bool TryClipDiagonal(float x0, float x1, float z0, float z1, float k, out Vector2 from, out Vector2 to)
+	{
+		Span<Vector2> hits = stackalloc Vector2[4];
+		int n = 0;
+
+		// Strict inequalities on the horizontal edges so a corner is not counted twice.
+		float z = x0 - k;
+		if (z >= z0 && z <= z1) hits[n++] = new Vector2(x0, z);
+		z = x1 - k;
+		if (z >= z0 && z <= z1) hits[n++] = new Vector2(x1, z);
+		float x = k + z0;
+		if (x > x0 && x < x1) hits[n++] = new Vector2(x, z0);
+		x = k + z1;
+		if (x > x0 && x < x1) hits[n++] = new Vector2(x, z1);
+
+		if (n < 2)
+		{
+			from = default;
+			to = default;
+			return false;
+		}
+
+		from = hits[0];
+		to = hits[1];
+		return (from - to).LengthSquared() > 0.0001f;
+	}
+
+	/// <summary>Drapes a flat XZ segment onto the terrain so the overlay follows hills.</summary>
+	private void DrawGroundLine(Vector2 from, Vector2 to, Color color)
+	{
+		DrawLine(new Vector3(from.X, GroundAt(from), from.Y), new Vector3(to.X, GroundAt(to), to.Y), color);
+	}
+
+	private static float GroundAt(Vector2 worldXZ)
+	{
+		return (Main.Current?.Map?.GetTerrainHeight(worldXZ) ?? 0f) + BLOCKED_LIFT;
 	}
 
     private void DrawFOV()

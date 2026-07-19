@@ -277,6 +277,9 @@ public partial class Player : Node3D
 		{
 			var camBaseLevel = map.GetTerrainHeight(new Vector2(this.GlobalPosition.X, this.GlobalPosition.Z)); // get height of the place where player's camera is looking at
 			PlayerInput.Current.SetGroundLevel(camBaseLevel);
+
+			// Ground truth of what is actually closed off; no-ops unless the debug overlay is on.
+			GameDebug.Current?.RegisterBlockedCells(map.PathField, MovementDomain.Ground);
 		}
 
 		_godCamera.Fov = _inputs.CameraFov;
