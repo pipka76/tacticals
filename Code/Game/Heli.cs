@@ -222,6 +222,9 @@ public partial class Heli : MovableTeamEntity, IPassengers
         }
     }
 
+    /// <summary>Helis fly: only RESTRICTED stops them, not ground obstacles.</summary>
+    protected override MovementDomain Domain => MovementDomain.Air;
+
     public override void MoveAlong(IReadOnlyList<Vector2> waypoints)
     {
         if (waypoints == null || waypoints.Count == 0)

@@ -208,17 +208,7 @@ public sealed class FlowFieldData
                 int ni = Idx(nxt);
                 if (IsBlockedAt(ni)) continue;
 
-                // Prevent corner cutting on diagonals
-                if (UseDiagonals && off.X != 0 && off.Y != 0)
-                {
-                    Vector2I c1 = new Vector2I(current.X + off.X, current.Y);
-                    Vector2I c2 = new Vector2I(current.X, current.Y + off.Y);
-                    if (InBounds(c1) && InBounds(c2))
-                    {
-                        if (IsBlockedAt(Idx(c1)) || IsBlockedAt(Idx(c2)))
-                            continue;
-                    }
-                }
+                if (DiagonalBlocked(current, off)) continue;
 
                 float stepLen = (off.X != 0 && off.Y != 0) ? 1.41421356f : 1f;
                 float stepCost = _baseCost[ni] * stepLen;
@@ -257,6 +247,10 @@ public sealed class FlowFieldData
                 Vector2I n = cell + off;
                 if (!InBounds(n)) continue;
 
+                // Must match ComputeIntegration, otherwise the field points units diagonally
+                // through a corner gap the integration pass declared impassable.
+                if (DiagonalBlocked(cell, off)) continue;
+
                 int ni = Idx(n);
                 float val = _integration[ni];
                 if (val < best)
@@ -278,6 +272,22 @@ public sealed class FlowFieldData
         }
     }
 
+    /// <summary>
+    /// True when a diagonal step from <paramref name="from"/> by <paramref name="off"/> would cut
+    /// the corner between two blocked cells. Shared by the integration and flow passes so they
+    /// cannot disagree about which diagonals exist.
+    /// No bounds guard needed: the flanking cells are (from+off).X paired with from.Y and vice
+    /// versa, and the caller has already bounds-checked from+off, so both are always in range.
+    /// </summary>
+    private bool DiagonalBlocked(Vector2I from, Vector2I off)
+    {
+        if (!UseDiagonals || off.X == 0 || off.Y == 0)
+            return false;
+
+        return IsBlockedAt(Idx(new Vector2I(from.X + off.X, from.Y)))
+            || IsBlockedAt(Idx(new Vector2I(from.X, from.Y + off.Y)));
+    }
+
     private bool InBounds(Vector2I c) => c.X >= 0 && c.Y >= 0 && c.X < Width && c.Y < Height;
     private int Idx(Vector2I c) => c.X + c.Y * Width;
     private Vector2I ToCell(int idx) => new Vector2I(idx % Width, idx / Width);
@@ -297,7 +307,20 @@ public sealed class FlowFieldManager
     public float CellSize { get; private set; } = 16f;
     public Vector2 Origin { get; private set; } = Vector2.Zero;
 
-    // Map state. One byte per cell holding a MovementDomain bitmask of who may enter it.
+    // Map state, in two layers.
+    //
+    // The base layer is the terrain as generated: authored once by MapGenerator and never
+    // mutated afterwards. The effective layer is what everything actually reads, and is the
+    // base recombined with every active TerrainEdit covering the cell.
+    //
+    // Two layers rather than one because edits have to be REMOVABLE. Player structures get
+    // destroyed, cancelled and refunded, and a single mutable grid cannot express that: with
+    // only Block()/SetMoveFactor() there is no way to undo a tower's footprint without also
+    // wiping the forest or trench it happened to overlap.
+    private byte[] _basePassable;
+    private float[] _baseMoveFactor;
+
+    // One byte per cell holding a MovementDomain bitmask of who may enter it.
     private byte[] _passable;
     private float[] _baseCost;
 
@@ -314,6 +337,23 @@ public sealed class FlowFieldManager
     // Cache
     private readonly Dictionary<FlowFieldKey, FlowFieldData> _cache = new();
 
+    /// <summary>One removable contribution laid over the terrain - a tower, bunker or trench.</summary>
+    private sealed class EditRecord
+    {
+        public Vector2I Min;               // inclusive cell bounds
+        public Vector2I Max;
+        public MovementDomain Blocks;      // domains this edit denies (None for a pure slowdown)
+        public float MoveFactor;           // 1f for a pure obstacle
+
+        public bool Covers(Vector2I c) => c.X >= Min.X && c.X <= Max.X && c.Y >= Min.Y && c.Y <= Max.Y;
+
+        public bool Overlaps(EditRecord o) =>
+            Min.X <= o.Max.X && Max.X >= o.Min.X && Min.Y <= o.Max.Y && Max.Y >= o.Min.Y;
+    }
+
+    private readonly Dictionary<int, EditRecord> _edits = new();
+    private int _nextEditId = 1;
+
     public bool IsInitialized => _passable != null && _baseCost != null;
 
     public void InitializeMap(int width, int height, float cellSize, Vector2 origin)
@@ -326,17 +366,22 @@ public sealed class FlowFieldManager
         Origin = origin;
 
         int n = width * height;
+        _basePassable = new byte[n];
+        _baseMoveFactor = new float[n];
         _passable = new byte[n];
         _baseCost = new float[n];
         _moveFactor = new float[n];
 
         for (int i = 0; i < n; i++)
         {
+            _basePassable[i] = (byte)MovementDomain.All;
+            _baseMoveFactor[i] = 1f;
             _passable[i] = (byte)MovementDomain.All;
             _baseCost[i] = 1f;
             _moveFactor[i] = 1f;
         }
 
+        _edits.Clear();
         _cache.Clear();
         MapVersion++;
     }
@@ -347,19 +392,25 @@ public sealed class FlowFieldManager
 
         for (int i = 0; i < _passable.Length; i++)
         {
+            _basePassable[i] = (byte)MovementDomain.All;
+            _baseMoveFactor[i] = 1f;
             _passable[i] = (byte)MovementDomain.All;
             _baseCost[i] = 1f;
             _moveFactor[i] = 1f;
         }
 
+        _edits.Clear();
         _cache.Clear();
         MapVersion++;
     }
 
-    // --- Map editing API ---
+    // --- Terrain authoring (base layer) ---
+    // These write the terrain the level was generated with. Use them from MapGenerator, not for
+    // anything the player can later remove - see AddObstacle/AddSlowdown for that.
+
     /// <summary>
-    /// Sets exactly which domains may enter the cell, discarding any previous state.
-    /// Use Block() instead when layering one obstacle on top of others.
+    /// Sets exactly which domains may enter the cell, discarding any previous terrain state.
+    /// Use Block() instead when layering one terrain feature on top of others.
     /// </summary>
     public void SetPassable(Vector2I cell, MovementDomain domains)
     {
@@ -367,10 +418,11 @@ public sealed class FlowFieldManager
         if (!InBounds(cell)) return;
 
         int idx = Idx(cell);
-        if (_passable[idx] == (byte)domains) return;
+        if (_basePassable[idx] == (byte)domains) return;
 
-        _passable[idx] = (byte)domains;
-        MapVersion++;
+        _basePassable[idx] = (byte)domains;
+        if (RecomputeCell(idx, cell))
+            MapVersion++;
     }
 
     /// <summary>
@@ -383,11 +435,12 @@ public sealed class FlowFieldManager
         if (!InBounds(cell)) return;
 
         int idx = Idx(cell);
-        byte updated = (byte)(_passable[idx] & ~(byte)domains);
-        if (_passable[idx] == updated) return;
+        byte updated = (byte)(_basePassable[idx] & ~(byte)domains);
+        if (_basePassable[idx] == updated) return;
 
-        _passable[idx] = updated;
-        MapVersion++;
+        _basePassable[idx] = updated;
+        if (RecomputeCell(idx, cell))
+            MapVersion++;
     }
 
     public void SetBaseCost(Vector2I cell, float cost)
@@ -416,8 +469,10 @@ public sealed class FlowFieldManager
 
         int idx = Idx(cell);
         float clamped = Mathf.Clamp(factor, MapConstants.MOVE_FACTOR_MIN, 1f);
-        if (clamped < _moveFactor[idx])
-            _moveFactor[idx] = clamped;
+        if (clamped >= _baseMoveFactor[idx]) return;
+
+        _baseMoveFactor[idx] = clamped;
+        RecomputeCell(idx, cell);
     }
 
     /// <summary>Ground movement-speed multiplier for the cell. 1.0 when uninitialized or out of bounds.</summary>
@@ -445,6 +500,160 @@ public sealed class FlowFieldManager
         if (!IsInitialized) return MovementDomain.None;
         if (!InBounds(cell)) return MovementDomain.None;
         return (MovementDomain)_passable[Idx(cell)];
+    }
+
+    // --- Removable edits (player-built structures) ---
+
+    /// <summary>
+    /// A tower, bunker or trench laid over the terrain. Keep it and pass it to RemoveEdit when
+    /// the structure is destroyed or the placement is cancelled.
+    /// </summary>
+    public readonly struct TerrainEdit
+    {
+        internal readonly int Id;
+        internal TerrainEdit(int id) { Id = id; }
+        public bool IsValid => Id != 0;
+    }
+
+    /// <summary>
+    /// Denies <paramref name="blocks"/> across a world-space footprint - a tower or bunker.
+    /// </summary>
+    public TerrainEdit AddObstacle(Rect2 worldArea, MovementDomain blocks)
+        => AddEdit(worldArea, blocks, 1f);
+
+    /// <summary>
+    /// Slows ground movement across a world-space footprint without blocking it - a trench.
+    /// Composes with terrain and other edits by taking the strongest (lowest) factor.
+    /// </summary>
+    public TerrainEdit AddSlowdown(Rect2 worldArea, float factor)
+        => AddEdit(worldArea, MovementDomain.None, factor);
+
+    private TerrainEdit AddEdit(Rect2 worldArea, MovementDomain blocks, float factor)
+    {
+        if (!IsInitialized) return default;
+        if (!ToCellBounds(worldArea, out var min, out var max)) return default;
+
+        var record = new EditRecord
+        {
+            Min = min,
+            Max = max,
+            Blocks = blocks,
+            MoveFactor = Mathf.Clamp(factor, MapConstants.MOVE_FACTOR_MIN, 1f)
+        };
+
+        int id = _nextEditId++;
+        _edits[id] = record;
+
+        // Applying an edit only ever subtracts, so the cells can be folded in directly
+        // rather than rebuilt from the base layer.
+        bool passabilityChanged = false;
+        for (int y = min.Y; y <= max.Y; y++)
+        {
+            for (int x = min.X; x <= max.X; x++)
+            {
+                int idx = Idx(new Vector2I(x, y));
+
+                byte updated = (byte)(_passable[idx] & ~(byte)record.Blocks);
+                if (updated != _passable[idx])
+                {
+                    _passable[idx] = updated;
+                    passabilityChanged = true;
+                }
+
+                if (record.MoveFactor < _moveFactor[idx])
+                    _moveFactor[idx] = record.MoveFactor;
+            }
+        }
+
+        // Speed alone never invalidates a field - it does not affect route choice.
+        if (passabilityChanged)
+            MapVersion++;
+
+        return new TerrainEdit(id);
+    }
+
+    /// <summary>
+    /// Lifts an edit and restores its footprint from the terrain plus whatever other edits still
+    /// overlap it, so demolishing a tower cannot erase the forest or trench underneath it.
+    /// </summary>
+    public void RemoveEdit(TerrainEdit handle)
+    {
+        if (!IsInitialized) return;
+        if (!_edits.TryGetValue(handle.Id, out var removed)) return;
+
+        _edits.Remove(handle.Id);
+
+        // Only edits overlapping the vacated footprint can contribute to those cells.
+        var overlapping = new List<EditRecord>();
+        foreach (var e in _edits.Values)
+        {
+            if (e.Overlaps(removed))
+                overlapping.Add(e);
+        }
+
+        bool passabilityChanged = false;
+        for (int y = removed.Min.Y; y <= removed.Max.Y; y++)
+        {
+            for (int x = removed.Min.X; x <= removed.Max.X; x++)
+            {
+                var cell = new Vector2I(x, y);
+                if (RecomputeCell(Idx(cell), cell, overlapping))
+                    passabilityChanged = true;
+            }
+        }
+
+        if (passabilityChanged)
+            MapVersion++;
+    }
+
+    /// <summary>Number of edits currently laid over the terrain.</summary>
+    public int ActiveEditCount => _edits.Count;
+
+    /// <summary>
+    /// Rebuilds one cell's effective value from the base terrain plus the edits covering it.
+    /// Returns true when passability changed, which is what invalidates cached fields.
+    /// </summary>
+    private bool RecomputeCell(int idx, Vector2I cell, List<EditRecord> candidates = null)
+    {
+        byte passable = _basePassable[idx];
+        float factor = _baseMoveFactor[idx];
+
+        if (candidates != null)
+        {
+            foreach (var e in candidates)
+            {
+                if (!e.Covers(cell)) continue;
+                passable = (byte)(passable & ~(byte)e.Blocks);
+                if (e.MoveFactor < factor) factor = e.MoveFactor;
+            }
+        }
+        else
+        {
+            foreach (var e in _edits.Values)
+            {
+                if (!e.Covers(cell)) continue;
+                passable = (byte)(passable & ~(byte)e.Blocks);
+                if (e.MoveFactor < factor) factor = e.MoveFactor;
+            }
+        }
+
+        bool passabilityChanged = _passable[idx] != passable;
+        _passable[idx] = passable;
+        _moveFactor[idx] = factor;
+
+        return passabilityChanged;
+    }
+
+    /// <summary>Clamps a world-space rect onto the grid. False when it lies entirely outside.</summary>
+    private bool ToCellBounds(Rect2 worldArea, out Vector2I min, out Vector2I max)
+    {
+        var a = WorldToCell(worldArea.Position);
+        var b = WorldToCell(worldArea.End);
+
+        min = new Vector2I(Mathf.Max(Mathf.Min(a.X, b.X), 0), Mathf.Max(Mathf.Min(a.Y, b.Y), 0));
+        max = new Vector2I(Mathf.Min(Mathf.Max(a.X, b.X), Width - 1), Mathf.Min(Mathf.Max(a.Y, b.Y), Height - 1));
+
+        return min.X <= max.X && min.Y <= max.Y;
     }
 
     // --- Field retrieval / caching ---

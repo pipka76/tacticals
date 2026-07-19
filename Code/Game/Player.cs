@@ -77,6 +77,9 @@ public partial class Player : Node3D
 		var map = GetParent().GetParent() as IGameMap;
 		if (map != null)
 		{
+			// Rect2 takes a SIZE, not an opposite corner: 7x5 box centred on (25, 50).
+			map.PathField.AddObstacle(new Rect2(new Vector2(25-3f, 50-2f), new Vector2(6f, 4f)), MovementDomain.Ground);
+			
 			var army = new List<TeamEntity>();
 			var soldier = GD.Load<PackedScene>("res://Scenes/Game/Soldier.tscn");
 			for (int i = 0; i < 3; i++)

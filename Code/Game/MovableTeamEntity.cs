@@ -48,7 +48,12 @@ public partial class MovableTeamEntity : TeamEntity
         }
 
         sep.Y = 0;
-        return sep;
+
+        // Clamp before returning. Unbounded, the inverse-square term dwarfs the unit-length
+        // navigation direction at close range - two units 0.2 apart produce a push 10x stronger -
+        // so in a crowd steering would be entirely separation and navigation would be ignored.
+        // That only shows up at chokepoints, which is exactly where navigation has to win.
+        return sep.LimitLength(1f);
     }
 
     /// <summary>Outcome of a single StepTowards call. Callers treat the two failures differently.</summary>
@@ -109,10 +114,48 @@ public partial class MovableTeamEntity : TeamEntity
         }
 
         var move = GlobalPosition + steer * (float)delta * (moveSpeed * speedFactor * TerrainSpeedFactor());
+        move = ClampMoveToPassable(GlobalPosition, move);
         move.Y = gnd.Y;
         GlobalPosition = move;
 
         return StepResult.Moved;
+    }
+
+    /// <summary>Which passability layer this unit is bound by.</summary>
+    protected virtual MovementDomain Domain => MovementDomain.Ground;
+
+    /// <summary>
+    /// Grid analogue of MoveAndSlide: refuses a step that would land the unit in a cell closed to
+    /// its domain, sliding along the blocked face rather than stopping dead.
+    /// Nothing else enforces this - entities write GlobalPosition directly and no physics
+    /// resolution runs - so this is the only thing keeping units out of towers and bunkers.
+    /// </summary>
+    private Vector3 ClampMoveToPassable(Vector3 from, Vector3 to)
+    {
+        var pathField = Main.Current?.Map?.PathField;
+        if (pathField == null)
+            return to;                       // menus, or a client whose grid was never built
+
+        var domain = Domain;
+
+        if (pathField.IsPassable(pathField.WorldToCell(new Vector2(to.X, to.Z)), domain))
+            return to;
+
+        // Already standing in a blocked cell - a structure went up on top of us. Let the unit
+        // move freely so it can walk out; trapping it inside is worse than the brief overlap.
+        if (!pathField.IsPassable(pathField.WorldToCell(new Vector2(from.X, from.Z)), domain))
+            return to;
+
+        // Slide along whichever axis stays clear.
+        var slideX = new Vector3(to.X, to.Y, from.Z);
+        if (pathField.IsPassable(pathField.WorldToCell(new Vector2(slideX.X, slideX.Z)), domain))
+            return slideX;
+
+        var slideZ = new Vector3(from.X, to.Y, to.Z);
+        if (pathField.IsPassable(pathField.WorldToCell(new Vector2(slideZ.X, slideZ.Z)), domain))
+            return slideZ;
+
+        return from;                         // inside corner - hold position
     }
 
     /// <summary>
