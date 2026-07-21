@@ -1,17 +1,17 @@
-[gd_scene load_steps=3 format=3 uid="uid://b44m8vlw85yhi"]
+[gd_scene format=3 uid="uid://b44m8vlw85yhi"]
 
 [ext_resource type="PackedScene" uid="uid://d2y77fk64bkdp" path="res://Assets/Game/Grass.fbx" id="1_jg3qh"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_unkft"]
 size = Vector3(14.98933, 1, 15.02365)
 
-[node name="GrassPlain" type="Node3D"]
+[node name="GrassPlain" type="Node3D" unique_id=1194049388]
 
-[node name="Grass" parent="." instance=ExtResource("1_jg3qh")]
+[node name="Grass" parent="." unique_id=999371782 instance=ExtResource("1_jg3qh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=128504970]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1444479825]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.198883e-05, 0, -0.00010681152)
 shape = SubResource("BoxShape3D_unkft")

@@ -11,6 +11,7 @@ public partial class Plains : Node3D, IGameMap
 {
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://Scenes/Game/Player.tscn");
 	private PackedScene _teamflag, _tank, _tower, _bunker, _treeB1, _treeB2, _treeC1, _treeC2, _treeC3, _treeC4, _treeC5, _treeC6;
+	private Mesh _grass3;
 	private Node _entities;
 	private MapBlock[][] _map;
 	private PackedScene _grassP, _riverS, _riverT;
@@ -40,6 +41,8 @@ public partial class Plains : Node3D, IGameMap
         _grassP = GD.Load<PackedScene>("res://Scenes/Terrains/GrassPlain.tscn");
         _riverS = GD.Load<PackedScene>("res://Scenes/Terrains/RiverStraight.tscn");
         _riverT = GD.Load<PackedScene>("res://Scenes/Terrains/RiverTurn.tscn");
+        
+        _grass3 = GD.Load<Mesh>("res://Assets/Maps/Nature/grass_type1_mesh.res");
 	}
 
     public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
@@ -114,6 +117,10 @@ public partial class Plains : Node3D, IGameMap
 
     private void GenerateSceneObjects(MapBlock[][] map)
 	{
+		// Every block's grass goes into one map-wide MultiMesh - a MultiMesh per block meant
+		// 10k GPU buffers and 10k draw calls for ~48 instances each, which defeats the point.
+		var grassInstances = new List<Transform3D>();
+
 		for (int i = 0; i < map.Length; i++)
 		{
 			for (int j = 0; j < map[0].Length; j++)
@@ -124,7 +131,7 @@ public partial class Plains : Node3D, IGameMap
 						//var pb = PreparePlainBlock(map, i, j);
 						//if(pb != null)
 							//this.AddChild(pb);
-						var pbList = PrepareDetailedPlainBlocks(map, i, j);
+						var pbList = PrepareDetailedPlainBlocks(map, i, j, grassInstances);
 						foreach (var pb in pbList)
 						{
 							this.AddChild(pb);
@@ -209,6 +216,46 @@ public partial class Plains : Node3D, IGameMap
 				}
 			}
 		}
+
+		var grass = BuildGrass(grassInstances);
+		if (grass != null)
+			this.AddChild(grass);
+	}
+
+	/// <summary>
+	/// Commits every scattered tuft into a single map-wide MultiMesh.
+	/// </summary>
+	private MultiMeshInstance3D BuildGrass(List<Transform3D> instances)
+	{
+		if (instances.Count == 0)
+			return null;
+
+		var mm = new MultiMesh();
+		mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
+		mm.Mesh = _grass3;                      // Mesh must be assigned before InstanceCount
+		mm.InstanceCount = instances.Count;
+
+		var min = instances[0].Origin;
+		var max = min;
+		for (int k = 0; k < instances.Count; k++)
+		{
+			var origin = instances[k].Origin;
+			mm.SetInstanceTransform(k, instances[k]);
+			min = new Vector3(Mathf.Min(min.X, origin.X), Mathf.Min(min.Y, origin.Y), Mathf.Min(min.Z, origin.Z));
+			max = new Vector3(Mathf.Max(max.X, origin.X), Mathf.Max(max.Y, origin.Y), Mathf.Max(max.Z, origin.Z));
+		}
+
+		// Instances are in world space and the node sits at the origin, so the AABB is world
+		// space too. Padded by a tuft's size since the bounds above only cover their origins.
+		const float tuftExtent = 1.5f;
+		mm.CustomAabb = new Aabb(
+			min - new Vector3(tuftExtent, 0f, tuftExtent),
+			(max - min) + new Vector3(tuftExtent * 2f, tuftExtent, tuftExtent * 2f));
+
+		var node = new MultiMeshInstance3D();
+		node.Multimesh = mm;
+		node.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
+		return node;
 	}
 
 	private Node3D PreparePlainBlock(MapBlock[][] map, int i, int j)
@@ -218,7 +265,7 @@ public partial class Plains : Node3D, IGameMap
         return r;
     }
 
-	private IList<Node3D> PrepareDetailedPlainBlocks(MapBlock[][] map, int i, int j)
+	private IList<Node3D> PrepareDetailedPlainBlocks(MapBlock[][] map, int i, int j, List<Transform3D> grassInstances)
 	{
 		const int s = MapConstants.BIOMEHEATMAPSCALE;
 		var subBlockSize = (float)MapConstants.BLOCK_SIZE / s;
@@ -375,7 +422,51 @@ public partial class Plains : Node3D, IGameMap
 		var terrain = new MeshInstance3D();
 		terrain.Mesh = mesh;
 		terrain.CreateConvexCollision();
-		
+
+		// Scatter this block's grass tufts into the map-wide list. They are committed to a
+		// single MultiMesh in BuildGrass() once every block has been visited.
+		// Seeded from the block coordinates so every peer builds the identical level.
+		const int grassPerSubBlock = 256;
+		var rng = new RandomNumberGenerator();
+		rng.Seed = (ulong)((long)map[i][j].Coordinates.X * 73856093 ^ (long)map[i][j].Coordinates.Y * 19349663);
+
+		for (int x = 0; x < s; x++)
+		{
+			for (int z = 0; z < s; z++)
+			{
+				for (int n = 0; n < grassPerSubBlock; n++)
+				{
+					var fx = rng.Randf();
+					var fz = rng.Randf();
+
+					// Sample the height off the same two triangles the terrain mesh is built
+					// from (diagonal runs v10 -> v01), not a bilinear average - on sloped
+					// blocks the two disagree by more than a tuft is tall and grass sinks.
+					float h;
+					if (fx + fz < 1f)
+						h = verts[x, z].Y
+							+ fx * (verts[x + 1, z].Y - verts[x, z].Y)
+							+ fz * (verts[x, z + 1].Y - verts[x, z].Y);
+					else
+						h = verts[x + 1, z + 1].Y
+							+ (1f - fx) * (verts[x, z + 1].Y - verts[x + 1, z + 1].Y)
+							+ (1f - fz) * (verts[x + 1, z].Y - verts[x + 1, z + 1].Y);
+
+					var pos = new Vector3(
+						originX + (x + fx) * subBlockSize,
+						h,
+						originZ + (z + fz) * subBlockSize);
+
+					// Build the basis separately - Transform3D.Rotated() pivots on the world origin
+					var basis = Basis.Identity
+						.Rotated(Vector3.Up, rng.RandfRange(0f, Mathf.Tau))
+						.Scaled(Vector3.One * rng.RandfRange(0.8f, 1.4f));
+
+					grassInstances.Add(new Transform3D(basis, pos));
+				}
+			}
+		}
+
 		result.Add(terrain);
 		return result;
 	}

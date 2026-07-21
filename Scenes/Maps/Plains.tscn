@@ -1,19 +1,46 @@
-[gd_scene load_steps=3 format=3 uid="uid://b3quk14amilq5"]
+[gd_scene format=3 uid="uid://b3quk14amilq5"]
 
 [ext_resource type="Script" uid="uid://d3q572lsg5mjc" path="res://Code/Maps/Plains.cs" id="1_dup03"]
 [ext_resource type="PackedScene" uid="uid://bs6ddw8i2d41a" path="res://Scenes/Maps/Minimap.tscn" id="2_wj7ge"]
+[ext_resource type="ArrayMesh" uid="uid://cpcej24ev0gxl" path="res://Assets/Maps/Nature/grass3.res" id="3_6y224"]
 
-[node name="Plains" type="Node3D"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_grass"]
+
+[sub_resource type="Sky" id="Sky_grass"]
+sky_material = SubResource("ProceduralSkyMaterial_grass")
+
+[sub_resource type="Environment" id="Environment_grass"]
+background_mode = 2
+sky = SubResource("Sky_grass")
+ambient_light_source = 3
+ambient_light_color = Color(0.9051985, 0.9240035, 0.9862067, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i188q"]
+albedo_color = Color(0.11847072, 0.5848431, 0, 1)
+
+[node name="Plains" type="Node3D" unique_id=592082416]
 script = ExtResource("1_dup03")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=460355835]
 transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 50, 1000, 50)
 light_energy = 2.0
 shadow_enabled = true
 
-[node name="Entities" type="Node" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1596920355]
+environment = SubResource("Environment_grass")
 
-[node name="Minimap" parent="." instance=ExtResource("2_wj7ge")]
+[node name="Entities" type="Node" parent="." unique_id=1496118860]
+
+[node name="Minimap" parent="." unique_id=72708628 instance=ExtResource("2_wj7ge")]
 position = Vector2(50, 50)
 
-[node name="Players" type="Node" parent="."]
+[node name="Players" type="Node" parent="." unique_id=1726585340]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=395874911]
+transform = Transform3D(7.26537, 0, 0, 0, 0.4487831, 0, 0, 0, 3.1780283, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_i188q")
+size = Vector3(5, 1, 5)
+
+[node name="Grass3" type="MeshInstance3D" parent="." unique_id=15647292]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2003927, 0.46298385, 1.1191726)
+mesh = ExtResource("3_6y224")
