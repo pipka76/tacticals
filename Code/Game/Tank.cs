@@ -194,7 +194,7 @@ public partial class Tank : MovableTeamEntity, IPassengers
 
         if (stopSound && _sfxSound.HasValue)
         {
-            Main.Current.Audio.Stop(_sfxSound.Value);
+            Main3d.Current.Audio.Stop(_sfxSound.Value);
             _sfxSound = null;
         }
     }
@@ -215,7 +215,7 @@ public partial class Tank : MovableTeamEntity, IPassengers
             }
 
             if (!_sfxSound.HasValue)
-                _sfxSound = Main.Current.Audio.Play3D("tank_driving", GlobalPosition, true);
+                _sfxSound = Main3d.Current.Audio.Play3D("tank_driving", GlobalPosition, true);
 
             return;
         }
@@ -246,9 +246,9 @@ public partial class Tank : MovableTeamEntity, IPassengers
     protected override void HitTaken(int pDamage, TeamEntity pShooter, Vector3 hitPos)
     {
         if (pDamage < 50)
-            Main.Current.Audio.Play3D("metal_ricochet", GlobalPosition);
+            Main3d.Current.Audio.Play3D("metal_ricochet", GlobalPosition);
         else
-            Main.Current.Audio.Play3D("metal_hit_heavy", GlobalPosition);
+            Main3d.Current.Audio.Play3D("metal_hit_heavy", GlobalPosition);
     }
 
     private void HandleAnimation()
@@ -262,7 +262,7 @@ public partial class Tank : MovableTeamEntity, IPassengers
         {
             if (_sfxSound.HasValue)
             {
-                Main.Current.Audio.Stop(_sfxSound.Value);
+                Main3d.Current.Audio.Stop(_sfxSound.Value);
                 _sfxSound = null;
             }
 

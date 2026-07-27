@@ -110,7 +110,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
             }
 
             if (!_sfxSound.HasValue)
-                _sfxSound = Main.Current.Audio.Play3D("heli_flight", GlobalPosition, true);
+                _sfxSound = Main3d.Current.Audio.Play3D("heli_flight", GlobalPosition, true);
 
             return;
         }
@@ -121,7 +121,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
     private void HandleHover()
     {
         if (!_sfxSound.HasValue)
-            _sfxSound = Main.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
+            _sfxSound = Main3d.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
 
         TransitionToNextState(true);
     }
@@ -131,7 +131,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
         if (_aboveGround < FLIGHT_LEVEL)
         {
             if (!_sfxSound.HasValue)
-                _sfxSound = Main.Current.Audio.Play3D("heli_take_off", GlobalPosition);
+                _sfxSound = Main3d.Current.Audio.Play3D("heli_take_off", GlobalPosition);
             
             _aboveGround += (float)delta * CLIMB_SPEED;
         }
@@ -151,7 +151,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
         if (_aboveGround > 0)
         {
             if (!_sfxSound.HasValue)
-                _sfxSound = Main.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
+                _sfxSound = Main3d.Current.Audio.Play3D("heli_hover", GlobalPosition, true);
             
             _aboveGround -= (float)delta * CLIMB_SPEED;
             if (_aboveGround <= 0)
@@ -175,9 +175,9 @@ public partial class Heli : MovableTeamEntity, IPassengers
          
             if (_sfxSound.HasValue)
             {
-                Main.Current.Audio.Stop(_sfxSound.Value);
+                Main3d.Current.Audio.Stop(_sfxSound.Value);
             }
-            Main.Current.Audio.Play3D("heli_off", GlobalPosition);
+            Main3d.Current.Audio.Play3D("heli_off", GlobalPosition);
             
             TransitionToNextState();
         }
@@ -217,7 +217,7 @@ public partial class Heli : MovableTeamEntity, IPassengers
 
         if (stopSound && _sfxSound.HasValue)
         {
-            Main.Current.Audio.Stop(_sfxSound.Value);
+            Main3d.Current.Audio.Stop(_sfxSound.Value);
             _sfxSound = null;
         }
     }

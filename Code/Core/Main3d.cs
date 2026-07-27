@@ -1,0 +1,152 @@
+using Godot;
+using System;
+using System.Linq;
+using tacticals.Code.Game;
+
+public partial class Main3d : Node
+{
+	public enum NAVIGATE_TARGET
+	{
+		STARTMENU,
+		LOBBYMENU,
+		BATTLEMENU
+	}
+
+	private const int PORT = 20000;
+	private const string PORT_ARG = "--port=";
+	public static Main3d Current { get; internal set; }
+	
+	public AudioManager Audio { get; internal set; }
+	
+	public ProjectileManager Projectiles { get; internal set; }
+
+	/// <summary>
+	/// The level currently loaded under the "Map" node, or null in the menus and during a
+	/// scene swap. Entities should reach the map through this rather than walking the node tree.
+	/// </summary>
+	public IGameMap Map { get; private set; }
+
+	public override void _Ready()
+	{
+		Current = this;
+		// Automatically start the server in headless mode.
+		if (DisplayServer.GetName() == "headless")
+		{
+			int port = PORT;
+			var args = OS.GetCmdlineArgs();
+//			GD.Print($"Found port parameter: {args.Length}");
+			var sPort= args.FirstOrDefault(a => a.StartsWith(PORT_ARG));
+			if (!String.IsNullOrEmpty(sPort))
+			{
+				GD.Print($"Found port parameter: {sPort}");
+				if (!int.TryParse(sPort.Substring(PORT_ARG.Length), out port))
+					port = PORT;
+			}
+
+			GD.Print($"Automatically starting dedicated server on port {port}");
+			CallDeferred(nameof(StartServer));
+		}
+
+		Audio = this.GetNode<AudioManager>("Audio");
+		Projectiles = this.GetNode<ProjectileManager>("Projectiles");
+	}
+	
+	public void StartServer()
+	{
+		// Start as server
+		var peer = new ENetMultiplayerPeer();
+		var error = peer.CreateServer(PORT);
+
+		if (error != Error.Ok || peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Disconnected)
+		{
+			OS.Alert("Failed to start multiplayer server");
+			return;
+		}
+
+		Multiplayer.MultiplayerPeer = peer;
+		
+		GD.Print("Server Started!");
+	}
+	
+	public IGameMap StartGame(string mapScene)
+	{
+//		if (Multiplayer.IsServer())
+//		{
+	//		CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
+//		}
+		(GetNode("MenuBackground") as Node3D).Visible = false;
+		return ChangeLevel(GD.Load<PackedScene>(mapScene));
+	}
+	
+	public void JoinServer(int port)
+	{
+		var peer = new ENetMultiplayerPeer();
+		var error = peer.CreateClient("localhost", port);
+
+		if (error != Error.Ok || peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Disconnected)
+		{
+			OS.Alert("Failed to start multiplayer client");
+			return;
+		}
+
+		Multiplayer.MultiplayerPeer = peer;
+		
+		//StartGame();
+	}
+
+	public void NavigateTo(NAVIGATE_TARGET target, NavigateContext context = null)
+	{
+		var main = (GetNode("CanvasLayer/StartMenu") as StartMenu);
+		var lobby = (GetNode("CanvasLayer/LobbyMenu") as LobbyMenu);
+		var battle = (GetNode("CanvasLayer/BattleMenu") as BattleMenu);
+		
+		switch (target)
+		{
+			case NAVIGATE_TARGET.STARTMENU:
+				main.Show();
+				main.OnNavigateTo(context);
+				lobby.Hide();
+				battle.Hide();
+				break;
+			case NAVIGATE_TARGET.LOBBYMENU:
+				main.Hide();
+				lobby.Show();
+				lobby.OnNavigateTo(context);
+				battle.Hide();
+				break;
+			case NAVIGATE_TARGET.BATTLEMENU:
+				main.Hide();
+				lobby.Hide();
+				battle.Show();
+				battle.OnNavigateTo(context);
+				break;
+		}
+	}
+
+	private IGameMap ChangeLevel(PackedScene scene)
+	{
+		// Drop the handle before freeing, so nothing dereferences a disposed level mid-teardown.
+		Map = null;
+
+		// Remove old level if any.
+		var mapRoot = GetNode("Map");
+		foreach (Node child in mapRoot.GetChildren())
+		{
+			mapRoot.RemoveChild(child);
+			child.QueueFree();
+		}
+
+		// Add new level.
+		var li = scene.Instantiate();
+		if (li is IGameMap map)
+		{
+			mapRoot.AddChild(li);
+			map.GenerateLevel();
+
+			Map = map;
+			return map;
+		}
+
+		return null;
+	}
+}

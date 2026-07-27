@@ -2,7 +2,6 @@
 
 [ext_resource type="Texture2D" uid="uid://dv515eov7bg77" path="res://Assets/UI/menuBackground.png" id="1_0rsls"]
 [ext_resource type="Script" uid="uid://c1b8ksqkvtbdp" path="res://Code/UI/LobbyMenu.cs" id="1_4jbjn"]
-[ext_resource type="PackedScene" uid="uid://cy2p3c18gmw86" path="res://Scenes/Menus/MenuBackground.tscn" id="3_lcrhv"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jroqm"]
 bg_color = Color(0, 0.251771, 0.663359, 1)
@@ -10,7 +9,7 @@ bg_color = Color(0, 0.251771, 0.663359, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_21sbj"]
 bg_color = Color(4.81308e-08, 0.393094, 0.264821, 1)
 
-[node name="LobbyMenu" type="Control" unique_id=571132398]
+[node name="LobbyMenu" type="Control" unique_id=1118264754]
 custom_minimum_size = Vector2(1600, 1200)
 layout_mode = 3
 anchors_preset = 15
@@ -29,8 +28,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("1_0rsls")
-
-[node name="MenuBackground" parent="." unique_id=1173953879 instance=ExtResource("3_lcrhv")]
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1852563800]
 layout_mode = 1

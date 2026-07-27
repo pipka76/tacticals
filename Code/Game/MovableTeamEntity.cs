@@ -132,7 +132,7 @@ public partial class MovableTeamEntity : TeamEntity
     /// </summary>
     private Vector3 ClampMoveToPassable(Vector3 from, Vector3 to)
     {
-        var pathField = Main.Current?.Map?.PathField;
+        var pathField = Main3d.Current?.Map?.PathField;
         if (pathField == null)
             return to;                       // menus, or a client whose grid was never built
 
@@ -167,7 +167,7 @@ public partial class MovableTeamEntity : TeamEntity
         if (IsInGroup(EntityGroup.AIR_UNIT))
             return 1f;
 
-        var pathField = Main.Current?.Map?.PathField;
+        var pathField = Main3d.Current?.Map?.PathField;
         return pathField?.GetMoveFactorWorld(new Vector2(GlobalPosition.X, GlobalPosition.Z)) ?? 1f;
     }
 

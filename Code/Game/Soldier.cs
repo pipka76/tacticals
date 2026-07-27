@@ -198,10 +198,10 @@ public partial class Soldier : MovableTeamEntity
 		var inaccY = Random.Shared.Next(-(int)target.Y, (int)target.Y);
 		var inaccZ = Random.Shared.Next(-(int)target.Z, (int)target.Z);
 		
-		Main.Current.Audio.Play3D("handgun_shot", GlobalPosition);
+		Main3d.Current.Audio.Play3D("handgun_shot", GlobalPosition);
 		var weapPos = GlobalPosition + Vector3.Up * 1.3f;
 		var fireDirection = (target - weapPos).Normalized() * 300f;
-		Main.Current.Projectiles.Spawn(new Projectile()
+		Main3d.Current.Projectiles.Spawn(new Projectile()
 		{
 			Shooter = this,
 			Pos = weapPos,
@@ -399,7 +399,7 @@ public partial class Soldier : MovableTeamEntity
 	{
 		if (_sfxSound.HasValue)
 		{
-			Main.Current.Audio.Stop(_sfxSound.Value);
+			Main3d.Current.Audio.Stop(_sfxSound.Value);
 			_sfxSound = null;
 		}
 	}
@@ -407,7 +407,7 @@ public partial class Soldier : MovableTeamEntity
 	protected override void HitTaken(int pDamage, TeamEntity pShooter, Vector3 hitPos)
 	{
 		Mute();
-		Main.Current.Audio.Play3D("soldier_died", GlobalPosition);
+		Main3d.Current.Audio.Play3D("soldier_died", GlobalPosition);
 	}
 
 	private void ReportDebug()

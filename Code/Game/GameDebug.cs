@@ -267,7 +267,7 @@ public partial class GameDebug : Node
 
 	private static float GroundAt(Vector2 worldXZ)
 	{
-		return (Main.Current?.Map?.GetTerrainHeight(worldXZ) ?? 0f) + BLOCKED_LIFT;
+		return (Main3d.Current?.Map?.GetTerrainHeight(worldXZ) ?? 0f) + BLOCKED_LIFT;
 	}
 
     private void DrawFOV()

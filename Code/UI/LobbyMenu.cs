@@ -72,7 +72,7 @@ public partial class LobbyMenu : Control, IGameMenu
 		int port = button.GetMeta("serverport").AsInt32();
 		GD.Print("BattleSelected ID: " + id);
 		
-		Main.Current.JoinServer(port);
+		Main3d.Current.JoinServer(port);
 		int peerId = Multiplayer.GetUniqueId();
 		var result = Task.Run(async () => await BattleServer.Current.JoinBattle(Guid.Parse(id), peerId)).Result;
 		if (result)
@@ -82,7 +82,7 @@ public partial class LobbyMenu : Control, IGameMenu
 			var context = new NavigateContext();
 			context.Command = "JoinExisting";
 			context.Metadata.Add("battleid", id);
-			Main.Current.NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
+			Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
 		}
 	}
 	
@@ -103,7 +103,7 @@ public partial class LobbyMenu : Control, IGameMenu
 		{
 			GD.Print($"New server created on port {result.port}: {result.id})");
 			GD.Print($"Connecting to the server ...");
-			Main.Current.JoinServer(result.port);
+			Main3d.Current.JoinServer(result.port);
 			GD.Print($"Authorizing the server as mine ...");
 			int peerId = Multiplayer.GetUniqueId();
 			var authorized =  Task.Run(async () => await BattleServer.Current.AuthorizeBattle(result.id, peerId)).Result;
@@ -113,7 +113,7 @@ public partial class LobbyMenu : Control, IGameMenu
 				var context = new NavigateContext();
 				context.Command = "CreateNew";
 				context.Metadata.Add("battleid", result.id.ToString());
-				Main.Current.NavigateTo(Main.NAVIGATE_TARGET.BATTLEMENU, context);
+				Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
 			}
 			else
 			{
@@ -125,14 +125,14 @@ public partial class LobbyMenu : Control, IGameMenu
 	private void CreateNewDemoBattle()
 	{
         this.Visible = false;
-        var map = Main.Current.StartGame("res://Scenes/Maps/Plains.tscn");
+        var map = Main3d.Current.StartGame("res://Scenes/Maps/Plains.tscn");
         map.SpawnPlayer(new Vector2(0,0));
 	}
 
 	private void CreateNewCampainDemoBattle()
 	{
 		this.Visible = false;
-		var map = Main.Current.StartGame("res://Scenes/Maps/CampainDemo.tscn");
+		var map = Main3d.Current.StartGame("res://Scenes/Maps/CampainDemo.tscn");
 		map.SpawnPlayer(new Vector2(0,0));
 	}
 

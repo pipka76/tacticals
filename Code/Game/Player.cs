@@ -65,6 +65,8 @@ public partial class Player : Node3D
 		_mouse_cursor_select = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_select.png");
 		DeployArmy();
 		
+		_godCamera.SetCurrent(true);
+		
 		//Input.SetCustomMouseCursor(_mouse_cursor_select, Input.CursorShape.Arrow, new Vector2(0, 8));
 		//Input.SetCustomMouseCursor(_mouse_cursor_moveto, Input.CursorShape.Cross, new Vector2(8, 10));
 		//Input.SetCustomMouseCursor(_mouse_cursor_board, Input.CursorShape.PointingHand, new Vector2(8, 100));

@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://bosk6ryvlkga2"]
+
+[ext_resource type="PackedScene" uid="uid://bertea36m5op7" path="res://Scenes/Menus/StartMenu.tscn" id="1_hql2v"]
+[ext_resource type="Script" uid="uid://xhtd4svxpint" path="res://Code/Core/Main3d.cs" id="1_iggqh"]
+[ext_resource type="PackedScene" uid="uid://cy2p3c18gmw86" path="res://Scenes/Menus/MenuBackground.tscn" id="1_tvh7v"]
+[ext_resource type="Script" uid="uid://gv3afmotmn0i" path="res://Code/Game/BattleServer.cs" id="2_81aw7"]
+[ext_resource type="PackedScene" uid="uid://dr80yp8c7dfvh" path="res://Scenes/Menus/LobbyMenu.tscn" id="2_tvh7v"]
+[ext_resource type="Script" uid="uid://qt6ijhxillg6" path="res://Code/Game/BattleNetwork.cs" id="3_4wqfk"]
+[ext_resource type="PackedScene" uid="uid://dx1papmc2pq23" path="res://Scenes/Menus/BattleMenu.tscn" id="7_d0kfl"]
+[ext_resource type="Script" uid="uid://b37ikg1ve4j0j" path="res://Code/Game/AudioManager.cs" id="8_7e5io"]
+[ext_resource type="Resource" uid="uid://cdw0uqhxij1d6" path="res://Assets/Sounds/SoundLibrary.tres" id="9_jifo4"]
+[ext_resource type="Script" uid="uid://sxttjg4q76hi" path="res://Code/Game/ProjectileManager.cs" id="10_pyiq5"]
+[ext_resource type="Script" uid="uid://3s7ca3a7facs" path="res://Code/Game/GameDebug.cs" id="11_nboip"]
+
+[node name="Main3d" type="Node3D" unique_id=589792418]
+script = ExtResource("1_iggqh")
+
+[node name="BattleServer" type="Node" parent="." unique_id=1262964008]
+script = ExtResource("2_81aw7")
+
+[node name="BattleNetwork" type="Node" parent="." unique_id=539083809]
+script = ExtResource("3_4wqfk")
+
+[node name="Map" type="Node" parent="." unique_id=44943782]
+
+[node name="MenuBackground" parent="." unique_id=1173953879 instance=ExtResource("1_tvh7v")]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=510637318]
+
+[node name="StartMenu" parent="CanvasLayer" unique_id=324517436 instance=ExtResource("1_hql2v")]
+
+[node name="LobbyMenu" parent="CanvasLayer" unique_id=1118264754 instance=ExtResource("2_tvh7v")]
+visible = false
+
+[node name="BattleMenu" parent="CanvasLayer" unique_id=1915344110 instance=ExtResource("7_d0kfl")]
+visible = false
+offset_right = 1600.0
+offset_bottom = 1200.0
+
+[node name="Audio" type="Node" parent="." unique_id=125037180]
+script = ExtResource("8_7e5io")
+Library = ExtResource("9_jifo4")
+
+[node name="Projectiles" type="Node3D" parent="." unique_id=1849305699]
+script = ExtResource("10_pyiq5")
+DebugDrawProjectiles = true
+
+[node name="Debug" type="Node" parent="." unique_id=1352144914]
+script = ExtResource("11_nboip")
