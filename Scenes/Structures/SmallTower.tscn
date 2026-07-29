@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bkxjdt4jqd8te"]
+
+[ext_resource type="PackedScene" uid="uid://borksb2ntbc80" path="res://Scenes/Structures/SmallTower_InProgress.tscn" id="1_xf71d"]
+[ext_resource type="PackedScene" uid="uid://db3kqvux50nct" path="res://Scenes/Structures/SmallTower_Finished.tscn" id="2_twmqf"]
+
+[node name="SmallTower" type="Node3D" unique_id=852309482]
+
+[node name="SmallTower_InProgress" parent="." unique_id=1619582868 instance=ExtResource("1_xf71d")]
+
+[node name="SmallTower_Finished" parent="." unique_id=1809336289 instance=ExtResource("2_twmqf")]

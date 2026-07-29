@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cvcgf4evbi5ob"
-path="res://.godot/imported/SmallTower.glb-2bf8a79804f1def79be7d95c5e7b88a9.scn"
+uid="uid://2j413new64ld"
+path="res://.godot/imported/SmallTower.Finished-col.glb-2f9681df267256e3e3e3798253eaf6aa.scn"
 
 [deps]
 
-source_file="res://Assets/Game/SmallTower.glb"
-dest_files=["res://.godot/imported/SmallTower.glb-2bf8a79804f1def79be7d95c5e7b88a9.scn"]
+source_file="res://Assets/Game/SmallTower.Finished-col.glb"
+dest_files=["res://.godot/imported/SmallTower.Finished-col.glb-2f9681df267256e3e3e3798253eaf6aa.scn"]
 
 [params]
 

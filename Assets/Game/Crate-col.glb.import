@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://nrwf76566w8r"
-path="res://.godot/imported/SmallTower-InProgress.glb-ba1a5c3864e7d4b7725a1a50c41cfa97.scn"
+uid="uid://5vhsnu0e7q67"
+path="res://.godot/imported/Crate-col.glb-8e99f24848ba3a76cbc33228433a7001.scn"
 
 [deps]
 
-source_file="res://Assets/Game/SmallTower-InProgress.glb"
-dest_files=["res://.godot/imported/SmallTower-InProgress.glb-ba1a5c3864e7d4b7725a1a50c41cfa97.scn"]
+source_file="res://Assets/Game/Crate-col.glb"
+dest_files=["res://.godot/imported/Crate-col.glb-8e99f24848ba3a76cbc33228433a7001.scn"]
 
 [params]
 
