@@ -24,7 +24,7 @@ public partial class GameDebug : Node
 	// Rect2 is a struct, so these two stay allocation-free even with thousands of cells a frame.
 	private List<Rect2> _blockedAreaRegister = new List<Rect2>();
 	private List<Rect2> _blockedCellRegister = new List<Rect2>();
-    private ImmediateMesh _immediateMesh;
+	private ImmediateMesh _immediateMesh;
 	private MeshInstance3D _meshInstance;
 
 	private const float BLOCKED_LIFT = 0.15f;    // keep the overlay off the terrain surface
@@ -70,43 +70,43 @@ public partial class GameDebug : Node
 		_immediateMesh.ClearSurfaces();
 		if (PlayerInput.Current.DebugToggle)
 		{
-            _immediateMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
-            
+			_immediateMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+			
 			DrawFOV();
 			DrawPatrolPaths();
 			DrawBlockedAreas();
 
-            _immediateMesh.SurfaceEnd();
-        }
-        _fovRegister.Clear();
-        _patrolRegister.Clear();
-        _blockedAreaRegister.Clear();
-        _blockedCellRegister.Clear();
+			_immediateMesh.SurfaceEnd();
+		}
+		_fovRegister.Clear();
+		_patrolRegister.Clear();
+		_blockedAreaRegister.Clear();
+		_blockedCellRegister.Clear();
 	}
 
-    private void DrawPatrolPaths()
-    {
-        if (_patrolRegister.Count == 0)
-            return;
+	private void DrawPatrolPaths()
+	{
+		if (_patrolRegister.Count == 0)
+			return;
 
-        foreach (var record in _patrolRegister)
-        {
-            var points = record.Points;
-            if (points == null || points.Length < 2)
-                continue;
+		foreach (var record in _patrolRegister)
+		{
+			var points = record.Points;
+			if (points == null || points.Length < 2)
+				continue;
 
-            // A one-shot move route stops at its last waypoint; a patrol circuit closes the loop.
-            int segments = record.Loop ? points.Length : points.Length - 1;
-            var color = record.Loop ? Colors.Purple : Colors.Cyan;
+			// A one-shot move route stops at its last waypoint; a patrol circuit closes the loop.
+			int segments = record.Loop ? points.Length : points.Length - 1;
+			var color = record.Loop ? Colors.Purple : Colors.Cyan;
 
-            for (int i = 0; i < segments; i++)
-            {
-                DrawLine(points[i] + Vector3.Up * 0.1f, points[(i + 1) % points.Length] + Vector3.Up * 0.1f, color);
-            }
-        }
-    }
+			for (int i = 0; i < segments; i++)
+			{
+				DrawLine(points[i] + Vector3.Up * 0.1f, points[(i + 1) % points.Length] + Vector3.Up * 0.1f, color);
+			}
+		}
+	}
 
-    private void DrawLine(Vector3 from, Vector3 to, Color color)
+	private void DrawLine(Vector3 from, Vector3 to, Color color)
 	{
 		_immediateMesh.SurfaceSetColor(color);
 		_immediateMesh.SurfaceAddVertex(from);
@@ -270,7 +270,7 @@ public partial class GameDebug : Node
 		return (Main3d.Current?.Map?.GetTerrainHeight(worldXZ) ?? 0f) + BLOCKED_LIFT;
 	}
 
-    private void DrawFOV()
+	private void DrawFOV()
 	{
 		if (_fovRegister.Count == 0)
 			return;
