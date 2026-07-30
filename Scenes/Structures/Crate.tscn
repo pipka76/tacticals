@@ -1,14 +1,18 @@
-[gd_scene format=3 uid="uid://bdgl1agnjyf7o"]
+[gd_scene format=3 uid="uid://bi243svb0ckq5"]
 
-[ext_resource type="PackedScene" uid="uid://5vhsnu0e7q67" path="res://Assets/Game/Crate-col.glb" id="1_3em6i"]
+[ext_resource type="PackedScene" uid="uid://bdgl1agnjyf7o" path="res://Scenes/Structures/Crate-col.tscn" id="1_3em6i"]
+[ext_resource type="Script" uid="uid://d4i6rkeck86io" path="res://Code/Game/Crate.cs" id="2_qx35h"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_uraql"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_qx35h"]
 size = Vector3(1.5873413, 0.8465576, 0.86499023)
 
-[node name="Crate" unique_id=1294820219 instance=ExtResource("1_3em6i")]
+[node name="Crate" type="CharacterBody3D" unique_id=1714478700]
+script = ExtResource("2_qx35h")
 
-[node name="RigidBody3D" type="RigidBody3D" parent="." index="1" unique_id=707975529]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D" index="0" unique_id=1060837961]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1635404009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.011566162, 0.4232788, 0.0045166016)
-shape = SubResource("BoxShape3D_uraql")
+shape = SubResource("BoxShape3D_qx35h")
+
+[node name="Crate-col" parent="." unique_id=1294820219 instance=ExtResource("1_3em6i")]
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=1568287910]
