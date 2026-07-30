@@ -600,7 +600,7 @@ public partial class Player : Node3D
 					if ((p.GlobalPosition - interactWith.GlobalPosition).Length() > 5f)
 						continue;
 					
-					if(iPass.BoardPassenger(p))
+					if(iPass.BoardPassenger(p) && (interactWith is not Crate))
 						p.SetVisible(false);
 				}
 
