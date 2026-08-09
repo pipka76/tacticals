@@ -2,8 +2,10 @@
 
 [ext_resource type="PackedScene" uid="uid://borksb2ntbc80" path="res://Scenes/Structures/SmallTower_InProgress.tscn" id="1_xf71d"]
 [ext_resource type="PackedScene" uid="uid://db3kqvux50nct" path="res://Scenes/Structures/SmallTower_Finished.tscn" id="2_twmqf"]
+[ext_resource type="Script" uid="uid://cfftgdncbd3vf" path="res://Code/Game/SmallTower.cs" id="3_smtwr"]
 
 [node name="SmallTower" type="Node3D" unique_id=852309482]
+script = ExtResource("3_smtwr")
 
 [node name="SmallTower_InProgress" parent="." unique_id=1619582868 instance=ExtResource("1_xf71d")]
 

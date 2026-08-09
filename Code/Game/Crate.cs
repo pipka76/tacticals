@@ -17,6 +17,13 @@ public partial class Crate : TeamEntity, IPassengers
 
     private TeamEntity _owner;
 
+    /// <summary>
+    /// What this crate builds into. Exported so it can be picked per instance in the editor and
+    /// set on the crate when it is spawned.
+    /// </summary>
+    [Export]
+    public CrateContent Content { get; set; } = CrateContent.SMALL_TOWER;
+
     public override void _Ready()
     {
         _owner = null;
@@ -75,6 +82,41 @@ public partial class Crate : TeamEntity, IPassengers
         var rotation = RotateMatchPlane(dragDirection, n.Normalized(), (float)(1.0 - Math.Exp(-TURN_STIFFNESS * delta)));
 
         GlobalTransform = new Transform3D(new Basis(rotation), new Vector3(crateFlat.X, gnd.Y, crateFlat.Z));
+    }
+
+    /// <summary>The scene a given content type unpacks into.</summary>
+    public static string ContentScenePath(CrateContent content)
+    {
+        return content switch
+        {
+            CrateContent.SMALL_TOWER => SmallTower.SCENE_PATH,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Unpacks the crate on the spot: puts the structure it carries down where the crate stands, at
+    /// zero build progress, lets go of whoever was dragging it and takes the crate out of the world.
+    /// Returns the new structure, or null if the content has no scene behind it.
+    /// </summary>
+    public Node3D BuildContent()
+    {
+        var scene = GD.Load<PackedScene>(ContentScenePath(Content));
+        if (scene == null)
+            return null;
+
+        var structure = scene.Instantiate<Node3D>();
+        GetParent().AddChild(structure);
+
+        // Keep the crate's spot and heading, but stand the structure up - the crate's basis is
+        // tilted onto the slope it was dragged over, which is not how a tower should sit.
+        structure.GlobalTransform = new Transform3D(
+            Basis.FromEuler(new Vector3(0, GlobalRotation.Y, 0)), GlobalPosition);
+
+        ExitPassengers();
+        QueueFree();
+
+        return structure;
     }
 
     public bool BoardPassenger(TeamEntity entity)
