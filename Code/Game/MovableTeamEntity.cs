@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 using tacticals.Code.Game;
@@ -18,6 +19,14 @@ public partial class MovableTeamEntity : TeamEntity
     {
         get
         {
+            var path = new List<Vector3>();
+            path.Add(this.GlobalPosition);
+            path.Add(new Vector3(_moveToCoords.X, 0, _moveToCoords.Y));
+            var plannedRoutes = GetPlannedRoutes();
+            foreach (var plannedRoute in plannedRoutes)
+                path.Add(new Vector3(plannedRoute.X, 0, plannedRoute.Y));
+            GameDebug.Current.RegisterPath(path.ToArray(), false);
+
             return new Vector3(_moveToCoords.X, 0, _moveToCoords.Y);
         }
     }

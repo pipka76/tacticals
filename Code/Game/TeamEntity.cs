@@ -39,6 +39,22 @@ public partial class TeamEntity : CharacterBody3D
         _entityStateQueue.Enqueue(new Tuple<TeamEntityStates, object>(state, arg));
     }
 
+    public IReadOnlyList<Vector2> GetPlannedRoutes()
+    {
+        var routes = new List<Vector2>();
+
+        foreach (var state in _entityStateQueue)
+        {
+            if(state.Item1 != TeamEntityStates.ONTHEWAY)
+                continue;
+
+            if (state.Item2 is Vector2 t)
+                routes.Add(t);
+        }
+        
+        return routes;
+    }
+
     /// <summary>Drops everything still queued, without touching the state the entity is in right now.</summary>
     protected void ClearPendingStates()
     {

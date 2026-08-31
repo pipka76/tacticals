@@ -534,7 +534,7 @@ public partial class Player : Node3D
 			return;
 		}
 
-		var last = _moveWaypoints[_moveWaypoints.Count - 1];
+        var last = _moveWaypoints[_moveWaypoints.Count - 1];
 		Vector2 dest = new Vector2(last.X, last.Z);
 
 		// Build ring-scatter slots around the destination
