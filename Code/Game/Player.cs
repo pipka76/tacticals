@@ -20,6 +20,22 @@ public partial class Player : Node3D
 	private bool _hasHover;
 	private Vector3 _hoverPos;
 	private Vector3 _hoverNormal = Vector3.Up;
+	/// <summary>
+	/// The structure being placed, between clicking a crate in build mode and confirming where it
+	/// stands. While set, the mouse belongs to the placement and no other command is dispatched.
+	/// </summary>
+	private BuildSite _placement;
+	private Crate _placementCrate;
+	private Soldier _placementCarrier;
+	private readonly List<Soldier> _placementBuilders = new List<Soldier>();
+	private Vector3 _placementPos;
+	private Vector3 _placementNormal = Vector3.Up;
+	private float _placementYaw;
+	private bool _placementPlaceable;
+	/// <summary>The click that picked the crate has been let go, so the next press is a fresh one.</summary>
+	private bool _placementArmed;
+	/// <summary>Position is pinned by a press; dragging from here aims the structure.</summary>
+	private bool _placementAnchored;
     private Vector3 _homeBaseCoords;
 	private TeamMembership _myTeam;
 	
@@ -34,6 +50,8 @@ public partial class Player : Node3D
 	private const float CLICK_COOLDOWN = 0.2f;
 	private const float FORMATION_SPACING = 2f;   // distance between soldiers (XZ)
 	private const float FORMATION_JITTER = 0.35f;   // random jitter factor (0..1)
+	private const float CRATE_REACH = 5f;          // same reach as boarding
+	private const float PLACEMENT_MIN_DRAG = 0.5f;  // shorter drags keep the previous heading
 	
 	// Set by the authority, synchronized on spawn.
 	[Export]
@@ -318,8 +336,15 @@ public partial class Player : Node3D
 		// frame's pose so the marker does not trail the view while panning or zooming.
 		_hasHover = MouseRaycastToTerrain(out _hoverPos, out _hoverNormal);
 
+		// Read every frame so a stray right click is not left over for the next placement.
+		bool cancel = _inputs.IsCancelPressed;
+
 		// The mode says which command is being aimed; the click confirms it.
-		if (_inputs.IsSelecting)
+		if (_placement != null)
+		{
+			HandlePlacement(cancel);
+		}
+		else if (_inputs.IsSelecting)
 		{
 			switch (_inputs.Mode)
 			{
@@ -327,6 +352,7 @@ public partial class Player : Node3D
 				case CommandMode.Board: HandleBoardCommand(); break;
 				case CommandMode.Exit: HandleExitCommand(); break;
 				case CommandMode.Patrol: HandlePatrolCommand(); break;
+				case CommandMode.Build: HandleBuildCommand(); break;
 				default: HandleSelectCommand(); break;
 			}
 		}
@@ -357,8 +383,11 @@ public partial class Player : Node3D
 		this.Position += new Vector3(_inputs.PlayerMove.X, 0,  _inputs.PlayerMove.Y) * (float)delta * CAM_MOVE_SPEED;
 
 		// Last, so a route committed on this frame is already cleared when the marker is drawn.
-		_commandCursor?.Render(_inputs.Mode, _hasHover, _hoverPos, _hoverNormal,
-			_hasHover ? _godCamera.GlobalPosition.DistanceTo(_hoverPos) : 0f);
+		if (_placement != null)
+			_commandCursor?.RenderPlacement(_placementPos, _placementNormal, _placementYaw, _placement.Radius, _placementPlaceable);
+		else
+			_commandCursor?.Render(_inputs.Mode, _hasHover, _hoverPos, _hoverNormal,
+				_hasHover ? _godCamera.GlobalPosition.DistanceTo(_hoverPos) : 0f);
 	}
 
     private void HandlePatrolMode()
@@ -611,7 +640,10 @@ public partial class Player : Node3D
 						p.SetVisible(false);
 				}
 
-				DeselectAllEntities();
+				// Boarding hides the soldiers inside the vehicle, so their selection goes with them.
+				// Hooking up a crate leaves them on foot, likely to be ordered on straight away.
+				if (interactWith is not Crate)
+					DeselectAllEntities();
 			}
 		}
 	}
@@ -636,5 +668,232 @@ public partial class Player : Node3D
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// Build mode click. On a crate it starts placing the crate's content; on a structure that is
+	/// still going up it sends the selected soldiers back to work on it.
+	/// </summary>
+	private void HandleBuildCommand()
+	{
+		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) <= CLICK_COOLDOWN)
+			return;
+
+		var target = MouseRaycastToBuildTarget() ?? GroundPickBuildSite();
+		if (target == null)
+			return;
+		_moveToCooldown = Time.GetTicksMsec() / 1000f;
+
+		var builders = GetSelectedSoldiers();
+		if (builders.Count == 0)
+			return;
+
+		if (target is Crate crate)
+		{
+			BeginPlacement(crate, builders);
+			return;
+		}
+
+		if (target is BuildSite site && !site.IsComplete)
+		{
+			foreach (var builder in builders)
+				builder.Build(site);
+			DeselectAllEntities();
+		}
+	}
+
+	private void BeginPlacement(Crate crate, List<Soldier> builders)
+	{
+		// Someone has to pull the crate to the site: whoever already is, else the nearest
+		// selected soldier in reach of it.
+		var carrier = crate.Dragger as Soldier;
+		if (carrier == null)
+		{
+			float best = CRATE_REACH;
+			foreach (var builder in builders)
+			{
+				float dist = builder.GlobalPosition.DistanceTo(crate.GlobalPosition);
+				if (dist <= best)
+				{
+					best = dist;
+					carrier = builder;
+				}
+			}
+		}
+
+		if (carrier == null)
+			return;
+
+		_placementCrate = crate;
+		_placementCarrier = carrier;
+		_placementBuilders.Clear();
+		_placementBuilders.AddRange(builders);
+		if (!_placementBuilders.Contains(carrier) && carrier.Team == _myTeam)
+			_placementBuilders.Add(carrier);
+
+		_placementPos = crate.GlobalPosition;
+		_placementNormal = Vector3.Up;
+		// Front towards the camera, so the player sees the side they are lining up.
+		_placementYaw = _inputs.CameraYaw + Mathf.Pi;
+		_placementArmed = false;
+		_placementAnchored = false;
+
+		_placement = BuildSite.Preview(crate);
+		crate.GetParent().AddChild(_placement);
+		UpdatePlacementTransform();
+	}
+
+	/// <summary>
+	/// The blueprint follows the mouse until a press pins it; dragging from the pinned spot turns
+	/// it to face the mouse, and letting go confirms. Right click / Esc backs out.
+	/// </summary>
+	private void HandlePlacement(bool cancel)
+	{
+		if (cancel || !GodotObject.IsInstanceValid(_placementCrate) || _placementCrate.IsQueuedForDeletion())
+		{
+			CancelPlacement();
+			return;
+		}
+
+		// The click that picked the crate may still be held - wait for it to come up first.
+		if (!_placementArmed && !_inputs.IsSelecting)
+			_placementArmed = true;
+
+		if (!_placementAnchored)
+		{
+			if (_hasHover)
+			{
+				_placementPos = _hoverPos;
+				_placementNormal = _hoverNormal;
+				if (_placementArmed && _inputs.IsSelecting)
+					_placementAnchored = true;
+			}
+		}
+		else
+		{
+			if (_hasHover)
+			{
+				var drag = new Vector2(_hoverPos.X - _placementPos.X, _hoverPos.Z - _placementPos.Z);
+				if (drag.Length() > PLACEMENT_MIN_DRAG)
+					_placementYaw = Mathf.Atan2(-drag.X, -drag.Y);
+			}
+
+			if (!_inputs.IsSelecting)
+			{
+				if (_placementPlaceable)
+				{
+					ConfirmPlacement();
+					return;
+				}
+
+				// Can't stand there - pick it back up and let the player try another spot.
+				_placementAnchored = false;
+			}
+		}
+
+		UpdatePlacementTransform();
+	}
+
+	private void UpdatePlacementTransform()
+	{
+		_placement.GlobalTransform = new Transform3D(new Basis(Vector3.Up, _placementYaw), _placementPos);
+		_placementPlaceable = _placement.IsPlaceable();
+		_placement.ShowPlaceable(_placementPlaceable);
+	}
+
+	private void ConfirmPlacement()
+	{
+		var site = _placement;
+		site.Commit();
+
+		if (_placementCrate.Dragger == null && GodotObject.IsInstanceValid(_placementCarrier)
+			&& !_placementCarrier.IsInState(TeamEntityStates.TERMINATED))
+			_placementCrate.BoardPassenger(_placementCarrier);
+
+		foreach (var builder in _placementBuilders)
+		{
+			if (GodotObject.IsInstanceValid(builder) && !builder.IsInState(TeamEntityStates.TERMINATED))
+				builder.Build(site);
+		}
+
+		DeselectAllEntities();
+		_selectCooldown = Time.GetTicksMsec() / 1000f;
+		ClearPlacement();
+	}
+
+	private void CancelPlacement()
+	{
+		_placement.QueueFree();
+		ClearPlacement();
+	}
+
+	private void ClearPlacement()
+	{
+		_placement = null;
+		_placementCrate = null;
+		_placementCarrier = null;
+		_placementBuilders.Clear();
+	}
+
+	private List<Soldier> GetSelectedSoldiers()
+	{
+		var soldiers = new List<Soldier>();
+		var map = GetParent().GetParent() as IGameMap;
+		if (map == null)
+			return soldiers;
+
+		foreach (var entity in map.GetEntities(_myTeam))
+		{
+			if (entity.IsSelected && entity is Soldier soldier && !soldier.IsInState(TeamEntityStates.TERMINATED))
+				soldiers.Add(soldier);
+		}
+
+		return soldiers;
+	}
+
+	/// <summary>
+	/// Fallback for clicks that pass between a scaffold's legs and hit the ground: a click
+	/// anywhere inside a site's footprint counts as clicking the site.
+	/// </summary>
+	private BuildSite GroundPickBuildSite()
+	{
+		if (!_hasHover)
+			return null;
+
+		foreach (var node in GetTree().GetNodesInGroup(EntityGroup.BUILD_SITES))
+		{
+			if (node is BuildSite site && site.IsCommitted && !site.IsComplete && site.ContainsGroundPoint(_hoverPos))
+				return site;
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// What the mouse points at that the build command can act on: a crate, or a structure going up
+	/// (found by walking up from its collider to the site that holds it).
+	/// </summary>
+	private Node3D MouseRaycastToBuildTarget()
+	{
+		var mousePos = GetViewport().GetMousePosition();
+		var from = _godCamera.ProjectRayOrigin(mousePos);
+		var to = from + _godCamera.ProjectRayNormal(mousePos) * VIEW_DISTANCE;
+		var space = GetWorld3D().DirectSpaceState;
+		var rayQuery = new PhysicsRayQueryParameters3D();
+		rayQuery.From = from;
+		rayQuery.To = to;
+		rayQuery.CollisionMask = 0b011;
+
+		var result = space.IntersectRay(rayQuery);
+		if (result.TryGetValue("collider", out var v) && v.AsGodotObject() is Node hit)
+		{
+			for (Node n = hit; n != null; n = n.GetParent())
+			{
+				if (n is Crate crate) return crate;
+				if (n is BuildSite site) return site;
+			}
+		}
+
+		return null;
 	}
 }

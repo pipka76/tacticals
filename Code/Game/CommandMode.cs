@@ -12,5 +12,6 @@ public enum CommandMode
     Move,
     Patrol,
     Board,
-    Exit
+    Exit,
+    Build
 }

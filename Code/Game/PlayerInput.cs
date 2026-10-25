@@ -43,6 +43,22 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	public bool IsBoarding;
 	public bool IsExiting;
 	public bool IsPatrolArmy;
+	public bool IsBuilding;
+	private bool _IsCancelPressed;
+	/// <summary>True once per right click / Esc; reading it consumes the flag. Backs out of placing a structure.</summary>
+	public bool IsCancelPressed
+	{
+		get
+		{
+			if (_IsCancelPressed)
+			{
+				_IsCancelPressed = false;
+				return true;
+			}
+
+			return _IsCancelPressed;
+		}
+	}
 	private bool _IsPatrolArmyReleased;
     public bool IsPatrolArmyReleased 
 	{ 
@@ -207,6 +223,10 @@ public partial class PlayerInput : MultiplayerSynchronizer
 			IsBoarding = Input.IsActionPressed("board_entity");
 			IsExiting = Input.IsActionPressed("exit_entity");
 			IsPatrolArmy = Input.IsActionPressed("patrol_army");
+			IsBuilding = Input.IsActionPressed("build_entity");
+
+        if (Input.IsActionJustPressed("context_menu") || Input.IsActionJustPressed("ui_cancel"))
+            _IsCancelPressed = true;
 
         if (Input.IsActionJustReleased("patrol_army"))
             _IsPatrolArmyReleased = true;
@@ -239,6 +259,7 @@ public partial class PlayerInput : MultiplayerSynchronizer
 		else if (IsBoarding) Mode = CommandMode.Board;
 		else if (IsExiting) Mode = CommandMode.Exit;
 		else if (IsPatrolArmy) Mode = CommandMode.Patrol;
+		else if (IsBuilding) Mode = CommandMode.Build;
 		else if (IsSelecting) Mode = CommandMode.Select;
 		else Mode = CommandMode.None;
 	}

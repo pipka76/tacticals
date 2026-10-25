@@ -24,6 +24,15 @@ public partial class Crate : TeamEntity, IPassengers
     [Export]
     public CrateContent Content { get; set; } = CrateContent.SMALL_TOWER;
 
+    /// <summary>The soldier pulling the crate, or null when it lies on its own.</summary>
+    public TeamEntity Dragger => _owner;
+
+    /// <summary>
+    /// Where the player has planned to build this crate's content. Planning it again replaces the
+    /// old site, which notices and removes itself.
+    /// </summary>
+    public BuildSite Site { get; set; }
+
     public override void _Ready()
     {
         _owner = null;
@@ -95,23 +104,19 @@ public partial class Crate : TeamEntity, IPassengers
     }
 
     /// <summary>
-    /// Unpacks the crate on the spot: puts the structure it carries down where the crate stands, at
-    /// zero build progress, lets go of whoever was dragging it and takes the crate out of the world.
+    /// Unpacks the crate into <paramref name="site"/>: the structure it carries goes in as the
+    /// site's child, so it stands exactly where and how the player placed it, at zero build
+    /// progress. Lets go of whoever was dragging it and takes the crate out of the world.
     /// Returns the new structure, or null if the content has no scene behind it.
     /// </summary>
-    public Node3D BuildContent()
+    public Node3D BuildContent(Node3D site)
     {
         var scene = GD.Load<PackedScene>(ContentScenePath(Content));
         if (scene == null)
             return null;
 
         var structure = scene.Instantiate<Node3D>();
-        GetParent().AddChild(structure);
-
-        // Keep the crate's spot and heading, but stand the structure up - the crate's basis is
-        // tilted onto the slope it was dragged over, which is not how a tower should sit.
-        structure.GlobalTransform = new Transform3D(
-            Basis.FromEuler(new Vector3(0, GlobalRotation.Y, 0)), GlobalPosition);
+        site.AddChild(structure);
 
         ExitPassengers();
         QueueFree();

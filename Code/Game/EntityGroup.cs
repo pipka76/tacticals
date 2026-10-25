@@ -7,4 +7,5 @@ public class EntityGroup
     public const string SOLDIERS = "soldiers";
     public const string MACHINERY = "machinery";
     public const string ENEMY = "enemies";
+    public const string BUILD_SITES = "build-sites";
 }

@@ -21,6 +21,9 @@ public partial class Soldier : MovableTeamEntity
 	private double _eyeAngle = 0.0;
 	private double _lookoutT = 0.0;
 	private double _lookoutD = 0.0;
+	/// <summary>Build progress one soldier adds per second - a lone soldier puts up a tower in 20s.</summary>
+	private const float BUILD_RATE = 1f / 20f;
+	private BuildSite _buildSite;
 
 	public Soldier()
 	{
@@ -75,6 +78,13 @@ public partial class Soldier : MovableTeamEntity
 		{
             ResetLookout();
             HandleAttack(delta);
+			return;
+		}
+
+		if (IsInState(TeamEntityStates.BUILDING))
+		{
+			ResetLookout();
+			HandleBuilding(delta);
 			return;
 		}
 
@@ -231,6 +241,54 @@ public partial class Soldier : MovableTeamEntity
 
 		return false;
     }
+
+	/// <summary>
+	/// Walks to a spot next to <paramref name="site"/> and works on it until it is complete.
+	/// A direct player order, so whatever was queued is dropped.
+	/// </summary>
+	public void Build(BuildSite site)
+	{
+		MoveTo(site.WorkSpotFor(new Vector2(GlobalPosition.X, GlobalPosition.Z)));
+		EnqueueState(TeamEntityStates.BUILDING, site);
+	}
+
+	private void HandleBuilding(double delta)
+	{
+		var site = _buildSite;
+		if (site == null || !GodotObject.IsInstanceValid(site) || site.IsQueuedForDeletion() || site.IsAbandoned || site.IsComplete)
+		{
+			_buildSite = null;
+			TransitionToNextState();
+			return;
+		}
+
+		// Spotting an enemy drops the tools: fight first, then come back to the same site.
+		if (CheckForEnemies(delta))
+		{
+			EnqueueState(TeamEntityStates.ATTACK, null, true);
+			EnqueueState(TeamEntityStates.BUILDING, site);
+			_buildSite = null;
+			TransitionToNextState();
+			return;
+		}
+
+		// Pushed off the site (or the fight moved him) - walk back before carrying on.
+		var siteFlat = new Vector2(site.GlobalPosition.X, site.GlobalPosition.Z);
+		if (siteFlat.DistanceTo(new Vector2(GlobalPosition.X, GlobalPosition.Z)) > site.WorkReach)
+		{
+			_buildSite = null;
+			Build(site);
+			return;
+		}
+
+		RotateTowards(new Vector3(site.GlobalPosition.X, 0, site.GlobalPosition.Z));
+
+		// Before the crate is here there is nothing to work on yet - wait for it.
+		if (!site.TryUnpack())
+			return;
+
+		site.Buildable?.AddProgress(BUILD_RATE * (float)delta);
+	}
 
 	private void HandleIdle(double delta)
 	{
@@ -390,6 +448,8 @@ public partial class Soldier : MovableTeamEntity
 			return;
 		if (nextState.Item1 == TeamEntityStates.ONTHEWAY || nextState.Item1 == TeamEntityStates.EXITING)
 			_moveToCoords = (Vector2)nextState.Item2;
+		if (nextState.Item1 == TeamEntityStates.BUILDING)
+			_buildSite = nextState.Item2 as BuildSite;
 		SetNewState(nextState.Item1);
 
 		if (stopSound) Mute();
@@ -429,7 +489,7 @@ public partial class Soldier : MovableTeamEntity
 			Visible = false;
 		}
 
-		if (IsInState(TeamEntityStates.IDLE))
+		if (IsInState(TeamEntityStates.IDLE) || IsInState(TeamEntityStates.BUILDING))
 		{
 			if (_animPlayer.CurrentAnimation != "Idle")
 				_animPlayer.Play("Idle");

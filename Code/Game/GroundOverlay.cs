@@ -158,6 +158,33 @@ public partial class GroundOverlay : Node3D
         AddLine(center - forward * size, center + forward * size, color);
     }
 
+    /// <summary>
+    /// Flat arrow lying in the surface plane, starting at the hit and pointing along
+    /// <paramref name="direction"/> (projected onto the plane): a filled head on an outlined shaft.
+    /// </summary>
+    public void ArrowAt(Vector3 origin, Vector3 normal, Vector3 direction, float length, Color color)
+    {
+        if (length <= 0f)
+            return;
+
+        var start = Anchor(origin, normal, out var right, out var forward);
+        var n = right.Cross(forward).Normalized();
+
+        var along = direction - n * direction.Dot(n);
+        if (along.LengthSquared() < 0.000001f)
+            return;
+        along = along.Normalized();
+        var side = along.Cross(n).Normalized();
+
+        float headLength = length * 0.35f;
+        float headWidth = length * 0.22f;
+        var tip = start + along * length;
+        var headBase = tip - along * headLength;
+
+        AddLine(start, headBase, color);
+        AddTriangle(tip, headBase + side * headWidth, headBase - side * headWidth, color);
+    }
+
     #endregion
 
     #region Draped shapes

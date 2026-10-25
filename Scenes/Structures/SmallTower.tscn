@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://cfftgdncbd3vf" path="res://Code/Game/SmallTower.cs" id="3_smtwr"]
 
 [node name="SmallTower" type="Node3D" unique_id=852309482]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 script = ExtResource("3_smtwr")
 
 [node name="SmallTower_InProgress" parent="." unique_id=1619582868 instance=ExtResource("1_xf71d")]

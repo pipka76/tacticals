@@ -11,5 +11,6 @@ public enum TeamEntityStates
     EXITING,
     ATTACK,
     BOARDED,
+    BUILDING,
     TERMINATED
 }

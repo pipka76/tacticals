@@ -26,6 +26,7 @@ public partial class CommandCursor : Node3D
     private static readonly Color PATROL_COLOR = new Color(0.70f, 0.45f, 1.00f);
     private static readonly Color BOARD_COLOR = new Color(0.35f, 0.70f, 1.00f);
     private static readonly Color EXIT_COLOR = new Color(1.00f, 0.70f, 0.25f);
+    private static readonly Color BUILD_COLOR = new Color(1.00f, 0.90f, 0.35f);
     private static readonly Color BLOCKED_COLOR = new Color(1.00f, 0.25f, 0.20f);
     private static readonly Color SLOW_COLOR = new Color(1.00f, 0.80f, 0.30f);
 
@@ -75,6 +76,25 @@ public partial class CommandCursor : Node3D
         _overlay.End();
     }
 
+    /// <summary>
+    /// Replaces the mode marker while a structure is being placed: a ring around its footprint
+    /// and an arrow out of its middle showing which way it will face.
+    /// </summary>
+    public void RenderPlacement(Vector3 pos, Vector3 normal, float yaw, float radius, bool placeable)
+    {
+        if (_overlay == null)
+            return;
+
+        var color = placeable ? BUILD_COLOR : BLOCKED_COLOR;
+        // Same convention as the units: yaw 0 faces -Z.
+        var facing = new Vector3(-Mathf.Sin(yaw), 0f, -Mathf.Cos(yaw));
+
+        _overlay.Begin();
+        _overlay.CircleOutlineAt(pos, normal, radius, new Color(color, OUTLINE_ALPHA));
+        _overlay.ArrowAt(pos, normal, facing, radius + 2f, new Color(color, OUTLINE_ALPHA));
+        _overlay.End();
+    }
+
     private static bool TryGetModeColor(CommandMode mode, out Color color)
     {
         switch (mode)
@@ -83,6 +103,7 @@ public partial class CommandCursor : Node3D
             case CommandMode.Patrol: color = PATROL_COLOR; return true;
             case CommandMode.Board: color = BOARD_COLOR; return true;
             case CommandMode.Exit: color = EXIT_COLOR; return true;
+            case CommandMode.Build: color = BUILD_COLOR; return true;
             // Plain selection is a click on a unit, not on the ground - a ground marker would only
             // be noise.
             default: color = default; return false;
