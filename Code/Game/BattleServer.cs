@@ -12,7 +12,7 @@ using tacticals_api_server.Domain;
 
 public partial class BattleServer : Node
 {
-	private const string ServerApiUrl = "http://172.33.1.169:5000/";
+	private const string ServerApiUrl = "http://127.0.0.1:6000/";
 	private System.Net.Http.HttpClient _serverApi;
 	private string _currentToken;
 
