@@ -1,0 +1,89 @@
+[gd_scene format=3 uid="uid://75rdtea5cnb5"]
+
+[ext_resource type="Script" uid="uid://cjsi6t5r73d6g" path="res://Code/UI/PrepareForBattleMenu.cs" id="1_prep"]
+[ext_resource type="PackedScene" uid="uid://b7armygrid0001" path="res://Scenes/Menus/ArmyGrid.tscn" id="2_grid"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_minimap"]
+bg_color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="PrepareForBattleMenu" type="Control"]
+custom_minimum_size = Vector2(1600, 1200)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_prep")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Prepare" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="MarginContainer/Prepare"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.498039, 0, 1)
+theme_override_constants/outline_size = 24
+theme_override_font_sizes/font_size = 80
+text = "Prepare for battle"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Top" type="HBoxContainer" parent="MarginContainer/Prepare"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="MinimapFrame" type="PanelContainer" parent="MarginContainer/Prepare/Top"]
+custom_minimum_size = Vector2(360, 360)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_minimap")
+
+[node name="Minimap" type="TextureRect" parent="MarginContainer/Prepare/Top/MinimapFrame"]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Info" type="VBoxContainer" parent="MarginContainer/Prepare/Top"]
+custom_minimum_size = Vector2(700, 0)
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Status" type="Label" parent="MarginContainer/Prepare/Top/Info"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "---"
+autowrap_mode = 3
+
+[node name="Progress" type="Label" parent="MarginContainer/Prepare/Top/Info"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.418812, 0.71095, 1)
+theme_override_font_sizes/font_size = 36
+
+[node name="btnDeploy" type="Button" parent="MarginContainer/Prepare/Top/Info"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+disabled = true
+text = "Deploy!"
+
+[node name="btnLeave" type="Button" parent="MarginContainer/Prepare/Top/Info"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Leave battle"
+
+[node name="ArmyGrid" parent="MarginContainer/Prepare" instance=ExtResource("2_grid")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[connection signal="pressed" from="MarginContainer/Prepare/Top/Info/btnDeploy" to="." method="OnDeployPressed"]
+[connection signal="pressed" from="MarginContainer/Prepare/Top/Info/btnLeave" to="." method="OnLeavePressed"]

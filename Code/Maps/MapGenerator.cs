@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
@@ -19,9 +21,42 @@ public class MapGenerator
         _mapHeight = mapHeight;
     }
 
+    // MapBlock keeps its data in public fields, so both directions need IncludeFields.
+    private static readonly JsonSerializerOptions JsonOptions = new() { IncludeFields = true };
+
     public string ToJson(MapBlock[][] map)
     {
-        return System.Text.Json.JsonSerializer.Serialize(map, new JsonSerializerOptions() { IncludeFields = true});
+        return System.Text.Json.JsonSerializer.Serialize(map, JsonOptions);
+    }
+
+    public static MapBlock[][] FromJson(string json)
+    {
+        return System.Text.Json.JsonSerializer.Deserialize<MapBlock[][]>(json, JsonOptions);
+    }
+
+    /// <summary>Gzipped JSON, for sending a generated map from the game server to the players.</summary>
+    public static byte[] Pack(MapBlock[][] map)
+    {
+        using var output = new MemoryStream();
+        using (var gzip = new GZipStream(output, CompressionLevel.Optimal))
+            System.Text.Json.JsonSerializer.Serialize(gzip, map, JsonOptions);
+        return output.ToArray();
+    }
+
+    public static MapBlock[][] Unpack(byte[] data)
+    {
+        using var gzip = new GZipStream(new MemoryStream(data), CompressionMode.Decompress);
+        return System.Text.Json.JsonSerializer.Deserialize<MapBlock[][]>(gzip, JsonOptions);
+    }
+
+    /// <summary>
+    /// Fills the flow field for a map generated elsewhere (e.g. received from the game server),
+    /// the same way GenerateMap does for a map it generates itself.
+    /// </summary>
+    public void PrepareFlowField(FlowFieldManager mgr, MapBlock[][] map)
+    {
+        InitializeFlowField(mgr);
+        RegisterObstacles(map, mgr);
     }
 
     public MapBlock[][] GenerateMap(FlowFieldManager mgr)

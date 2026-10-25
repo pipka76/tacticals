@@ -1,110 +1,148 @@
 using Godot;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
+/// <summary>
+/// Step 3 of the battle flow: the lobby of one battle. Polls the API for the players and their
+/// ready state. The owner gets Start once everyone is ready, and everyone moves on to
+/// PrepareForBattle once the battle is running.
+/// </summary>
 public partial class BattleMenu : Control, IGameMenu
 {
+	// A failed poll is retried; this many in a row means the battle is gone (e.g. the owner left).
+	private const int MAX_MISSED_POLLS = 3;
+
 	private Container _playersList;
 	private HBoxContainer _playerTemplate;
-	private Guid _battleId;
-	
+	private Button _readyButton;
+	private Button _startButton;
+	private Label _status;
+	private Timer _pollTimer;
+	private bool _refreshing;
+	private int _missedPolls;
+
+	private Guid BattleId => Main3d.Current.Session.BattleId;
+
 	public void OnNavigateTo(NavigateContext context)
 	{
-		if (context == null)
-			return;
-
-		var bName = GetNode<Label>("MarginContainer/BattleLobby/BattleName");
-		string battleId = context.Metadata["battleid"];
-		GD.Print($"Getting battle details {battleId} ...");
-		var b = Task.Run(async () => await BattleServer.Current.GetBattle(Guid.Parse(battleId))).Result;
-		if(b == null)
-			return;
-		GD.Print($"Battle details read: {b.Name}");
-		bName.Text = b.Name;
-		_battleId = b.ID;
+		_missedPolls = 0;
+		_readyButton.SetPressedNoSignal(false);
+		_readyButton.Disabled = false;
+		_startButton.Visible = false;
+		_startButton.Disabled = false;
+		_status.Text = string.Empty;
+		GetNode<Label>("MarginContainer/BattleLobby/PlayerHBoxContainer/MyName").Text =
+			BattleServer.Current.CurrentProfile?.Name ?? "---";
+		ClearPlayers();
+		RefreshBattle();
 	}
-	
+
 	public override void _Ready()
 	{
 		_playersList = GetNode<Container>("MarginContainer/BattleLobby/OtherPlayers");
 		_playerTemplate = GetNode<HBoxContainer>("MarginContainer/BattleLobby/AnotherPlayer");
-	}
-
-	private void OnReadyToPlay(bool toggled_on)
-	{
-		var name = GetNode<TextEdit>("MarginContainer/BattleLobby/PlayerHBoxContainer/TextEdit");
-		name.Editable = !toggled_on;
-		Task.Run(async () => await BattleServer.Current.SetPlayerReady(_battleId, toggled_on)).Wait();
-		OnOtherPlayerReady();
-	}
-
-	[Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-	private void OnOtherPlayerReady()
-	{
-		var myId = BattleServer.Current.CurrentProfile?.Id ?? Guid.Empty;
-		var battle = Task.Run(async () => await BattleServer.Current.GetBattle(_battleId)).Result;
-		if (battle != null)
+		_readyButton = GetNode<Button>("MarginContainer/BattleLobby/PlayerHBoxContainer/btnReady");
+		_startButton = GetNode<Button>("MarginContainer/BattleLobby/btnStartGame");
+		_status = GetNode<Label>("MarginContainer/BattleLobby/Status");
+		_pollTimer = GetNode<Timer>("PollTimer");
+		this.VisibilityChanged += () =>
 		{
-			while(_playersList.GetChildCount() > 0)
-				_playersList.RemoveChild(_playersList.GetChild(0));
-
-			foreach (var p in battle.Peers)
-			{
-				if (p.Id == myId)
-					continue;
-				
-
-				var newp = (HBoxContainer) _playerTemplate.Duplicate();
-				newp.Visible = true;
-				newp.Name = p.Id.ToString();
-				var namep = newp.GetNode<Label>("Name");
-				namep.Text = p.Name;
-				var indi = newp.GetNode<CheckButton>("MarginContainer/BattleLobby/AnotherPlayer/rdyIndicator");
-				indi.SetPressed(p.IsReady);
-				_playersList.AddChild(newp);
-			}
-			
-			// Same rule the API enforces on battle/start.
-			if(battle.Peers.All(p => p.IsReady) && battle.Owner == myId)
-				OnAllPlayersReady();
+			if (this.Visible)
+				_pollTimer.Start();
 			else
-				OnAllPlayersNotReady();
+				_pollTimer.Stop();
+		};
+	}
+
+	private async void OnReadyToPlay(bool toggled_on)
+	{
+		_readyButton.Disabled = true;
+		await BattleServer.Current.SetPlayerReady(BattleId, toggled_on);
+		_readyButton.Disabled = false;
+		RefreshBattle();
+	}
+
+	private async void RefreshBattle()
+	{
+		// A slow API shouldn't stack up overlapping polls.
+		if (_refreshing || BattleId == Guid.Empty)
+			return;
+
+		var battleId = BattleId;
+		_refreshing = true;
+		var battle = await BattleServer.Current.GetBattle(battleId);
+		_refreshing = false;
+
+		// We may have left or moved on while waiting.
+		if (!this.Visible || battleId != BattleId)
+			return;
+
+		var myId = BattleServer.Current.CurrentProfile?.Id ?? Guid.Empty;
+		if (battle == null || battle.Peers.All(p => p.Id != myId))
+		{
+			if (battle == null && ++_missedPolls < MAX_MISSED_POLLS)
+				return;
+
+			BackToLobby("The battle was disbanded.");
+			return;
 		}
+		_missedPolls = 0;
+
+		GetNode<Label>("MarginContainer/BattleLobby/BattleName").Text = battle.Name;
+
+		if (battle.IsRunning)
+		{
+			// The owner started it; its game server is up.
+			Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.PREPAREMENU);
+			return;
+		}
+
+		ClearPlayers();
+		foreach (var p in battle.Peers)
+		{
+			if (p.Id == myId)
+				continue;
+
+			var newp = (HBoxContainer) _playerTemplate.Duplicate();
+			newp.Visible = true;
+			newp.Name = p.Id.ToString();
+			newp.GetNode<Label>("Name").Text = p.Name;
+			newp.GetNode<CheckButton>("rdyIndicator").SetPressedNoSignal(p.IsReady);
+			_playersList.AddChild(newp);
+		}
+
+		// Same rule the API enforces on battle/start.
+		_startButton.Visible = battle.Owner == myId && battle.Peers.All(p => p.IsReady);
 	}
 
-	[Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-	private void OnOtherPlayerNotReady()
+	private void ClearPlayers()
 	{
-		OnOtherPlayerReady();
-	}
-
-	private void OnAllPlayersReady()
-	{
-		GD.Print("OnAllPlayersReady");
-		GetNode<Button>("MarginContainer/BattleLobby/btnStartGame").Visible = true;
-	}
-
-	[Rpc(MultiplayerApi.RpcMode.Authority)]
-	private void OnAllPlayersNotReady()
-	{
-		GetNode<Button>("MarginContainer/BattleLobby/btnStartGame").Visible = false;
+		foreach (Node child in _playersList.GetChildren())
+		{
+			_playersList.RemoveChild(child);
+			child.QueueFree();
+		}
 	}
 
 	private void StartTheGame()
 	{
-		BattleServer.Current.RpcId(1, "StartBattle", Multiplayer.GetUniqueId());
+		// PrepareForBattle asks the API to start the game server and waits for it.
+		_startButton.Disabled = true;
+		Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.PREPAREMENU);
 	}
 
-	[Rpc(MultiplayerApi.RpcMode.Authority)]
-	private void OnStartBattle(string mapName, string mapData)
+	private async void OnLeavePressed()
 	{
-		this.Visible = false;
-		var map = (Plains) GD.Load<PackedScene>(mapName).Instantiate();
-		map.ImportLevelData(mapData);
-		GetTree().CurrentScene.GetNode<Node>("Map").AddChild(map);
+		await BattleServer.Current.LeaveBattle(BattleId);
+		BackToLobby(null);
+	}
 
-		var player = (Player)GD.Load<PackedScene>("res://Scenes/Game/Player.tscn").Instantiate();
-		GetTree().CurrentScene.GetNode<Node>("Map").GetChild(0).GetNode<Node>("Players").AddChild(player);
+	private void BackToLobby(string message)
+	{
+		Main3d.Current.Session.LeaveBattle();
+		var context = new NavigateContext();
+		if (message != null)
+			context.Metadata.Add(LobbyMenu.MESSAGE_META, message);
+		Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.LOBBYMENU, context);
 	}
 }

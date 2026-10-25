@@ -11,6 +11,7 @@
 [ext_resource type="Resource" uid="uid://cdw0uqhxij1d6" path="res://Assets/Sounds/SoundLibrary.tres" id="9_jifo4"]
 [ext_resource type="Script" uid="uid://sxttjg4q76hi" path="res://Code/Game/ProjectileManager.cs" id="10_pyiq5"]
 [ext_resource type="Script" uid="uid://3s7ca3a7facs" path="res://Code/Game/GameDebug.cs" id="11_nboip"]
+[ext_resource type="PackedScene" uid="uid://c8prepbattle01" path="res://Scenes/Menus/PrepareForBattleMenu.tscn" id="12_prep"]
 
 [node name="Main3d" type="Node3D" unique_id=589792418]
 script = ExtResource("1_iggqh")
@@ -36,6 +37,9 @@ visible = false
 visible = false
 offset_right = 1600.0
 offset_bottom = 1200.0
+
+[node name="PrepareForBattleMenu" parent="CanvasLayer" instance=ExtResource("12_prep")]
+visible = false
 
 [node name="Audio" type="Node" parent="." unique_id=125037180]
 script = ExtResource("8_7e5io")

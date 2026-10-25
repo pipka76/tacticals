@@ -80,12 +80,17 @@ public partial class Plains : Node3D, IGameMap
 			minimap.Visible = !minimap.Visible;
     }
 
-    public void ImportLevelData(string data)
+    public void LoadLevel(MapBlock[][] map)
 	{
-		var dData = System.Text.Json.JsonSerializer.Deserialize<MapBlock[][]>(data);
+		_map = map;
+		new MapGenerator(map.Length, map[0].Length).PrepareFlowField(_mgr, _map);
+
+		LoadResources();
+		GenerateSceneObjects(_map);
+
 		var minimap = GetNode<Minimap>("Minimap");
 		if (minimap != null)
-			minimap.Generate(dData);
+			minimap.Generate(_map);
 	}
 
     public float GetTerrainHeight(Vector2 coords)
@@ -567,10 +572,13 @@ public partial class Plains : Node3D, IGameMap
         return null;
 	}
 
-	public void SpawnPlayer(Vector2 globalFlatPosition)
+	public Player SpawnPlayer(Vector2 globalFlatPosition)
 	{
 		var player = (Player)_playerScene.Instantiate();
+		// Before AddChild: Player._Ready checks whether we own its input.
+		player.PlayerId = Multiplayer.GetUniqueId();
 		GetNode<Node>("Players").AddChild(player);
 		player.GlobalPosition = new Vector3(globalFlatPosition.X, 0, globalFlatPosition.Y);
+		return player;
 	}
 }

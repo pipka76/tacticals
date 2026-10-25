@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://bertea36m5op7"]
+[gd_scene format=3 uid="uid://bertea36m5op7"]
 
 [ext_resource type="Script" path="res://Code/UI/StartMenu.cs" id="1_uasv6"]
 [ext_resource type="Texture2D" uid="uid://byr057x0qdp4y" path="res://Assets/UI/BattleButton.png" id="1_ypqbx"]
@@ -6,28 +6,14 @@
 [ext_resource type="Texture2D" uid="uid://ctq5wyt0c5v4m" path="res://Assets/UI/TrainDefenceButton.png" id="3_f802u"]
 [ext_resource type="ButtonGroup" uid="uid://cr2j138gqsqey" path="res://Scenes/Menus/GameModeGroup.tres" id="3_kpkjo"]
 [ext_resource type="Texture2D" uid="uid://61ibieek6vqj" path="res://Assets/UI/PressedClassicModeButton.png" id="4_13r7w"]
-[ext_resource type="Texture2D" uid="uid://cj3vosp6bxpdy" path="res://Assets/UI/SoldierUnit.png" id="4_wxe8e"]
-[ext_resource type="Texture2D" uid="uid://dqllohrd7oadx" path="res://Assets/UI/TankUnit.png" id="5_1xq7c"]
 [ext_resource type="Texture2D" uid="uid://cps051xusyiqx" path="res://Assets/UI/PressedTrainDefenceButton.png" id="6_47n7a"]
-[ext_resource type="Texture2D" uid="uid://nl1qfoo0gf31" path="res://Assets/UI/MotorcycleUnit.png" id="6_m1mx8"]
-[ext_resource type="Texture2D" uid="uid://e3kjhmd3f3kg" path="res://Assets/UI/PressedSoldierUnit.png" id="6_mh477"]
 [ext_resource type="Texture2D" uid="uid://dmc7mwm2qxmus" path="res://Assets/UI/HamburgerMenuButton.png" id="7_we17s"]
-[ext_resource type="Texture2D" uid="uid://ctllxmta4g7oq" path="res://Assets/UI/TruckUnit.png" id="7_ygi7i"]
-[ext_resource type="Texture2D" uid="uid://g45eqx0ptkud" path="res://Assets/UI/helicopterUnit.png" id="8_bnnql"]
-[ext_resource type="ButtonGroup" uid="uid://cerraupf3r0hf" path="res://Scenes/Menus/SelectArmyUnitGroup.tres" id="8_c0ark"]
-[ext_resource type="Texture2D" uid="uid://dfs4vw3lylavc" path="res://Assets/UI/PressedTankUnit.png" id="8_p5g46"]
-[ext_resource type="Texture2D" uid="uid://b761q77v37e71" path="res://Assets/UI/PressedTruckUnit.png" id="9_fli88"]
-[ext_resource type="Texture2D" uid="uid://dwd6nkd6mjx8a" path="res://Assets/UI/ArtileryUnit.png" id="9_t7fcg"]
-[ext_resource type="Texture2D" uid="uid://c17k4t6nbapeq" path="res://Assets/UI/PressedMotorcycleUnit.png" id="10_qjdfa"]
-[ext_resource type="Texture2D" uid="uid://ri8o21bnc6pc" path="res://Assets/UI/DeleteButton.png" id="11_2m8qd"]
-[ext_resource type="Texture2D" uid="uid://bhtldqy2dcoi5" path="res://Assets/UI/PressedArtileryUnit.png" id="12_f0f4e"]
-[ext_resource type="Texture2D" uid="uid://d4fav2ji2m58t" path="res://Assets/UI/PressedDeleteButton.png" id="14_3jk11"]
-[ext_resource type="Texture2D" uid="uid://chj6sklfxa5s5" path="res://Assets/UI/PressedHelicopterUnit.png" id="14_4ktbp"]
 [ext_resource type="Texture2D" uid="uid://b1xtn5b02yner" path="res://Assets/UI/BackButton.png" id="22_vcxan"]
 [ext_resource type="PackedScene" uid="uid://c447kwkb1m2ks" path="res://Scenes/Menus/ProfileMenu.tscn" id="25_2mqdi"]
 [ext_resource type="PackedScene" uid="uid://dsd5vlsrknp3t" path="res://Scenes/Menus/OptionsMenu.tscn" id="26_vq855"]
 [ext_resource type="PackedScene" uid="uid://bh0dy7bnvlx7l" path="res://Scenes/Menus/LeaderboardMenu.tscn" id="27_cv53x"]
 [ext_resource type="PackedScene" uid="uid://dhnokjolswbl1" path="res://Scenes/Menus/LoginMenu.tscn" id="28_ifjwx"]
+[ext_resource type="PackedScene" uid="uid://b7armygrid0001" path="res://Scenes/Menus/ArmyGrid.tscn" id="29_armygrid"]
 
 [node name="StartMenu" type="Control"]
 layout_mode = 3
@@ -107,75 +93,9 @@ size_flags_vertical = 0
 theme_override_font_sizes/font_size = 24
 text = "LOGIN/REGISTER"
 
-[node name="MiddleMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
-custom_minimum_size = Vector2(0, 650)
+[node name="ArmyGrid" parent="StartMenuContents/VBoxContainer" instance=ExtResource("29_armygrid")]
+custom_minimum_size = Vector2(0, 850)
 layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer/MiddleMarginContainer"]
-layout_mode = 2
-
-[node name="Panel" type="Panel" parent="StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer"]
-layout_mode = 2
-
-[node name="BottomMarginContainer" type="MarginContainer" parent="StartMenuContents/VBoxContainer"]
-custom_minimum_size = Vector2(0, 200)
-layout_mode = 2
-theme_override_constants/margin_left = 100
-theme_override_constants/margin_right = 100
-
-[node name="UnitCatalog" type="HBoxContainer" parent="StartMenuContents/VBoxContainer/BottomMarginContainer"]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="SOLDIER" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("4_wxe8e")
-texture_pressed = ExtResource("6_mh477")
-
-[node name="TANK" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("5_1xq7c")
-texture_pressed = ExtResource("8_p5g46")
-
-[node name="MOTORCYCLE" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("6_m1mx8")
-texture_pressed = ExtResource("10_qjdfa")
-
-[node name="TRUCK" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("7_ygi7i")
-texture_pressed = ExtResource("9_fli88")
-
-[node name="HELICOPTER" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("8_bnnql")
-texture_pressed = ExtResource("14_4ktbp")
-
-[node name="ARTILERY" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("9_t7fcg")
-texture_pressed = ExtResource("12_f0f4e")
-
-[node name="TRASH" type="TextureButton" parent="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog"]
-layout_mode = 2
-toggle_mode = true
-button_group = ExtResource("8_c0ark")
-texture_normal = ExtResource("11_2m8qd")
-texture_pressed = ExtResource("14_3jk11")
 
 [node name="PopupMenu" type="HBoxContainer" parent="StartMenuContents"]
 visible = false
@@ -232,19 +152,10 @@ layout_mode = 1
 visible = false
 layout_mode = 1
 
-[connection signal="resized" from="." to="." method="OnResized"]
 [connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/btnGotoBattle" to="." method="OnBattlePressed"]
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnClassicMode" to="." method="OnClassicMode"]
 [connection signal="toggled" from="StartMenuContents/VBoxContainer/TopMarginContainer/CenterContainer/TopMenu/HBoxContainer/btnTrainDefence" to="." method="OnTrainMode"]
 [connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/Hamburger" to="." method="OnShowPopupMenu"]
 [connection signal="pressed" from="StartMenuContents/VBoxContainer/TopMarginContainer/btnLoginLogout" to="." method="OnLoginRegisterPressed"]
-[connection signal="gui_input" from="StartMenuContents/VBoxContainer/MiddleMarginContainer/MarginContainer/Panel" to="." method="OnGridPanelInput"]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/SOLDIER" to="." method="OnUnitSelected" binds= ["SOLDIER"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TANK" to="." method="OnUnitSelected" binds= ["TANK"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/MOTORCYCLE" to="." method="OnUnitSelected" binds= ["MOTORCYCLE"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TRUCK" to="." method="OnUnitSelected" binds= ["TRUCK"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/HELICOPTER" to="." method="OnUnitSelected" binds= ["HELICOPTER"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/ARTILERY" to="." method="OnUnitSelected" binds= ["ARTILERY"]]
-[connection signal="toggled" from="StartMenuContents/VBoxContainer/BottomMarginContainer/UnitCatalog/TRASH" to="." method="OnUnitSelected" binds= ["TRASH"]]
 [connection signal="pressed" from="StartMenuContents/PopupMenu/VBoxContainer2/Options" to="." method="OnOptionsPressed"]
 [connection signal="pressed" from="StartMenuContents/PopupMenu/Back" to="." method="OnHidePopupMenu"]

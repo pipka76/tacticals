@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -16,7 +17,9 @@ using tacticals_api_server.Domain;
 /// </summary>
 public partial class BattleServer : Node
 {
-	private const string ServerApiUrl = "http://172.33.1.169:5000/";
+	private const string ServerApiUrl = "http://172.33.1.133:6000/";
+	// e.g. --api=http://127.0.0.1:6000/ to point a local client at a test API.
+	private const string API_ARG = "--api=";
 	private System.Net.Http.HttpClient _serverApi;
 	private string _currentToken;
 
@@ -35,7 +38,8 @@ public partial class BattleServer : Node
 	{
 		_currentToken = null;
 		_serverApi = new System.Net.Http.HttpClient();
-		_serverApi.BaseAddress = new Uri(ServerApiUrl);
+		var apiArg = OS.GetCmdlineUserArgs().FirstOrDefault(a => a.StartsWith(API_ARG));
+		_serverApi.BaseAddress = new Uri(apiArg?.Substring(API_ARG.Length) ?? ServerApiUrl);
 		Current = this;
 	}
 
@@ -109,6 +113,7 @@ public partial class BattleServer : Node
 			var result = await _serverApi.PutAsync($"battle/start?id={id}", null);
 			if (result.StatusCode != HttpStatusCode.OK)
 			{
+				
 				GD.Print($"StartBattle failed: {result.StatusCode}");
 				return null;
 			}

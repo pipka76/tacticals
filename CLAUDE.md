@@ -14,8 +14,8 @@ The `.csproj` has a `ProjectReference` to `../tacticals-api-server/tactical-api-
 # Build (Godot.NET.Sdk pulls in the engine SDK; plain dotnet build works)
 dotnet build tacticals.csproj
 
-# Run the client
-/Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path .
+# Run the client (--api= overrides BattleServer's hardcoded API address, e.g. for a local test API)
+/Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . -- --api=http://127.0.0.1:6000/
 
 # Run a dedicated server (headless auto-starts the ENet server; see Main._Ready)
 /Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . --headless -- --port=20000 --join-timeout=600
@@ -29,7 +29,9 @@ There is no test suite, linter, or CI. Verification is by running the game.
 
 `Main` (`Code/Core/Main.cs`) is the root and holds static `Current`. Several managers follow the same idiom: a `Node` in `Main.tscn` that assigns `static Current` in `_Ready()` — `BattleServer`, `BattleNetwork`, `AudioManager` (as `Main.Current.Audio`), `ProjectileManager` (as `Main.Current.Projectiles`), `GameDebug`, `PlayerInput`. Reach them through those statics, not by node path.
 
-`Main.NavigateTo(NAVIGATE_TARGET, NavigateContext)` shows/hides the three menu nodes (StartMenu / LobbyMenu / BattleMenu) — they are all instanced siblings, never swapped scenes. `Main.StartGame(scenePath)` swaps the level under the `Map` node and calls `IGameMap.GenerateLevel()`.
+`Main.NavigateTo(NAVIGATE_TARGET, NavigateContext)` shows one of the menu nodes under `CanvasLayer` and hides the rest (`HideMenus()` hides them all) — they are all instanced siblings, never swapped scenes. State that has to survive from menu to menu (battle id, owner flag, army layout) lives in `Main.Current.Session` (`ClientSession`), not in `NavigateContext`. `Main.StartGame(scenePath, map = null)` swaps the level under the `Map` node and calls `IGameMap.LoadLevel(map)` when given a map, `GenerateLevel()` otherwise.
+
+Battle flow through the menus: **StartMenu** (army grid; Battle requires login) → **LobbyMenu** (list/create/join on the API) → **BattleMenu** (polls `battle/get` every 1s; ready toggles; owner's Start once all are ready) → **PrepareForBattleMenu** (owner calls `battle/start`, others `battle/endpoint`; connects to the game server, shows the minimap of the map it sends, Deploy sends the army) → level built on `BattleNetwork.BeginBattle`. Any failure goes back to the lobby with a message. The army grid is the reusable `ArmyGrid` scene (StartMenu and PrepareForBattle); its layout moves between them as a string (`GetLayout`/`SetLayout`).
 
 ### Maps
 
@@ -40,7 +42,7 @@ Any level implements `IGameMap` (`Plains` for procedural multiplayer, `CampainDe
 
 Both produce `MapBlock[][]` and initialize the `FlowFieldManager` for pathing. `MapConstants.BLOCK_SIZE` (15) converts world XZ ↔ grid indices; `BIOMEHEATMAPSCALE` (2) is the sub-cell resolution of the biome/height data stored in each block's `BiomeInfo`.
 
-The generated map is serialized to JSON (`MapGenerator.ToJson`) and pushed to peers so every client builds the identical level — see `BattleNetwork.OnBattleStart`.
+In multiplayer the game server generates the map once, packs it (`MapGenerator.Pack`: gzipped JSON with `IncludeFields`, since `MapBlock` keeps its data in fields) and sends it to each player, who builds the identical level with `IGameMap.LoadLevel` (`MapGenerator.PrepareFlowField` fills the flow field for a received map). `Minimap.CreateImage(map)` renders the minimap picture outside a level, too.
 
 ### Entities
 
@@ -66,11 +68,11 @@ Shooting does not spawn nodes. Entities call `Main.Current.Projectiles.Spawn(new
 
 Easy to confuse:
 
-- **`BattleServer`** — player-side HTTP client against the REST API at `ServerApiUrl` (hardcoded IP in `Code/Game/BattleServer.cs`) for login, battle registration, join/leave, ready state, start. The login token is attached to every request; the API identifies players by **profile id** (`Battle.Owner`, `Peer.Id` are profile Guids), never by ENet peer id. Async, wrapped in blocking `Task.Run(...).Result` at call sites.
+- **`BattleServer`** — player-side HTTP client against the REST API at `ServerApiUrl` (hardcoded IP in `Code/Game/BattleServer.cs`, overridable with `--api=`) for login, battle registration, join/leave, ready state, start. The login token is attached to every request; the API identifies players by **profile id** (`Battle.Owner`, `Peer.Id` are profile Guids), never by ENet peer id. Await it from `async void` UI handlers; don't block on `.Result`.
 - **`ServerAuth`** — headless only. Clients connect with the one-time join ticket from `battle/start` / `battle/endpoint` (`Main3d.JoinServer(host, port, ticket)` sends it in Godot's auth handshake); the server redeems it with the API before completing the handshake, so `PeerConnected` only fires for verified players. Map ENet peer → profile with `ServerAuth.Current.GetIdentity(peerId)`. A server started by hand (no API env vars) accepts everyone.
 - **`ServerApi`** — the game server's own HTTP calls back to the API (ticket redeem, finish report), authenticated with the per-instance token from the environment.
 - **`ServerLifecycle`** — headless only (added by `Main3d`). The API launches one server process per battle and treats the process exiting as the battle ending, so this node decides when to quit: `FinishBattle(statistics)` reports results to the API (`battle/server/finish`, token from env) then exits 0; all players leaving exits 2; nobody joining within `--join-timeout` (default 60s) exits 3. Exit codes live in `GameServerExit` (tactical-api-common).
-- **`BattleNetwork`** — Godot ENet RPCs between peers (`[Rpc(MultiplayerApi.RpcMode.AnyPeer)]`). It validates the caller's profile (via `ServerAuth`) against `BattleServer` state before acting (see the owner check in `OnBattleStart`), then fans out to peers with `RpcId`.
+- **`BattleNetwork`** — Godot ENet RPCs for PrepareForBattle; same node path on both sides. Server (`StartHosting`, called by `Main3d` before the ENet server starts): generates and packs the map, sends it to each player on `PeerConnected` (`ReceiveMap`), records armies from `SubmitDeploy`, and once every player in the battle (list read from `battle/get` via `ServerApi`) has deployed, sends `BeginBattle` to all. A player disconnecting before that no longer counts. Client: raises `MapReceived` / `DeployProgressChanged` for PrepareForBattle and builds the level on `BeginBattle`. Gameplay itself is not replicated yet: each client spawns only its own player.
 
 ### Debug rendering
 

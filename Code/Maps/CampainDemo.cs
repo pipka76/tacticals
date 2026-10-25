@@ -54,11 +54,14 @@ public partial class CampainDemo :  Node3D, IGameMap
         return _entities.GetChildren().Cast<TeamEntity>().Where(te => te.IsMemberOf(memberOf.Value));
     }
     
-    public void SpawnPlayer(Vector2 globalFlatPosition)
+    public Player SpawnPlayer(Vector2 globalFlatPosition)
     {
         var player = (Player)_playerScene.Instantiate();
+        // Before AddChild: Player._Ready checks whether we own its input.
+        player.PlayerId = Multiplayer.GetUniqueId();
         GetNode<Node>("Players").AddChild(player);
         player.GlobalPosition = new Vector3(globalFlatPosition.X, 0, globalFlatPosition.Y);
+        return player;
     }
 
     public void SpawnEntity(Node3D entity, Vector2 globalFlatPosition)
@@ -68,8 +71,10 @@ public partial class CampainDemo :  Node3D, IGameMap
         entity.GlobalPosition = new Vector3(globalFlatPosition.X, _map[b.X][b.Y].GlobalPosition.Y, globalFlatPosition.Y);
     }
 
-    public void ImportLevelData(string data)
+    public void LoadLevel(MapBlock[][] map)
     {
+        // Authored level; there is no generated map to load.
+        GenerateLevel();
     }
 
 

@@ -69,10 +69,12 @@ position = Vector2(358, 38)
 scale = Vector2(0.4, 0.4)
 texture = ExtResource("2_gcpdb")
 
-[node name="TextEdit" type="TextEdit" parent="MarginContainer/BattleLobby/PlayerHBoxContainer" unique_id=283086625]
+[node name="MyName" type="Label" parent="MarginContainer/BattleLobby/PlayerHBoxContainer"]
 custom_minimum_size = Vector2(500, 0)
+clip_contents = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 46
+theme_override_font_sizes/font_size = 54
+text = "---"
 
 [node name="btnReady" type="Button" parent="MarginContainer/BattleLobby/PlayerHBoxContainer" unique_id=1477619893]
 custom_minimum_size = Vector2(240, 80)
@@ -108,8 +110,9 @@ layout_mode = 2
 disabled = true
 button_mask = 0
 
-[node name="OtherPlayers" type="Container" parent="MarginContainer/BattleLobby" unique_id=1307295156]
+[node name="OtherPlayers" type="VBoxContainer" parent="MarginContainer/BattleLobby" unique_id=1307295156]
 layout_mode = 2
+theme_override_constants/separation = 18
 
 [node name="btnStartGame" type="Button" parent="MarginContainer/BattleLobby" unique_id=652616944]
 visible = false
@@ -117,5 +120,20 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 46
 text = "Start the war!"
 
+[node name="Status" type="Label" parent="MarginContainer/BattleLobby"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.1, 0.1, 1)
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
+[node name="btnLeave" type="Button" parent="MarginContainer/BattleLobby"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Leave battle"
+
+[node name="PollTimer" type="Timer" parent="."]
+
 [connection signal="toggled" from="MarginContainer/BattleLobby/PlayerHBoxContainer/btnReady" to="." method="OnReadyToPlay"]
 [connection signal="pressed" from="MarginContainer/BattleLobby/btnStartGame" to="." method="StartTheGame"]
+[connection signal="pressed" from="MarginContainer/BattleLobby/btnLeave" to="." method="OnLeavePressed"]
+[connection signal="timeout" from="PollTimer" to="." method="RefreshBattle"]

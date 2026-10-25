@@ -10,7 +10,8 @@ public partial class Main3d : Node
 	{
 		STARTMENU,
 		LOBBYMENU,
-		BATTLEMENU
+		BATTLEMENU,
+		PREPAREMENU
 	}
 
 	private const int PORT = 20000;
@@ -23,6 +24,9 @@ public partial class Main3d : Node
 	public AudioManager Audio { get; internal set; }
 	
 	public ProjectileManager Projectiles { get; internal set; }
+
+	/// <summary>The battle the player is heading into, shared by the menus.</summary>
+	public ClientSession Session { get; } = new();
 
 	/// <summary>
 	/// The level currently loaded under the "Map" node, or null in the menus and during a
@@ -48,9 +52,11 @@ public partial class Main3d : Node
 			}
 
 			GD.Print($"Automatically starting dedicated server on port {port}");
-			CallDeferred(nameof(StartServer), port);
 			AddChild(new ServerLifecycle());
 			AddChild(new ServerAuth());
+			// Generates the map before "Server Started!", so it's ready when the first player connects.
+			BattleNetwork.Current.StartHosting();
+			CallDeferred(nameof(StartServer), port);
 		}
 		else
 		{
@@ -83,14 +89,15 @@ public partial class Main3d : Node
 		GD.Print("Server Started!");
 	}
 	
-	public IGameMap StartGame(string mapScene)
+	/// <param name="map">Map to build the level from (sent by the game server); generated locally when null.</param>
+	public IGameMap StartGame(string mapScene, MapBlock[][] map = null)
 	{
 //		if (Multiplayer.IsServer())
 //		{
 	//		CallDeferred(nameof(ChangeLevel), GD.Load<PackedScene>(mapScene));
 //		}
 		(GetNode("MenuBackground") as Node3D).Visible = false;
-		return ChangeLevel(GD.Load<PackedScene>(mapScene));
+		return ChangeLevel(GD.Load<PackedScene>(mapScene), map);
 	}
 	
 	/// <summary>Connects to a battle's game server using the endpoint from the API.</summary>
@@ -111,6 +118,16 @@ public partial class Main3d : Node
 		//StartGame();
 	}
 
+	/// <summary>Drops the connection to the game server, if any.</summary>
+	public void LeaveServer()
+	{
+		var peer = Multiplayer.MultiplayerPeer;
+		// Swap first, so closing the old peer doesn't raise ServerDisconnected at us.
+		Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
+		if (peer is ENetMultiplayerPeer)
+			peer.Close();
+	}
+
 	private void OnPeerAuthenticating(long id)
 	{
 		// The server verifies the ticket; there is nothing for us to check on our side.
@@ -124,31 +141,38 @@ public partial class Main3d : Node
 		var main = (GetNode("CanvasLayer/StartMenu") as StartMenu);
 		var lobby = (GetNode("CanvasLayer/LobbyMenu") as LobbyMenu);
 		var battle = (GetNode("CanvasLayer/BattleMenu") as BattleMenu);
+		var prepare = (GetNode("CanvasLayer/PrepareForBattleMenu") as PrepareForBattleMenu);
 		
+		HideMenus();
 		switch (target)
 		{
 			case NAVIGATE_TARGET.STARTMENU:
 				main.Show();
 				main.OnNavigateTo(context);
-				lobby.Hide();
-				battle.Hide();
 				break;
 			case NAVIGATE_TARGET.LOBBYMENU:
-				main.Hide();
 				lobby.Show();
 				lobby.OnNavigateTo(context);
-				battle.Hide();
 				break;
 			case NAVIGATE_TARGET.BATTLEMENU:
-				main.Hide();
-				lobby.Hide();
 				battle.Show();
 				battle.OnNavigateTo(context);
+				break;
+			case NAVIGATE_TARGET.PREPAREMENU:
+				prepare.Show();
+				prepare.OnNavigateTo(context);
 				break;
 		}
 	}
 
-	private IGameMap ChangeLevel(PackedScene scene)
+	/// <summary>Hides every menu, e.g. when the battle begins.</summary>
+	public void HideMenus()
+	{
+		foreach (var menu in GetNode("CanvasLayer").GetChildren().OfType<Control>())
+			menu.Hide();
+	}
+
+	private IGameMap ChangeLevel(PackedScene scene, MapBlock[][] mapData)
 	{
 		// Drop the handle before freeing, so nothing dereferences a disposed level mid-teardown.
 		Map = null;
@@ -166,7 +190,10 @@ public partial class Main3d : Node
 		if (li is IGameMap map)
 		{
 			mapRoot.AddChild(li);
-			map.GenerateLevel();
+			if (mapData != null)
+				map.LoadLevel(mapData);
+			else
+				map.GenerateLevel();
 
 			Map = map;
 			return map;

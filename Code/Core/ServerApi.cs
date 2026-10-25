@@ -22,11 +22,13 @@ public static class ServerApi
 		!String.IsNullOrEmpty(OS.GetEnvironment(GameServerExit.ApiUrlEnv))
 		&& !String.IsNullOrEmpty(OS.GetEnvironment(GameServerExit.ServerTokenEnv));
 
+	/// <param name="body">Sent as JSON; null sends no body.</param>
 	public static Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object body)
 	{
 		var request = new HttpRequestMessage(method, new Uri(new Uri(OS.GetEnvironment(GameServerExit.ApiUrlEnv)), path));
 		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", OS.GetEnvironment(GameServerExit.ServerTokenEnv));
-		request.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+		if (body != null)
+			request.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
 		return _http.SendAsync(request);
 	}
 }

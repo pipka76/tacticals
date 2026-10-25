@@ -57,6 +57,12 @@ text = "Create or join battle"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Error" type="Label" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.1, 0.1, 1)
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/CreateJoinBattle" unique_id=228326301]
 layout_mode = 2
 alignment = 1
@@ -117,8 +123,17 @@ layout_mode = 2
 layout_mode = 2
 text = "Refresh"
 
+[node name="btnBack" type="Button" parent="MarginContainer/CreateJoinBattle"]
+layout_mode = 2
+text = "Back"
+
+[node name="RefreshTimer" type="Timer" parent="."]
+wait_time = 2.0
+
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnDemo" to="." method="CreateNewDemoBattle"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnCampainDemo" to="." method="CreateNewCampainDemoBattle"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/btnNewBattle" to="." method="CreateNewBattleStep1"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName/btnOk" to="." method="CreateNewBattleFinal"]
 [connection signal="pressed" from="MarginContainer/CreateJoinBattle/Button" to="." method="RefreshBattles"]
+[connection signal="pressed" from="MarginContainer/CreateJoinBattle/btnBack" to="." method="OnBackPressed"]
+[connection signal="timeout" from="RefreshTimer" to="." method="RefreshBattles"]

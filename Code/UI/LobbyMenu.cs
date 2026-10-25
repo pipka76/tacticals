@@ -1,86 +1,86 @@
 using Godot;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Timers;
 
+/// <summary>
+/// Step 2 of the battle flow: lists the battles on the API that haven't started yet, and
+/// creates or joins one. The lobby lives on the API; we connect to a game server only in PrepareForBattle.
+/// </summary>
 public partial class LobbyMenu : Control, IGameMenu
 {
-	private System.Timers.Timer _refreshTimer;
-	
-	private class BattleInfo
-	{
-		public Guid id { get; set; }
-		public string name { get; set; }
-		public int count { get; set; }
-	}
+	public const string MESSAGE_META = "message";
+
+	private Timer _refreshTimer;
+	private Label _error;
+	private bool _refreshing;
 
 	public NavigateContext Context { get; set; }
 
 	public override void _Ready()
 	{
-		_refreshTimer = new System.Timers.Timer();
-		_refreshTimer.Enabled = false;
-		_refreshTimer.Interval = 2000;
-		_refreshTimer.Elapsed += RefreshTimerOnElapsed;
+		_refreshTimer = GetNode<Timer>("RefreshTimer");
+		_error = GetNode<Label>("MarginContainer/CreateJoinBattle/Error");
 		this.VisibilityChanged += OnVisibilityChanged;
-	}
-
-	private void RefreshTimerOnElapsed(object sender, ElapsedEventArgs e)
-	{
-		CallDeferred("RefreshBattles");
 	}
 
 	private void OnVisibilityChanged()
 	{
-		_refreshTimer.Enabled = this.Visible;
+		if (this.Visible)
+		{
+			_refreshTimer.Start();
+			RefreshBattles();
+		}
+		else
+			_refreshTimer.Stop();
 	}
 
-	public void RefreshBattles()
+	public async void RefreshBattles()
 	{
-		var list = Task.Run(async () => await BattleServer.Current.ListAllBattles()).Result;
-		OnGetRegisteredBattles(list);
+		// A slow API shouldn't stack up overlapping refreshes.
+		if (_refreshing)
+			return;
+
+		_refreshing = true;
+		var list = await BattleServer.Current.ListAllBattles();
+		_refreshing = false;
+
+		if (this.Visible)
+			OnGetRegisteredBattles(list);
 	}
 
-	[Rpc(MultiplayerApi.RpcMode.Authority)]
 	private void OnGetRegisteredBattles(IEnumerable<tacticals_api_server.Domain.Battle> battles)
 	{
 		var battlesRoot = GetNode<Container>("MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/ExistingGames");
 		var battleTemplate = GetNode<Control>("MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hostedGameTemplate");
 
-		while(battlesRoot.GetChildCount() > 0)
+		foreach (Node child in battlesRoot.GetChildren())
 		{
-			battlesRoot.RemoveChild(battlesRoot.GetChild(0));
+			battlesRoot.RemoveChild(child);
+			child.QueueFree();
 		}
 		
 		foreach (var b in battles)
 		{
 			var bi = (Button)battleTemplate.Duplicate();
 			bi.Visible = true;
-			bi.Text = b.Name;
-			bi.Pressed += () => BattleSelected(bi);
-			bi.SetMeta("battleid", b.ID.ToString());
+			bi.Text = $"{b.Name} ({b.Peers?.Count ?? 0}/4)";
+			var battleId = b.ID;
+			bi.Pressed += () => BattleSelected(battleId);
 			battlesRoot.AddChild(bi);
 		}
 	}
 
-	private void BattleSelected(Button button)
+	private async void BattleSelected(Guid id)
 	{
-		string id = button.GetMeta("battleid").AsString();
-		GD.Print("BattleSelected ID: " + id);
+		GD.Print($"BattleSelected ID: {id}");
 		
-		// The lobby lives on the API; we connect to the game server only once the battle starts.
-		var result = Task.Run(async () => await BattleServer.Current.JoinBattle(Guid.Parse(id))).Result;
-		if (result)
+		if (await BattleServer.Current.JoinBattle(id))
 		{
-			GD.Print("Battle joined: " + id);
-
-			var context = new NavigateContext();
-			context.Command = "JoinExisting";
-			context.Metadata.Add("battleid", id);
-			Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
+			GD.Print($"Battle joined: {id}");
+			EnterBattle(id, false);
 		}
+		else
+			_error.Text = "Could not join the battle (it is full or already started).";
 	}
 	
 	private void CreateNewBattleStep1()
@@ -89,26 +89,39 @@ public partial class LobbyMenu : Control, IGameMenu
 			"MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName").Visible = true;
 	}
 
-	private void CreateNewBattleFinal()
+	private async void CreateNewBattleFinal()
 	{
 		var battleName = GetNode<TextEdit>(
 			"MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName/TextEdit");
+		if (String.IsNullOrWhiteSpace(battleName.Text))
+		{
+			_error.Text = "Enter a battle name.";
+			return;
+		}
 		
 		// We own the new battle and are already its first player.
-		var battleId = Task.Run(async () => await BattleServer.Current.RegisterNewBattle(battleName.Text)).Result;
+		var battleId = await BattleServer.Current.RegisterNewBattle(battleName.Text.Trim());
 		
 		if (battleId != Guid.Empty)
 		{
 			GD.Print($"New battle registered: {battleId}");
-			var context = new NavigateContext();
-			context.Command = "CreateNew";
-			context.Metadata.Add("battleid", battleId.ToString());
-			Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
+			EnterBattle(battleId, true);
 		}
 		else
-		{
-			GD.Print($"Failed to register battle!");
-		}
+			_error.Text = "Could not create the battle (the name may be taken).";
+	}
+
+	private void EnterBattle(Guid battleId, bool isOwner)
+	{
+		var session = Main3d.Current.Session;
+		session.BattleId = battleId;
+		session.IsOwner = isOwner;
+		Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU);
+	}
+
+	private void OnBackPressed()
+	{
+		Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.STARTMENU);
 	}
 
 	private void CreateNewDemoBattle()
@@ -127,5 +140,7 @@ public partial class LobbyMenu : Control, IGameMenu
 
 	public void OnNavigateTo(NavigateContext context)
 	{
+		// e.g. why we were sent back here from a battle.
+		_error.Text = context != null && context.Metadata.TryGetValue(MESSAGE_META, out var message) ? message : string.Empty;
 	}
 }
