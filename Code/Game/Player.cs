@@ -15,6 +15,11 @@ public partial class Player : Node3D
 	private float _patrolCmdCooldown;
 	/// <summary>Waypoints collected while "move_army" is held, committed on release.</summary>
 	private readonly List<Vector3> _moveWaypoints = new List<Vector3>();
+	private CommandCursor _commandCursor;
+	/// <summary>This frame's ground pick, shared by every command handler and the marker.</summary>
+	private bool _hasHover;
+	private Vector3 _hoverPos;
+	private Vector3 _hoverNormal = Vector3.Up;
     private Vector3 _homeBaseCoords;
 	private TeamMembership _myTeam;
 	
@@ -64,9 +69,22 @@ public partial class Player : Node3D
 		_mouse_cursor_moveto = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_moveto.png");
 		_mouse_cursor_select = GD.Load<Texture2D>("res://Assets/UI/mouse_cursor_select.png");
 		DeployArmy();
-		
+
 		_godCamera.SetCurrent(true);
-		
+		// The camera sits up to 300 units out; the default 0.05 near plane spends its depth
+		// precision on the first hand-span in front of the lens and leaves ground overlays
+		// shimmering against the terrain.
+		_godCamera.Near = 1f;
+
+		// Local player only - the marker is aiming feedback for whoever is holding the mouse.
+		// TopLevel matters: _Process pans this node to move the camera, and the marker works in
+		// world space.
+		if (GetNode("PlayerInput").GetMultiplayerAuthority() == Multiplayer.GetUniqueId())
+		{
+			_commandCursor = new CommandCursor { Name = "CommandCursor", TopLevel = true };
+			AddChild(_commandCursor);
+		}
+
 		//Input.SetCustomMouseCursor(_mouse_cursor_select, Input.CursorShape.Arrow, new Vector2(0, 8));
 		//Input.SetCustomMouseCursor(_mouse_cursor_moveto, Input.CursorShape.Cross, new Vector2(8, 10));
 		//Input.SetCustomMouseCursor(_mouse_cursor_board, Input.CursorShape.PointingHand, new Vector2(8, 100));
@@ -249,7 +267,13 @@ public partial class Player : Node3D
 		return null;
 	}
 
-	private Vector3 MouseRaycastToTerrain()
+	/// <summary>
+	/// Where the mouse is pointing on the ground, and the surface normal there. Called once per
+	/// frame into _hoverPos/_hoverNormal - every command handler and the ground marker read those
+	/// fields rather than raycasting for themselves, so what the player aims at and what a click
+	/// resolves to can never be a frame apart.
+	/// </summary>
+	private bool MouseRaycastToTerrain(out Vector3 hitPos, out Vector3 hitNormal)
 	{
 		var mousePos = GetViewport().GetMousePosition();
 		var from = _godCamera.ProjectRayOrigin(mousePos);
@@ -259,21 +283,23 @@ public partial class Player : Node3D
 		rayQuery.From = from;
 		rayQuery.To = to;
 		rayQuery.CollisionMask = 1;
-		
+
 		var result = space.IntersectRay(rayQuery);
-		if (result.TryGetValue("position", out Variant posVar))
+		if (result.TryGetValue("position", out var posVar))
 		{
-			return (Vector3)posVar.Obj;
+			hitPos = posVar.AsVector3();
+			hitNormal = result.TryGetValue("normal", out var normalVar) ? normalVar.AsVector3() : Vector3.Up;
+			return true;
 		}
 
-		return Vector3.Inf;
+		hitPos = Vector3.Inf;
+		hitNormal = Vector3.Up;
+		return false;
 	}
-	
+
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
-	
 		var map = GetParent().GetParent() as IGameMap;
 		if (map != null)
 		{
@@ -287,41 +313,23 @@ public partial class Player : Node3D
 		_godCamera.Fov = _inputs.CameraFov;
 		_godCamera.Rotation = new Vector3(_inputs.CameraDegX, _inputs.CameraYaw, 0);
 		_godCamera.Position = new Vector3(_godCamera.Position.X, _inputs.CameraY, _godCamera.Position.Z);
-		
+
+		// One ground pick for the whole frame, taken after the camera has been moved into this
+		// frame's pose so the marker does not trail the view while panning or zooming.
+		_hasHover = MouseRaycastToTerrain(out _hoverPos, out _hoverNormal);
+
+		// The mode says which command is being aimed; the click confirms it.
 		if (_inputs.IsSelecting)
 		{
-			if (_inputs.IsMoveArmy)
+			switch (_inputs.Mode)
 			{
-				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-				HandleMoveToCommand();
-				goto specialModeExit;
+				case CommandMode.Move: HandleMoveToCommand(); break;
+				case CommandMode.Board: HandleBoardCommand(); break;
+				case CommandMode.Exit: HandleExitCommand(); break;
+				case CommandMode.Patrol: HandlePatrolCommand(); break;
+				default: HandleSelectCommand(); break;
 			}
-
-			if (_inputs.IsBoarding)
-			{
-				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-				HandleBoardCommand();
-				goto specialModeExit;
-			}
-
-			if (_inputs.IsExiting)
-			{
-				Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-				HandleExitCommand();
-				goto specialModeExit;
-			}
-
-			if (_inputs.IsPatrolArmy)
-			{
-                Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-                HandlePatrolCommand();
-                goto specialModeExit;
-            }
-
-            HandleSelectCommand();
 		}
-
-    specialModeExit:
 
 		if (_inputs.IsPatrolArmyReleased)
         {
@@ -333,14 +341,9 @@ public partial class Player : Node3D
             HandleMoveMode();
         }
 
-        if (_inputs.IsMoveArmy)
-		{
-			Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-
-			// Show the route being laid down while the button is held (debug overlay only).
-			if (_moveWaypoints.Count > 0)
-				GameDebug.Current?.RegisterPath(_moveWaypoints.ToArray(), false);
-		}
+        // Show the route being laid down while the button is held (debug overlay only).
+        if (_inputs.IsMoveArmy && _moveWaypoints.Count > 0)
+	        GameDebug.Current?.RegisterPath(_moveWaypoints.ToArray(), false);
 
 		if (_inputs.MapToggle)
 		{
@@ -352,6 +355,10 @@ public partial class Player : Node3D
         }
 		
 		this.Position += new Vector3(_inputs.PlayerMove.X, 0,  _inputs.PlayerMove.Y) * (float)delta * CAM_MOVE_SPEED;
+
+		// Last, so a route committed on this frame is already cleared when the marker is drawn.
+		_commandCursor?.Render(_inputs.Mode, _hasHover, _hoverPos, _hoverNormal,
+			_hasHover ? _godCamera.GlobalPosition.DistanceTo(_hoverPos) : 0f);
 	}
 
     private void HandlePatrolMode()
@@ -384,9 +391,10 @@ public partial class Player : Node3D
         if ((Time.GetTicksMsec() / 1000f - _patrolCmdCooldown) <= CLICK_COOLDOWN)
             return;
 
-        var whereTo3 = MouseRaycastToTerrain();
-        if (whereTo3 == Vector3.Inf)
+        if (!_hasHover)
             return;
+
+        var whereTo3 = _hoverPos;
 
         // Collect selected movable entities
         var map = GetParent().GetParent() as IGameMap;
@@ -494,13 +502,12 @@ public partial class Player : Node3D
 		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) <= CLICK_COOLDOWN)
 			return;
 
-		var whereTo3 = MouseRaycastToTerrain();
-		if (whereTo3 == Vector3.Inf)
+		if (!_hasHover)
 			return;
 
 		_moveToCooldown = Time.GetTicksMsec() / 1000f;
 
-		_moveWaypoints.Add(whereTo3);
+		_moveWaypoints.Add(_hoverPos);
 	}
 
 	/// <summary>
@@ -612,9 +619,9 @@ public partial class Player : Node3D
 	{
 		if ((Time.GetTicksMsec() / 1000f - _moveToCooldown) > CLICK_COOLDOWN)
 		{
-			var whereTo = MouseRaycastToTerrain();
-			if (whereTo != Vector3.Inf)
+			if (_hasHover)
 			{
+				var whereTo = _hoverPos;
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
 				var map = GetParent().GetParent() as IGameMap;
 				foreach (var entity in map.GetEntities(_myTeam))

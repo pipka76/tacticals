@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using Godot;
+using tacticals.Code.Game;
 
 public partial class PlayerInput : MultiplayerSynchronizer
 {
@@ -58,6 +59,11 @@ public partial class PlayerInput : MultiplayerSynchronizer
 	}
     public bool MapToggle;
 	public bool DebugToggle;
+	/// <summary>
+	/// Which command the held modifier keys are aiming, independent of the confirm click.
+	/// Derived state, so it is not replicated - see UpdateCommandMode.
+	/// </summary>
+	public CommandMode Mode = CommandMode.None;
     public float CameraFov = 50f;
 	public float CameraDegX = MIN_CAMERA_DEG;
 	public float CameraY = MAX_CAMERA_Y;
@@ -218,5 +224,22 @@ public partial class PlayerInput : MultiplayerSynchronizer
 
         if (Input.IsActionJustReleased("debug_toggle"))
             DebugToggle = !DebugToggle;
+
+        UpdateCommandMode();
     }
+
+	/// <summary>
+	/// Resolves the held modifiers down to a single aimed command. The priority order has to match
+	/// the dispatch in Player._Process exactly: if the two disagreed, the marker would promise one
+	/// command and the click would issue another.
+	/// </summary>
+	private void UpdateCommandMode()
+	{
+		if (IsMoveArmy) Mode = CommandMode.Move;
+		else if (IsBoarding) Mode = CommandMode.Board;
+		else if (IsExiting) Mode = CommandMode.Exit;
+		else if (IsPatrolArmy) Mode = CommandMode.Patrol;
+		else if (IsSelecting) Mode = CommandMode.Select;
+		else Mode = CommandMode.None;
+	}
 }
