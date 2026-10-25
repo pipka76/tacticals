@@ -33,8 +33,8 @@ public partial class Main3d : Node
 		if (DisplayServer.GetName() == "headless")
 		{
 			int port = PORT;
-			var args = OS.GetCmdlineArgs();
-//			GD.Print($"Found port parameter: {args.Length}");
+			// User args after "--" are only reported by GetCmdlineUserArgs.
+			var args = OS.GetCmdlineUserArgs().Concat(OS.GetCmdlineArgs());
 			var sPort= args.FirstOrDefault(a => a.StartsWith(PORT_ARG));
 			if (!String.IsNullOrEmpty(sPort))
 			{
@@ -44,18 +44,19 @@ public partial class Main3d : Node
 			}
 
 			GD.Print($"Automatically starting dedicated server on port {port}");
-			CallDeferred(nameof(StartServer));
+			CallDeferred(nameof(StartServer), port);
+			AddChild(new ServerLifecycle());
 		}
 
 		Audio = this.GetNode<AudioManager>("Audio");
 		Projectiles = this.GetNode<ProjectileManager>("Projectiles");
 	}
 	
-	public void StartServer()
+	public void StartServer(int port)
 	{
 		// Start as server
 		var peer = new ENetMultiplayerPeer();
-		var error = peer.CreateServer(PORT);
+		var error = peer.CreateServer(port);
 
 		if (error != Error.Ok || peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Disconnected)
 		{
@@ -65,6 +66,7 @@ public partial class Main3d : Node
 
 		Multiplayer.MultiplayerPeer = peer;
 		
+		// The API server waits for this exact line before handing the endpoint to players.
 		GD.Print("Server Started!");
 	}
 	

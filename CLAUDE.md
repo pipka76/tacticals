@@ -18,7 +18,7 @@ dotnet build tacticals.csproj
 /Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path .
 
 # Run a dedicated server (headless auto-starts the ENet server; see Main._Ready)
-/Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . --headless -- --port=20000
+/Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . --headless -- --port=20000 --join-timeout=600
 ```
 
 There is no test suite, linter, or CI. Verification is by running the game.
@@ -64,9 +64,10 @@ Shooting does not spawn nodes. Entities call `Main.Current.Projectiles.Spawn(new
 
 ### Networking
 
-Two distinct layers, easy to confuse:
+Three pieces, easy to confuse:
 
 - **`BattleServer`** — HTTP client against the REST API at `ServerApiUrl` (hardcoded IP in `Code/Game/BattleServer.cs`) for lobby/battle registration, join, ready state, auth token. Async, wrapped in blocking `Task.Run(...).Result` at call sites.
+- **`ServerLifecycle`** — headless only (added by `Main3d`). The API launches one server process per battle and treats the process exiting as the battle ending, so this node decides when to quit: `FinishBattle(statistics)` reports results to the API (`battle/server/finish`, token from env) then exits 0; all players leaving exits 2; nobody joining within `--join-timeout` (default 60s) exits 3. Exit codes live in `GameServerExit` (tactical-api-common).
 - **`BattleNetwork`** — Godot ENet RPCs between peers (`[Rpc(MultiplayerApi.RpcMode.AnyPeer)]`). It validates the caller against `BattleServer` state before acting (see the `Owner != callerId` check in `OnBattleStart`), then fans out to peers with `RpcId`.
 
 ### Debug rendering
