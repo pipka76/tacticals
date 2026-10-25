@@ -61,7 +61,6 @@ public partial class LobbyMenu : Control, IGameMenu
 			bi.Text = b.Name;
 			bi.Pressed += () => BattleSelected(bi);
 			bi.SetMeta("battleid", b.ID.ToString());
-			bi.SetMeta("serverport", b.Port);
 			battlesRoot.AddChild(bi);
 		}
 	}
@@ -69,12 +68,10 @@ public partial class LobbyMenu : Control, IGameMenu
 	private void BattleSelected(Button button)
 	{
 		string id = button.GetMeta("battleid").AsString();
-		int port = button.GetMeta("serverport").AsInt32();
 		GD.Print("BattleSelected ID: " + id);
 		
-		Main3d.Current.JoinServer(port);
-		int peerId = Multiplayer.GetUniqueId();
-		var result = Task.Run(async () => await BattleServer.Current.JoinBattle(Guid.Parse(id), peerId)).Result;
+		// The lobby lives on the API; we connect to the game server only once the battle starts.
+		var result = Task.Run(async () => await BattleServer.Current.JoinBattle(Guid.Parse(id))).Result;
 		if (result)
 		{
 			GD.Print("Battle joined: " + id);
@@ -97,28 +94,20 @@ public partial class LobbyMenu : Control, IGameMenu
 		var battleName = GetNode<TextEdit>(
 			"MarginContainer/CreateJoinBattle/HBoxContainer/ScrollContainer/VBoxContainer/hBoxBattleName/TextEdit");
 		
-		var result =  Task.Run(async () => await BattleServer.Current.RegisterNewBattle(battleName.Text)).Result;
+		// We own the new battle and are already its first player.
+		var battleId = Task.Run(async () => await BattleServer.Current.RegisterNewBattle(battleName.Text)).Result;
 		
-		if (result.id != Guid.Empty)
+		if (battleId != Guid.Empty)
 		{
-			GD.Print($"New server created on port {result.port}: {result.id})");
-			GD.Print($"Connecting to the server ...");
-			Main3d.Current.JoinServer(result.port);
-			GD.Print($"Authorizing the server as mine ...");
-			int peerId = Multiplayer.GetUniqueId();
-			var authorized =  Task.Run(async () => await BattleServer.Current.AuthorizeBattle(result.id, peerId)).Result;
-			if (authorized)
-			{
-				GD.Print($"Authorized");
-				var context = new NavigateContext();
-				context.Command = "CreateNew";
-				context.Metadata.Add("battleid", result.id.ToString());
-				Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
-			}
-			else
-			{
-				GD.Print($"Failed to authorize!");
-			}
+			GD.Print($"New battle registered: {battleId}");
+			var context = new NavigateContext();
+			context.Command = "CreateNew";
+			context.Metadata.Add("battleid", battleId.ToString());
+			Main3d.Current.NavigateTo(Main3d.NAVIGATE_TARGET.BATTLEMENU, context);
+		}
+		else
+		{
+			GD.Print($"Failed to register battle!");
 		}
 	}
 

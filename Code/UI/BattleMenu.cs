@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class BattleMenu : Control, IGameMenu
@@ -33,22 +34,15 @@ public partial class BattleMenu : Control, IGameMenu
 	private void OnReadyToPlay(bool toggled_on)
 	{
 		var name = GetNode<TextEdit>("MarginContainer/BattleLobby/PlayerHBoxContainer/TextEdit");
-		if (toggled_on)
-		{
-			name.Editable = false;
-			BattleNetwork.Current.RpcId(1, "OnPlayerReady", _battleId.ToString(), Multiplayer.GetUniqueId(), name.Text);
-		}
-		else
-		{
-			name.Editable = true;
-			BattleNetwork.Current.RpcId(1, "OnPlayerNotReady", _battleId.ToString(), Multiplayer.GetUniqueId(), name.Text);
-		}
+		name.Editable = !toggled_on;
+		Task.Run(async () => await BattleServer.Current.SetPlayerReady(_battleId, toggled_on)).Wait();
+		OnOtherPlayerReady();
 	}
 
 	[Rpc(MultiplayerApi.RpcMode.AnyPeer)]
 	private void OnOtherPlayerReady()
 	{
-		int rdyCount = 0;
+		var myId = BattleServer.Current.CurrentProfile?.Id ?? Guid.Empty;
 		var battle = Task.Run(async () => await BattleServer.Current.GetBattle(_battleId)).Result;
 		if (battle != null)
 		{
@@ -57,11 +51,8 @@ public partial class BattleMenu : Control, IGameMenu
 
 			foreach (var p in battle.Peers)
 			{
-				if (p.Id == Multiplayer.GetUniqueId())
-				{
-					if (p.IsReady) rdyCount++;
+				if (p.Id == myId)
 					continue;
-				}
 				
 
 				var newp = (HBoxContainer) _playerTemplate.Duplicate();
@@ -72,11 +63,10 @@ public partial class BattleMenu : Control, IGameMenu
 				var indi = newp.GetNode<CheckButton>("MarginContainer/BattleLobby/AnotherPlayer/rdyIndicator");
 				indi.SetPressed(p.IsReady);
 				_playersList.AddChild(newp);
-
-				if (p.IsReady) rdyCount++;
 			}
 			
-			if(rdyCount >= 2 && battle.Owner == Multiplayer.GetUniqueId())
+			// Same rule the API enforces on battle/start.
+			if(battle.Peers.All(p => p.IsReady) && battle.Owner == myId)
 				OnAllPlayersReady();
 			else
 				OnAllPlayersNotReady();

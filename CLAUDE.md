@@ -64,11 +64,13 @@ Shooting does not spawn nodes. Entities call `Main.Current.Projectiles.Spawn(new
 
 ### Networking
 
-Three pieces, easy to confuse:
+Easy to confuse:
 
-- **`BattleServer`** — HTTP client against the REST API at `ServerApiUrl` (hardcoded IP in `Code/Game/BattleServer.cs`) for lobby/battle registration, join, ready state, auth token. Async, wrapped in blocking `Task.Run(...).Result` at call sites.
+- **`BattleServer`** — player-side HTTP client against the REST API at `ServerApiUrl` (hardcoded IP in `Code/Game/BattleServer.cs`) for login, battle registration, join/leave, ready state, start. The login token is attached to every request; the API identifies players by **profile id** (`Battle.Owner`, `Peer.Id` are profile Guids), never by ENet peer id. Async, wrapped in blocking `Task.Run(...).Result` at call sites.
+- **`ServerAuth`** — headless only. Clients connect with the one-time join ticket from `battle/start` / `battle/endpoint` (`Main3d.JoinServer(host, port, ticket)` sends it in Godot's auth handshake); the server redeems it with the API before completing the handshake, so `PeerConnected` only fires for verified players. Map ENet peer → profile with `ServerAuth.Current.GetIdentity(peerId)`. A server started by hand (no API env vars) accepts everyone.
+- **`ServerApi`** — the game server's own HTTP calls back to the API (ticket redeem, finish report), authenticated with the per-instance token from the environment.
 - **`ServerLifecycle`** — headless only (added by `Main3d`). The API launches one server process per battle and treats the process exiting as the battle ending, so this node decides when to quit: `FinishBattle(statistics)` reports results to the API (`battle/server/finish`, token from env) then exits 0; all players leaving exits 2; nobody joining within `--join-timeout` (default 60s) exits 3. Exit codes live in `GameServerExit` (tactical-api-common).
-- **`BattleNetwork`** — Godot ENet RPCs between peers (`[Rpc(MultiplayerApi.RpcMode.AnyPeer)]`). It validates the caller against `BattleServer` state before acting (see the `Owner != callerId` check in `OnBattleStart`), then fans out to peers with `RpcId`.
+- **`BattleNetwork`** — Godot ENet RPCs between peers (`[Rpc(MultiplayerApi.RpcMode.AnyPeer)]`). It validates the caller's profile (via `ServerAuth`) against `BattleServer` state before acting (see the owner check in `OnBattleStart`), then fans out to peers with `RpcId`.
 
 ### Debug rendering
 

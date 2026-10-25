@@ -10,19 +10,25 @@ using System.Threading.Tasks;
 using System.Web;
 using tacticals_api_server.Domain;
 
+/// <summary>
+/// Player-side client for the REST API. Battle calls are authenticated with the login token,
+/// which is attached to every request after LoginProfile; the API identifies us by profile.
+/// </summary>
 public partial class BattleServer : Node
 {
-	private const string ServerApiUrl = "http://127.0.0.1:6000/";
+	private const string ServerApiUrl = "http://172.33.1.169:5000/";
 	private System.Net.Http.HttpClient _serverApi;
 	private string _currentToken;
 
-	public struct NewBattle
+	private struct NewBattle
 	{
 		public Guid id { set; get; }
-		public int port { set; get; }
 	}
 
 	public static BattleServer Current { get; internal set; }
+
+	/// <summary>Logged-in profile (set by GetProfile), or null.</summary>
+	public UProfile CurrentProfile { get; private set; }
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -32,60 +38,59 @@ public partial class BattleServer : Node
 		_serverApi.BaseAddress = new Uri(ServerApiUrl);
 		Current = this;
 	}
-	
-	public async Task<NewBattle> RegisterNewBattle(string name)
+
+	/// <summary>Creates a battle owned by us (we're its first player); Guid.Empty on failure.</summary>
+	public async Task<Guid> RegisterNewBattle(string name)
 	{
 		try
 		{
-			var result = await _serverApi.PutAsync($"/register?name={name}", null);
+			var result = await _serverApi.PutAsync($"battle/register?name={HttpUtility.UrlEncode(name)}", null);
 			if (result.StatusCode != HttpStatusCode.OK)
-				return new NewBattle() { id = Guid.Empty, port = -1 };
-			
-			return await result.Content.ReadFromJsonAsync<NewBattle>();
+				return Guid.Empty;
+
+			return (await result.Content.ReadFromJsonAsync<NewBattle>()).id;
 		}
 		catch (Exception e)
 		{
-			return new NewBattle() { id = Guid.Empty, port = -1 };
+			GD.Print($"RegisterNewBattle: {e.Message}");
+			return Guid.Empty;
 		}
 	}
 
-	public async Task<bool> JoinBattle(Guid id, int peerId)
+	public async Task<bool> JoinBattle(Guid id)
 	{
 		try
 		{
-			var result = await _serverApi.PutAsync($"/join?id={id.ToString()}&peerId={peerId}", null);
-			if (result.StatusCode != HttpStatusCode.OK)
-				return false;
-			
-			return true;
+			var result = await _serverApi.PutAsync($"battle/join?id={id}", null);
+			return result.StatusCode == HttpStatusCode.OK;
 		}
 		catch (Exception e)
 		{
-			return false;
-		}
-	}
-	
-	public async Task<bool> AuthorizeBattle(Guid id, int peerId)
-	{
-		try
-		{
-			var result = await _serverApi.PutAsync($"/authorize?id={id.ToString()}&ownerPeer={peerId}", null);
-			if (result.StatusCode != HttpStatusCode.OK)
-				return false;
-			
-			return true;
-		}
-		catch (Exception e)
-		{
+			GD.Print($"JoinBattle: {e.Message}");
 			return false;
 		}
 	}
 
-	public async Task SetPlayerReady(Guid id, int peerId, bool isReady, string name)
+	/// <summary>Leaves a battle that hasn't started; if we own it, it's disbanded.</summary>
+	public async Task<bool> LeaveBattle(Guid id)
 	{
 		try
 		{
-			await _serverApi.PutAsync($"/playerready?id={id.ToString()}&peerId={peerId}&isReady={isReady}&name={HttpUtility.UrlEncode(name)}", null);
+			var result = await _serverApi.PutAsync($"battle/leave?id={id}", null);
+			return result.StatusCode == HttpStatusCode.OK;
+		}
+		catch (Exception e)
+		{
+			GD.Print($"LeaveBattle: {e.Message}");
+			return false;
+		}
+	}
+
+	public async Task SetPlayerReady(Guid id, bool isReady)
+	{
+		try
+		{
+			await _serverApi.PutAsync($"battle/playerready?id={id}&isReady={isReady}", null);
 		}
 		catch (Exception e)
 		{
@@ -93,23 +98,53 @@ public partial class BattleServer : Node
 		}
 	}
 
-	public async Task StartBattle(Guid id, int peerId)
+	/// <summary>
+	/// Owner only, once everyone is ready: launches the game server. Returns where to connect
+	/// plus our join ticket, or null on failure.
+	/// </summary>
+	public async Task<BattleEndpoint> StartBattle(Guid id)
 	{
 		try
 		{
-			await _serverApi.PutAsync($"/start?id={id.ToString()}&peerId={peerId}", null);
+			var result = await _serverApi.PutAsync($"battle/start?id={id}", null);
+			if (result.StatusCode != HttpStatusCode.OK)
+			{
+				GD.Print($"StartBattle failed: {result.StatusCode}");
+				return null;
+			}
+
+			return await result.Content.ReadFromJsonAsync<BattleEndpoint>();
 		}
 		catch (Exception e)
 		{
 			GD.Print($"StartBattle: {e.Message}");
+			return null;
 		}
 	}
-	
+
+	/// <summary>Where to connect for a started battle, with a fresh join ticket; null until started.</summary>
+	public async Task<BattleEndpoint> GetEndpoint(Guid id)
+	{
+		try
+		{
+			var result = await _serverApi.GetAsync($"battle/endpoint?id={id}");
+			if (result.StatusCode != HttpStatusCode.OK)
+				return null;
+
+			return await result.Content.ReadFromJsonAsync<BattleEndpoint>();
+		}
+		catch (Exception e)
+		{
+			GD.Print($"GetEndpoint: {e.Message}");
+			return null;
+		}
+	}
+
 	public async Task<tacticals_api_server.Domain.Battle> GetBattle(Guid id)
 	{
 		try
 		{
-			return await _serverApi.GetFromJsonAsync<tacticals_api_server.Domain.Battle>($"/get?id={id.ToString()}");
+			return await _serverApi.GetFromJsonAsync<tacticals_api_server.Domain.Battle>($"battle/get?id={id}");
 		}
 		catch (Exception e)
 		{
@@ -121,7 +156,7 @@ public partial class BattleServer : Node
 	{
 		try
 		{
-			return await _serverApi.GetFromJsonAsync<IEnumerable<tacticals_api_server.Domain.Battle>>($"/list");
+			return await _serverApi.GetFromJsonAsync<IEnumerable<tacticals_api_server.Domain.Battle>>("battle/list");
 		}
 		catch (Exception e)
 		{
@@ -140,17 +175,18 @@ public partial class BattleServer : Node
 				content);
 			if (!result.IsSuccessStatusCode)
 			{
-				_currentToken = null;
+				Logout();
 				GD.Print($"Login failed: {result.StatusCode}");
 				return false;
 			}
 
 			_currentToken = await result.Content.ReadAsStringAsync();
+			_serverApi.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _currentToken);
 			return true;
 		}
 		catch (Exception e)
 		{
-			_currentToken = null;
+			Logout();
 			GD.Print($"LoginProfile exception: {e.Message}");
 			return false;
 		}
@@ -159,13 +195,14 @@ public partial class BattleServer : Node
 	public void Logout()
 	{
 		_currentToken = null;
+		CurrentProfile = null;
+		_serverApi.DefaultRequestHeaders.Authorization = null;
 	}
 
 	public async Task<UProfile> GetProfile()
 	{
 		try
 		{
-			_serverApi.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _currentToken);
 			var result = await _serverApi.GetAsync("/profile/get");
 			if (!result.IsSuccessStatusCode)
 			{
@@ -173,7 +210,8 @@ public partial class BattleServer : Node
 				return null;
 			}
 
-			return await result.Content.ReadFromJsonAsync<UProfile>();
+			CurrentProfile = await result.Content.ReadFromJsonAsync<UProfile>();
+			return CurrentProfile;
 		}
 		catch (Exception e)
 		{

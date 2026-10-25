@@ -2,9 +2,6 @@ using Godot;
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using tacticals_api_server.Domain;
 
@@ -20,14 +17,15 @@ public partial class ServerLifecycle : Node
 	private const string BATTLE_ARG = "--battle=";
 	private const string JOIN_TIMEOUT_ARG = "--join-timeout=";
 
-	private static readonly System.Net.Http.HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
-
 	public static ServerLifecycle Current { get; internal set; }
 
 	private Guid _battleId;
 	private int _connectedPeers;
 	private bool _anyPeerJoined;
 	private bool _quitting;
+
+	/// <summary>Battle this server runs, from --battle=; Guid.Empty when started by hand.</summary>
+	public Guid BattleId => _battleId;
 
 	public override void _Ready()
 	{
@@ -88,9 +86,7 @@ public partial class ServerLifecycle : Node
 
 	private async Task ReportFinishAsync(string statistics)
 	{
-		var apiUrl = OS.GetEnvironment(GameServerExit.ApiUrlEnv);
-		var token = OS.GetEnvironment(GameServerExit.ServerTokenEnv);
-		if (String.IsNullOrEmpty(apiUrl) || String.IsNullOrEmpty(token) || _battleId == Guid.Empty)
+		if (!ServerApi.IsConfigured || _battleId == Guid.Empty)
 		{
 			GD.PrintErr("ServerLifecycle: not started by the API, skipping finish report");
 			return;
@@ -98,11 +94,7 @@ public partial class ServerLifecycle : Node
 
 		try
 		{
-			var request = new HttpRequestMessage(HttpMethod.Put, new Uri(new Uri(apiUrl), $"battle/server/finish?id={_battleId}"));
-			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-			request.Content = new StringContent(JsonSerializer.Serialize(statistics ?? string.Empty), Encoding.UTF8, "application/json");
-
-			var result = await _http.SendAsync(request);
+			var result = await ServerApi.SendAsync(HttpMethod.Put, $"battle/server/finish?id={_battleId}", statistics ?? string.Empty);
 			if (!result.IsSuccessStatusCode)
 				GD.PrintErr($"ServerLifecycle: finish report failed: {result.StatusCode}");
 		}

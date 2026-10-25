@@ -26,13 +26,12 @@ public partial class BattleNetwork : Node
 		if (battleServer == null)
 			return;
 
-		if (battleServer.Owner != callerId)
+		// Peers are identified by the profile behind their join ticket (see ServerAuth).
+		if (ServerAuth.Current?.GetIdentity(callerId)?.ProfileId != battleServer.Owner)
 		{
 			GD.Print($"OnBattleStart called by unauthorized peer {callerId}");
 			return;
 		}
-
-		Task.Run(async () => await BattleServer.Current.StartBattle(battle.ID, callerId)).Wait();
 
 		_currentBattle = battle;
 		// Clear any peers that are not ready and sync with server state
@@ -42,47 +41,11 @@ public partial class BattleNetwork : Node
 		var mm = new MapGenerator(100, 100);
 		var map = mm.GenerateMap(null);
 		string mapData = mm.ToJson(map);
-		foreach (var peer in _currentBattle.Peers)
+		foreach (var peerId in Multiplayer.GetPeers())
 		{
-			GetParent().GetNode("BattleMenu").RpcId(peer.Id, "OnStartBattle", _currentBattle.MapName, mapData);
-		}
-	}
-
-	[Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-	private void OnPlayerReady(string id, int peerId, string name)
-	{
-		var battle = Task.Run(async () =>
-		{
-			await BattleServer.Current.SetPlayerReady(Guid.Parse(id), peerId, true, name);
-			return await BattleServer.Current.GetBattle(Guid.Parse(id));
-		}).Result;
-
-		if (battle != null)
-		{
-			foreach (var peer in battle.Peers)
-			{
-				if(peer.Id != peerId)
-					GetParent().GetNode("BattleMenu").RpcId(peer.Id, "OnOtherPlayerReady");
-			}
-		}
-	}
-
-	[Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-	private void OnPlayerNotReady(string id, int peerId, string name)
-	{
-		var battle = Task.Run(async () =>
-		{
-			await BattleServer.Current.SetPlayerReady(Guid.Parse(id), peerId, false, name);
-			return await BattleServer.Current.GetBattle(Guid.Parse(id));
-		}).Result;
-
-		if (battle != null)
-		{
-			foreach (var peer in battle.Peers)
-			{
-				if(peer.Id != peerId)
-					GetParent().GetNode("BattleMenu").RpcId(peer.Id, "OnOtherPlayerNotReady");
-			}
+			var identity = ServerAuth.Current.GetIdentity(peerId);
+			if (identity != null && _currentBattle.Peers.Any(p => p.Id == identity.ProfileId))
+				GetParent().GetNode("BattleMenu").RpcId(peerId, "OnStartBattle", _currentBattle.MapName, mapData);
 		}
 	}
 }

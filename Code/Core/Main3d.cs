@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Linq;
+using System.Text;
 using tacticals.Code.Game;
 
 public partial class Main3d : Node
@@ -15,6 +16,9 @@ public partial class Main3d : Node
 	private const int PORT = 20000;
 	private const string PORT_ARG = "--port=";
 	public static Main3d Current { get; internal set; }
+
+	// Join ticket sent to the game server in the ENet auth handshake (see JoinServer, ServerAuth).
+	private string _joinTicket;
 	
 	public AudioManager Audio { get; internal set; }
 	
@@ -46,6 +50,15 @@ public partial class Main3d : Node
 			GD.Print($"Automatically starting dedicated server on port {port}");
 			CallDeferred(nameof(StartServer), port);
 			AddChild(new ServerLifecycle());
+			AddChild(new ServerAuth());
+		}
+		else
+		{
+			// Game servers only accept peers that authenticate with a join ticket.
+			var multiplayer = (SceneMultiplayer)Multiplayer;
+			multiplayer.AuthCallback = Callable.From<long, byte[]>((_, _) => { });
+			multiplayer.AuthTimeout = ServerAuth.AUTH_TIMEOUT_SEC;
+			multiplayer.PeerAuthenticating += OnPeerAuthenticating;
 		}
 
 		Audio = this.GetNode<AudioManager>("Audio");
@@ -80,10 +93,12 @@ public partial class Main3d : Node
 		return ChangeLevel(GD.Load<PackedScene>(mapScene));
 	}
 	
-	public void JoinServer(int port)
+	/// <summary>Connects to a battle's game server using the endpoint from the API.</summary>
+	public void JoinServer(string host, int port, string ticket)
 	{
+		_joinTicket = ticket;
 		var peer = new ENetMultiplayerPeer();
-		var error = peer.CreateClient("localhost", port);
+		var error = peer.CreateClient(host, port);
 
 		if (error != Error.Ok || peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Disconnected)
 		{
@@ -94,6 +109,14 @@ public partial class Main3d : Node
 		Multiplayer.MultiplayerPeer = peer;
 		
 		//StartGame();
+	}
+
+	private void OnPeerAuthenticating(long id)
+	{
+		// The server verifies the ticket; there is nothing for us to check on our side.
+		var multiplayer = (SceneMultiplayer)Multiplayer;
+		multiplayer.SendAuth((int)id, Encoding.UTF8.GetBytes(_joinTicket ?? string.Empty));
+		multiplayer.CompleteAuth((int)id);
 	}
 
 	public void NavigateTo(NAVIGATE_TARGET target, NavigateContext context = null)
