@@ -17,6 +17,26 @@ public struct Projectile
     public Vector3[]? Trail;
     public int TrailCount;
     public int TrailHead;
+
+    /// <summary>
+    /// Turns an aim <paramref name="direction"/> into where the shot actually goes: anywhere inside
+    /// a cone of <paramref name="halfAngle"/> degrees around it, evenly over its cross-section, so
+    /// a miss is as likely high or low as it is wide, and grows with distance.
+    /// </summary>
+    public static Vector3 Scatter(Vector3 direction, float halfAngle)
+    {
+        direction = direction.Normalized();
+        var side = direction.Cross(Vector3.Up);
+        if (side.LengthSquared() < 0.000001f)
+            side = direction.Cross(Vector3.Right);   // shooting straight up or down
+        side = side.Normalized();
+        var up = side.Cross(direction);
+
+        // Square root spreads the hits evenly over the cone's disc rather than bunching them in the middle.
+        float off = Mathf.Tan(Mathf.DegToRad(halfAngle) * Mathf.Sqrt(System.Random.Shared.NextSingle()));
+        float around = System.Random.Shared.NextSingle() * Mathf.Tau;
+        return (direction + (side * Mathf.Cos(around) + up * Mathf.Sin(around)) * off).Normalized();
+    }
 }
 
 public partial class ProjectileManager : Node3D

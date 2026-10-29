@@ -1,5 +1,8 @@
 [gd_scene format=3 uid="uid://db3kqvux50nct"]
 
 [ext_resource type="PackedScene" uid="uid://2j413new64ld" path="res://Assets/Game/SmallTower.Finished-col.glb" id="1_vdiva"]
+[ext_resource type="PackedScene" uid="uid://raidkhsl8spm" path="res://Assets/Game/SmallTowerDoor-col.glb" id="2_3tnqi"]
 
 [node name="SmallTower_Finished" unique_id=1809336289 instance=ExtResource("1_vdiva")]
+
+[node name="SmallTowerDoor2" parent="." index="1" unique_id=1448646755 instance=ExtResource("2_3tnqi")]

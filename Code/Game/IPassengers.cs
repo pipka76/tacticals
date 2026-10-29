@@ -9,4 +9,7 @@ public interface IPassengers
     IReadOnlyList<TeamEntity> ExitPassengers();
 
     void UpdatePassengersPosition(Vector3 pos);
+
+    /// <summary>How far from this entity's origin a soldier may stand and still get in.</summary>
+    float BoardReach => 5f;
 }

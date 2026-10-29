@@ -17,6 +17,12 @@ public partial class Soldier : MovableTeamEntity
 	private double _awareT = 0.0;
 	private TeamEntity _enemyTarget;
 	private const float ATTACK_INTERVAL = 3.0f;
+	/// <summary>
+	/// Half-angle of the cone a soldier's shots land in, degrees. At 30m that is about 0.8m either
+	/// way - a man in the open is hit most of the time, one behind a firing slit rarely.
+	/// </summary>
+	public const float SHOT_SPREAD = 1.5f;
+	public const float BULLET_SPEED = 300f;
 	private double _attackT = 0.0;
 	private double _eyeAngle = 0.0;
 	private double _lookoutT = 0.0;
@@ -204,18 +210,14 @@ public partial class Soldier : MovableTeamEntity
 
 	private void FireOnTarget(Vector3 target)
 	{
-		var inaccX = Random.Shared.Next(-(int)target.X, (int)target.X);
-		var inaccY = Random.Shared.Next(-(int)target.Y, (int)target.Y);
-		var inaccZ = Random.Shared.Next(-(int)target.Z, (int)target.Z);
-		
 		Main3d.Current.Audio.Play3D("handgun_shot", GlobalPosition);
 		var weapPos = GlobalPosition + Vector3.Up * 1.3f;
-		var fireDirection = (target - weapPos).Normalized() * 300f;
+		var fireDirection = Projectile.Scatter(target - weapPos, SHOT_SPREAD) * BULLET_SPEED;
 		Main3d.Current.Projectiles.Spawn(new Projectile()
 		{
 			Shooter = this,
 			Pos = weapPos,
-			Vel = new Vector3(fireDirection.X + inaccX/50f, fireDirection.Y + inaccY/50f, fireDirection.Z + inaccZ/50f),
+			Vel = fireDirection,
 			Mask = 0b111,
 			ShooterRid = GetRid(),
 			Life = 1,
@@ -472,9 +474,18 @@ public partial class Soldier : MovableTeamEntity
 
 	private void ReportDebug()
 	{
-        float yaw = (float)_eyeAngle + GlobalRotation.Y;
-        GameDebug.Current?.RegisterFov(GlobalPosition + Vector3.Up * 1.4f, SOLDIER_FOV, new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), AWARE_RADIUS);
-    }
+		// Inside a vehicle or tower he looks out through it, if at all - his own cone means nothing.
+		if (IsInState(TeamEntityStates.BOARDED))
+			return;
+
+		if (GameDebug.Current == null || !GameDebug.Current.IsEnabled)
+			return;
+
+		float yaw = (float)_eyeAngle + GlobalRotation.Y;
+		GameDebug.Current.RegisterSight(GetWorld3D().DirectSpaceState, GlobalPosition + Vector3.Up * 1.4f,
+			new Vector3(-Mathf.Sin(yaw), 0, -Mathf.Cos(yaw)), SOLDIER_FOV, AWARE_RADIUS,
+			new Godot.Collections.Array<Rid> { GetRid() });
+	}
 
     private void HandleAnimation()
 	{

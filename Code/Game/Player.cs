@@ -233,7 +233,11 @@ public partial class Player : Node3D
 		return new Vector2(20, 20);
 	}
 
-	private Node MouseRaycastToEntity(uint collisionMask)
+	/// <param name="skipBoarded">
+	/// Look past units sitting inside something: they are hidden but keep their collider, so a click
+	/// on a tower or vehicle would otherwise pick the soldier in it instead.
+	/// </param>
+	private Node MouseRaycastToEntity(uint collisionMask, bool skipBoarded = false)
 	{
 		var mousePos = GetViewport().GetMousePosition();
 		var from = _godCamera.ProjectRayOrigin(mousePos);
@@ -243,15 +247,23 @@ public partial class Player : Node3D
 		rayQuery.From = from;
 		rayQuery.To = to;
 		rayQuery.CollisionMask = collisionMask;
-		
-		var result = space.IntersectRay(rayQuery);
-		if (result.TryGetValue("collider", out Variant collider))
+		var skipped = new Godot.Collections.Array<Rid>();
+
+		// Bounded: each pass excludes one more boarded unit.
+		for (int i = 0; i < 8; i++)
 		{
-			if (collider.Obj != null)
+			rayQuery.Exclude = skipped;
+			var result = space.IntersectRay(rayQuery);
+			if (!result.TryGetValue("collider", out Variant collider) || collider.Obj == null)
+				return null;
+
+			if (skipBoarded && collider.Obj is TeamEntity te && te.IsInState(TeamEntityStates.BOARDED))
 			{
-				return collider.Obj as Node;
-				//return (collider.Obj as Node)?.GetParent();
+				skipped.Add(te.GetRid());
+				continue;
 			}
+
+			return collider.Obj as Node;
 		}
 
 		return null;
@@ -454,15 +466,12 @@ public partial class Player : Node3D
 	{
 		if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)
 		{
-			var nodeHit = MouseRaycastToEntity(0b1110);
-			if (nodeHit != null)
+			var nodeHit = MouseRaycastToEntity(0b1110, skipBoarded: true);
+			var entity = nodeHit as TeamEntity ?? MouseRaycastToGarrison();
+			if (entity != null)
 			{
-				var entity = nodeHit as TeamEntity;
-				if (entity != null)
-				{
-					entity.IsSelected = !entity.IsSelected;
-					_selectCooldown = Time.GetTicksMsec() / 1000f;
-				}
+				entity.IsSelected = !entity.IsSelected;
+				_selectCooldown = Time.GetTicksMsec() / 1000f;
 			}
 		}
 	}
@@ -615,6 +624,30 @@ public partial class Player : Node3D
 			foreach (var p in map.GetEntities())
 				p.IsSelected = false;
 		}
+
+		foreach (var g in GetGarrisons())
+			g.IsSelected = false;
+	}
+
+	/// <summary>
+	/// A tower has no body on the unit layers - one there would block the sight lines into its
+	/// windows - so a click on it is found through its model's colliders instead.
+	/// </summary>
+	private TeamEntity MouseRaycastToGarrison()
+	{
+		for (Node n = MouseRaycastToEntity(0b1); n != null; n = n.GetParent())
+		{
+			if (n is TeamEntity entity)
+				return entity.IsInGroup(EntityGroup.GARRISONS) ? entity : null;
+		}
+
+		return null;
+	}
+
+	/// <summary>Structures soldiers can get into - outside the map's entity list, so asked for separately.</summary>
+	private IEnumerable<TeamEntity> GetGarrisons()
+	{
+		return GetTree().GetNodesInGroup(EntityGroup.GARRISONS).OfType<TeamEntity>();
 	}
 
 	private void HandleBoardCommand()
@@ -633,7 +666,7 @@ public partial class Player : Node3D
 					if (!p.IsSelected)
 						continue;
 					
-					if ((p.GlobalPosition - interactWith.GlobalPosition).Length() > 5f)
+					if ((p.GlobalPosition - interactWith.GlobalPosition).Length() > iPass.BoardReach)
 						continue;
 					
 					if(iPass.BoardPassenger(p) && (interactWith is not Crate))
@@ -656,9 +689,9 @@ public partial class Player : Node3D
 				var whereTo = _hoverPos;
 				_moveToCooldown = Time.GetTicksMsec() / 1000f;
 				var map = GetParent().GetParent() as IGameMap;
-				foreach (var entity in map.GetEntities(_myTeam))
+				foreach (var entity in map.GetEntities(_myTeam).Concat(GetGarrisons()))
 				{
-					if (!entity.IsSelected)
+					if (!entity.IsSelected || !entity.IsMemberOf(_myTeam))
 						continue;
 
 					if (entity is TeamEntity and IPassengers iPass)

@@ -5,12 +5,11 @@ using System.Collections.Generic;
 
 public partial class GameDebug : Node
 {
-	public class FovRecord
-	{ 
-		public Vector3 From {  get; set; }
-		public float FovAngle { get; set; }
-		public Vector3 Forward { get; set; }
-		public float FovDistance { get; set; }
+	/// <summary>A view cone as it really is: the eye, and where each ray across it stopped, left to right.</summary>
+	private class SightRecord
+	{
+		public Vector3 Eye { get; set; }
+		public Vector3[] Edge { get; set; }
 	}
 
 	private class PathRecord
@@ -19,17 +18,26 @@ public partial class GameDebug : Node
 		public bool Loop { get; set; }
 	}
 
-	private List<FovRecord> _fovRegister = new List<FovRecord>();
+	private List<SightRecord> _sightRegister = new List<SightRecord>();
 	private List<PathRecord> _patrolRegister = new List<PathRecord>();
 	// Rect2 is a struct, so these two stay allocation-free even with thousands of cells a frame.
 	private List<Rect2> _blockedAreaRegister = new List<Rect2>();
 	private List<Rect2> _blockedCellRegister = new List<Rect2>();
 	private ImmediateMesh _immediateMesh;
 	private MeshInstance3D _meshInstance;
+	/// <summary>See-through fills go in a mesh of their own: the line mesh is opaque and draws lines only.</summary>
+	private ImmediateMesh _fillMesh;
+	private MeshInstance3D _fillInstance;
 
 	private const float BLOCKED_LIFT = 0.15f;    // keep the overlay off the terrain surface
 	private const float BLOCKED_HATCH_SPACING = 1.5f;
 	private const float BLOCKED_POST_HEIGHT = 2.0f;
+
+	/// <summary>One ray per this many degrees of a view cone - fine enough to show a window slit's edges.</summary>
+	private const float SIGHT_RAY_STEP = 3f;
+	private const int SIGHT_MIN_RAYS = 8;
+	private static readonly Color SIGHT_OUTLINE = new Color(1f, 1f, 1f, 1f);
+	private static readonly Color SIGHT_FILL = new Color(1f, 1f, 1f, 0.12f);
 
 	public static GameDebug Current {  get; internal set; }
 
@@ -55,11 +63,61 @@ public partial class GameDebug : Node
 		_meshInstance.MaterialOverride = material;
 		
 		AddChild(_meshInstance);
+
+		_fillMesh = new ImmediateMesh();
+		_fillInstance = new MeshInstance3D
+		{
+			Mesh = _fillMesh,
+			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+			MaterialOverride = new StandardMaterial3D
+			{
+				ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+				VertexColorUseAsAlbedo = true,
+				Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+				CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+				// Overlapping cones would otherwise hide each other half the time.
+				DepthDrawMode = BaseMaterial3D.DepthDrawModeEnum.Disabled,
+				DisableReceiveShadows = true
+			}
+		};
+		AddChild(_fillInstance);
 	}
 
-	public void RegisterFov(Vector3 from, float angle, Vector3 forward, float distance)
-	{ 
-		_fovRegister.Add(new GameDebug.FovRecord() { From = from, FovAngle = angle, Forward = forward, FovDistance = distance});
+	/// <summary>
+	/// Draws what a unit can actually see this frame: a fan of rays across its view cone, each
+	/// cut short where the environment (terrain, trees, walls - collision layer 1) blocks it, drawn
+	/// as a filled wedge with that ragged far edge. The rays are only cast while the overlay is on.
+	/// </summary>
+	/// <param name="forward">Middle of the cone; flattened, the fan is level with the eye.</param>
+	/// <param name="exclude">Colliders the unit looks out from, e.g. its own body.</param>
+	public void RegisterSight(PhysicsDirectSpaceState3D space, Vector3 eye, Vector3 forward, float angle, float distance,
+		Godot.Collections.Array<Rid> exclude = null)
+	{
+		if (!IsEnabled || space == null)
+			return;
+
+		forward.Y = 0f;
+		if (forward.LengthSquared() < 0.000001f)
+			return;
+		forward = forward.Normalized();
+
+		int rays = Math.Max(SIGHT_MIN_RAYS, Mathf.CeilToInt(angle / SIGHT_RAY_STEP)) + 1;
+		float half = Mathf.DegToRad(angle / 2f);
+		var edge = new Vector3[rays];
+		var query = new PhysicsRayQueryParameters3D { From = eye, CollisionMask = 1 };
+		if (exclude != null)
+			query.Exclude = exclude;
+
+		for (int i = 0; i < rays; i++)
+		{
+			// Left to right: positive turns about Up go left.
+			float a = half - (2f * half) * i / (rays - 1);
+			query.To = eye + forward.Rotated(Vector3.Up, a) * distance;
+			var hit = space.IntersectRay(query);
+			edge[i] = hit.Count > 0 ? (Vector3)hit["position"] : query.To;
+		}
+
+		_sightRegister.Add(new SightRecord { Eye = eye, Edge = edge });
 	}
 
 	public override void _Process(double delta)
@@ -68,17 +126,20 @@ public partial class GameDebug : Node
 			return;
 
 		_immediateMesh.ClearSurfaces();
+		_fillMesh.ClearSurfaces();
 		if (PlayerInput.Current.DebugToggle)
 		{
 			_immediateMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
 			
-			DrawFOV();
+			DrawSightOutlines();
 			DrawPatrolPaths();
 			DrawBlockedAreas();
 
 			_immediateMesh.SurfaceEnd();
+
+			DrawSightFills();
 		}
-		_fovRegister.Clear();
+		_sightRegister.Clear();
 		_patrolRegister.Clear();
 		_blockedAreaRegister.Clear();
 		_blockedCellRegister.Clear();
@@ -270,24 +331,37 @@ public partial class GameDebug : Node
 		return (Main3d.Current?.Map?.GetTerrainHeight(worldXZ) ?? 0f) + BLOCKED_LIFT;
 	}
 
-	private void DrawFOV()
+	/// <summary>The wedge's border: both sides and the far edge where the rays stopped.</summary>
+	private void DrawSightOutlines()
 	{
-		if (_fovRegister.Count == 0)
+		foreach (var record in _sightRegister)
+		{
+			var edge = record.Edge;
+			DrawLine(record.Eye, edge[0], SIGHT_OUTLINE);
+			for (int i = 1; i < edge.Length; i++)
+				DrawLine(edge[i - 1], edge[i], SIGHT_OUTLINE);
+			DrawLine(edge[^1], record.Eye, SIGHT_OUTLINE);
+		}
+	}
+
+	/// <summary>The see-through inside of each wedge, as a fan of triangles from the eye.</summary>
+	private void DrawSightFills()
+	{
+		if (_sightRegister.Count == 0)
 			return;
 
-		foreach (var record in _fovRegister)
+		_fillMesh.SurfaceBegin(Mesh.PrimitiveType.Triangles);
+		foreach (var record in _sightRegister)
 		{
-			float halfAngle = Mathf.DegToRad(record.FovAngle / 2f);
-
-			Vector3 right = record.Forward.Cross(Vector3.Up).Normalized();
-			Vector3 rotationAxis = right.Cross(record.Forward).Normalized();
-
-			Vector3 leftEdge = record.Forward.Rotated(rotationAxis, -halfAngle).Normalized();
-			Vector3 rightEdge = record.Forward.Rotated(rotationAxis, halfAngle).Normalized();
-
-			float rayLength = record.FovDistance;
-			DrawLine(record.From, record.From + leftEdge * rayLength, Colors.White);
-			DrawLine(record.From, record.From + rightEdge * rayLength, Colors.White);
+			var edge = record.Edge;
+			for (int i = 1; i < edge.Length; i++)
+			{
+				_fillMesh.SurfaceSetColor(SIGHT_FILL);
+				_fillMesh.SurfaceAddVertex(record.Eye);
+				_fillMesh.SurfaceAddVertex(edge[i - 1]);
+				_fillMesh.SurfaceAddVertex(edge[i]);
+			}
 		}
+		_fillMesh.SurfaceEnd();
 	}
 }
