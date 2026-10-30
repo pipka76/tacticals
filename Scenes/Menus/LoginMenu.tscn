@@ -1,10 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://dhnokjolswbl1"]
+[gd_scene format=3 uid="uid://dhnokjolswbl1"]
 
 [ext_resource type="PackedScene" uid="uid://k1x2anf5atdu" path="res://Scenes/Menus/RegisterMenu.tscn" id="1_j688s"]
-[ext_resource type="Script" path="res://Code/UI/LoginMenu.cs" id="1_od607"]
+[ext_resource type="Script" uid="uid://vjq5o7rg7dk7" path="res://Code/UI/LoginMenu.cs" id="1_od607"]
 [ext_resource type="Texture2D" uid="uid://dv515eov7bg77" path="res://Assets/UI/menuBackground.png" id="2_mgyt2"]
 
-[node name="LoginMenu" type="Control"]
+[node name="LoginMenu" type="Control" unique_id=352959870]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_od607")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=2038706485]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,7 +22,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_mgyt2")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=412502252]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,10 +34,10 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=260060940]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer" unique_id=614237751]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
@@ -45,7 +45,7 @@ text = "LOG IN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Error" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="Error" type="Label" parent="MarginContainer/VBoxContainer" unique_id=214999950]
 custom_minimum_size = Vector2(500, 100)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -55,12 +55,12 @@ theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BottomContainer" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+[node name="BottomContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1437618453]
 layout_mode = 2
 size_flags_vertical = 3
 columns = 2
 
-[node name="Email" type="Label" parent="MarginContainer/VBoxContainer/BottomContainer"]
+[node name="Email" type="Label" parent="MarginContainer/VBoxContainer/BottomContainer" unique_id=270382400]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 5
@@ -70,14 +70,14 @@ text = "EMAIL:"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="EInput" type="LineEdit" parent="MarginContainer/VBoxContainer/BottomContainer"]
+[node name="EInput" type="LineEdit" parent="MarginContainer/VBoxContainer/BottomContainer" unique_id=1383683759]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 45
 
-[node name="Password" type="Label" parent="MarginContainer/VBoxContainer/BottomContainer"]
+[node name="Password" type="Label" parent="MarginContainer/VBoxContainer/BottomContainer" unique_id=931573247]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 5
@@ -87,51 +87,59 @@ text = "PASSWORD:"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PInput" type="LineEdit" parent="MarginContainer/VBoxContainer/BottomContainer"]
+[node name="PInput" type="LineEdit" parent="MarginContainer/VBoxContainer/BottomContainer" unique_id=1839140343]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 45
+secret = true
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="RememberMe" type="CheckBox" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 50
+text = "Remember me"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=788898842]
 custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 size_flags_horizontal = 4
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1452915849]
 custom_minimum_size = Vector2(600, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 50
 text = "Don't have an account yet:"
 
-[node name="btnRegister" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="btnRegister" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1374652746]
 custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 50
 text = " REGISTER"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=832794473]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 theme_override_constants/separation = 100
 alignment = 1
 
-[node name="btnLogin" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="btnLogin" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1173653291]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 64
 text = "Log in"
 
-[node name="btnCancel" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="btnCancel" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=415352081]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 64
 text = "Cancel"
 
-[node name="RegisterMenu" parent="." instance=ExtResource("1_j688s")]
+[node name="RegisterMenu" parent="." unique_id=36452221 instance=ExtResource("1_j688s")]
 visible = false
 layout_mode = 1
 

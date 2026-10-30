@@ -28,6 +28,9 @@ public partial class StartMenu : Control, IGameMenu
         _optionsMenu = GetNode<Control>("OptionsMenu");
         _loginMenu = GetNode<Control>("LoginMenu");
         _armyGrid = GetNode<ArmyGrid>("StartMenuContents/VBoxContainer/ArmyGrid");
+
+        // "Remember me": BattleServer precedes CanvasLayer in Main3d, so it's ready by now.
+        _ = ((LoginMenu)_loginMenu).TryAutoLogin();
     }
 
     private void OnClassicMode(bool toggledOn)
@@ -84,6 +87,7 @@ public partial class StartMenu : Control, IGameMenu
             // logout
             var loginBtn = GetNode<Button>("StartMenuContents/VBoxContainer/TopMarginContainer/btnLoginLogout");
             BattleServer.Current.Logout();
+            SavedLogin.Clear();
             loginBtn.Text = "LOGIN/REGISTER";
             _isLoggedIn = false;
         }
