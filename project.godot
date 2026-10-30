@@ -110,6 +110,7 @@ build_entity={
 3d_physics/layer_1="Environment"
 3d_physics/layer_2="People"
 3d_physics/layer_3="Equipment"
+3d_physics/layer_5="Picking"
 
 [shader_globals]
 

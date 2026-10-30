@@ -127,7 +127,21 @@ Id = &"metal_hit_heavy"
 Event = SubResource("Resource_2ptfj")
 metadata/_custom_type_script = "uid://c1jqklaqamamg"
 
+[sub_resource type="Resource" id="Resource_mgshot_event"]
+script = ExtResource("3_jljoi")
+Variations = Array[AudioStream]([ExtResource("9_5uw71")])
+VolumeDb = 3.0
+PitchMin = 0.7
+PitchMax = 0.8
+metadata/_custom_type_script = "uid://db1acjl4ofgp1"
+
+[sub_resource type="Resource" id="Resource_mgshot"]
+script = ExtResource("1_1gbm7")
+Id = &"mg_shot"
+Event = SubResource("Resource_mgshot_event")
+metadata/_custom_type_script = "uid://c1jqklaqamamg"
+
 [resource]
 script = ExtResource("2_kovan")
-Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe"), SubResource("Resource_m6usm"), SubResource("Resource_v4mxj"), SubResource("Resource_stoke")])
+Sounds = Array[ExtResource("1_1gbm7")]([SubResource("Resource_jljoi"), SubResource("Resource_oxhqc"), SubResource("Resource_5uw71"), SubResource("Resource_j0c8u"), SubResource("Resource_t0kma"), SubResource("Resource_dcwsl"), SubResource("Resource_f4vbe"), SubResource("Resource_m6usm"), SubResource("Resource_v4mxj"), SubResource("Resource_stoke"), SubResource("Resource_mgshot")])
 metadata/_custom_type_script = "uid://doimqsddt711p"

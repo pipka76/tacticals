@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://borrlki8qqyjl"]
+
+[ext_resource type="PackedScene" uid="uid://bgfh2pxi5i7wg" path="res://Assets/Game/TurretStand-col.glb" id="1_l3ies"]
+
+[node name="TurretStand" unique_id=1091115891 instance=ExtResource("1_l3ies")]

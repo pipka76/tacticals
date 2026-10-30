@@ -52,6 +52,11 @@ public partial class Player : Node3D
 	private const float FORMATION_JITTER = 0.35f;   // random jitter factor (0..1)
 	private const float CRATE_REACH = 5f;          // same reach as boarding
 	private const float PLACEMENT_MIN_DRAG = 0.5f;  // shorter drags keep the previous heading
+	/// <summary>
+	/// Layer 5, "Picking": click-only colliders, for structures whose real colliders are too thin
+	/// to hit with the mouse. Only the click rays here look at it - bullets and sight lines don't.
+	/// </summary>
+	private const uint PICK_LAYER = 0b10000;
 	
 	// Set by the authority, synchronized on spawn.
 	[Export]
@@ -278,7 +283,7 @@ public partial class Player : Node3D
 		var rayQuery = new PhysicsRayQueryParameters3D();
 		rayQuery.From = from;
 		rayQuery.To = to;
-		rayQuery.CollisionMask = 0b011;
+		rayQuery.CollisionMask = 0b011 | PICK_LAYER;
 		
 		var result = space.IntersectRay(rayQuery);
 		if (result.TryGetValue("collider", out var v))
@@ -631,11 +636,11 @@ public partial class Player : Node3D
 
 	/// <summary>
 	/// A tower has no body on the unit layers - one there would block the sight lines into its
-	/// windows - so a click on it is found through its model's colliders instead.
+	/// windows - so a click on it is found through its model's colliders, or its pick collider.
 	/// </summary>
 	private TeamEntity MouseRaycastToGarrison()
 	{
-		for (Node n = MouseRaycastToEntity(0b1); n != null; n = n.GetParent())
+		for (Node n = MouseRaycastToEntity(0b1 | PICK_LAYER); n != null; n = n.GetParent())
 		{
 			if (n is TeamEntity entity)
 				return entity.IsInGroup(EntityGroup.GARRISONS) ? entity : null;
@@ -669,7 +674,7 @@ public partial class Player : Node3D
 					if ((p.GlobalPosition - interactWith.GlobalPosition).Length() > iPass.BoardReach)
 						continue;
 					
-					if(iPass.BoardPassenger(p) && (interactWith is not Crate))
+					if(iPass.BoardPassenger(p) && iPass.HidesPassengers)
 						p.SetVisible(false);
 				}
 
@@ -915,7 +920,7 @@ public partial class Player : Node3D
 		var rayQuery = new PhysicsRayQueryParameters3D();
 		rayQuery.From = from;
 		rayQuery.To = to;
-		rayQuery.CollisionMask = 0b011;
+		rayQuery.CollisionMask = 0b011 | PICK_LAYER;
 
 		var result = space.IntersectRay(rayQuery);
 		if (result.TryGetValue("collider", out var v) && v.AsGodotObject() is Node hit)

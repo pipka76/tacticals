@@ -507,5 +507,10 @@ public partial class Soldier : MovableTeamEntity
 			if (RaycastToTerrain(out var gnd, out _))
 				GlobalPosition = new Vector3(GlobalPosition.X, gnd.Y, GlobalPosition.Z);
 		}
+
+		// Whatever he boarded puts him where he belongs - no snapping him to the ground here, a
+		// tower holds him up in its cabin. He may still be in view, at a gun, so not mid-stride.
+		if (IsInState(TeamEntityStates.BOARDED) && _animPlayer.CurrentAnimation != "Idle")
+			_animPlayer.Play("Idle");
 	}
 }

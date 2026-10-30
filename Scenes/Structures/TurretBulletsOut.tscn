@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cd2s0weval3f0"]
+
+[ext_resource type="PackedScene" uid="uid://bv6ciggd811u7" path="res://Assets/Game/TurretBulletsOut.glb" id="1_ejr13"]
+
+[node name="TurretBulletsOut" unique_id=205039509 instance=ExtResource("1_ejr13")]

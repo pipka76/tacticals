@@ -36,4 +36,53 @@ public class GameUtils
 
         return result;
     }
+
+    private const string SELECTION_RING_PATH = "res://Assets/Game/SelectionRing.fbx";
+
+    /// <summary>
+    /// The furthest any mesh under <paramref name="root"/> reaches from <paramref name="frame"/>'s
+    /// origin in its XZ plane, or 0 when there are no meshes.
+    /// </summary>
+    public static float FlatRadius(Node3D root, Node3D frame)
+    {
+        float radius = 0f;
+        var toFrame = frame.GlobalTransform.AffineInverse();
+
+        foreach (var node in root.FindChildren("*", nameof(MeshInstance3D), true, false))
+        {
+            var mesh = (MeshInstance3D)node;
+            var aabb = mesh.GetAabb();
+            var toLocal = toFrame * mesh.GlobalTransform;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = toLocal * aabb.GetEndpoint(i);
+                radius = Mathf.Max(radius, new Vector2(corner.X, corner.Z).Length());
+            }
+        }
+
+        return radius;
+    }
+
+    /// <summary>
+    /// A selection ring around a structure <paramref name="footRadius"/> wide, added under
+    /// <paramref name="owner"/> and hidden. Units bring their own ring in their scene; structures
+    /// get one made like this.
+    /// </summary>
+    public static Node3D CreateSelectionRing(Node3D owner, float footRadius)
+    {
+        var scene = GD.Load<PackedScene>(SELECTION_RING_PATH);
+        if (scene == null)
+            return null;
+
+        var ring = scene.Instantiate<Node3D>();
+        ring.Name = "SelectionRing";
+        owner.AddChild(ring);
+
+        // Sized off its own mesh, so it hugs the structure whatever units the model came in.
+        float ringRadius = FlatRadius(ring, ring);
+        if (ringRadius > 0f)
+            ring.Scale = Vector3.One * ((footRadius + 0.5f) / ringRadius);
+        ring.Visible = false;
+        return ring;
+    }
 }

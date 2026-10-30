@@ -1,23 +1,39 @@
-[gd_scene load_steps=4 format=3 uid="uid://bf4w8ir8u4bg8"]
+[gd_scene format=3 uid="uid://bf4w8ir8u4bg8"]
 
-[ext_resource type="PackedScene" uid="uid://6tp8vaa050ap" path="res://Assets/Game/BrowningTurret.fbx" id="1_alt5t"]
+[ext_resource type="PackedScene" uid="uid://borrlki8qqyjl" path="res://Scenes/Structures/TurretStand.tscn" id="1_a3pfg"]
+[ext_resource type="Script" uid="uid://21xaevgvr75" path="res://Code/Game/BrowningTurret.cs" id="1_brtur"]
+[ext_resource type="PackedScene" uid="uid://dg5n00osn3kmm" path="res://Scenes/Structures/TurretHead.tscn" id="2_gkgb4"]
+[ext_resource type="PackedScene" uid="uid://cd2s0weval3f0" path="res://Scenes/Structures/TurretBulletsOut.tscn" id="3_sy840"]
+[ext_resource type="PackedScene" uid="uid://dhgj7bcflsj2c" path="res://Scenes/Structures/TurretBulletsIn.tscn" id="4_4kimr"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_dnjqv"]
-size = Vector3(0.028442383, 1.2021484, 1)
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_pick"]
+height = 1.6114258
+radius = 1.0283203
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_1goae"]
-size = Vector3(1.0411377, 0.29974365, 0.28987122)
+[node name="BrowningTurret" type="CharacterBody3D" unique_id=580771261]
+script = ExtResource("1_brtur")
 
-[node name="BrowningTurret" type="Node3D"]
+[node name="TurretStand" parent="." unique_id=1091115891 instance=ExtResource("1_a3pfg")]
 
-[node name="BrowningTurret" parent="." instance=ExtResource("1_alt5t")]
+[node name="Gun" type="Node3D" parent="." unique_id=1377021954]
 
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
+[node name="TurretHead" parent="Gun" unique_id=882132562 instance=ExtResource("2_gkgb4")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19909114, 0.85418296, 0)
-shape = SubResource("BoxShape3D_dnjqv")
+[node name="TurretBulletsOut" parent="Gun" unique_id=205039509 instance=ExtResource("3_sy840")]
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21038818, 1.0294743, 0.0075149536)
-shape = SubResource("BoxShape3D_1goae")
+[node name="TurretBulletsIn" parent="Gun" unique_id=1652504484 instance=ExtResource("4_4kimr")]
+
+[node name="GunnerSpot" type="Marker3D" parent="Gun" unique_id=1377021955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.4)
+
+[node name="Muzzle" type="Marker3D" parent="Gun" unique_id=1377021958]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04, -1.9)
+
+[node name="PickBody" type="StaticBody3D" parent="." unique_id=1377021956]
+collision_layer = 16
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PickBody" unique_id=1377021957]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8057129, 0)
+shape = SubResource("CylinderShape3D_pick")

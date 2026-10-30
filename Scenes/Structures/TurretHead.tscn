@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dg5n00osn3kmm"]
+
+[ext_resource type="PackedScene" uid="uid://dhslwvda76emv" path="res://Assets/Game/Turret-col.glb" id="1_vqv8l"]
+
+[node name="TurretHead" unique_id=882132562 instance=ExtResource("1_vqv8l")]

@@ -99,6 +99,7 @@ public partial class Crate : TeamEntity, IPassengers
         return content switch
         {
             CrateContent.SMALL_TOWER => SmallTower.SCENE_PATH,
+            CrateContent.BROWNING_TURRET => BrowningTurret.SCENE_PATH,
             _ => null
         };
     }
@@ -123,6 +124,8 @@ public partial class Crate : TeamEntity, IPassengers
 
         return structure;
     }
+
+    public bool HidesPassengers => false;
 
     public bool BoardPassenger(TeamEntity entity)
     {

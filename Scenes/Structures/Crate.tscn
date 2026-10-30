@@ -16,3 +16,4 @@ shape = SubResource("BoxShape3D_qx35h")
 [node name="Crate-col" parent="." unique_id=1294820219 instance=ExtResource("1_3em6i")]
 
 [node name="Sprite3D" type="Sprite3D" parent="." unique_id=1568287910]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4999807, 0)

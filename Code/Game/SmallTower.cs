@@ -18,7 +18,6 @@ public partial class SmallTower : TeamEntity, IBuildable, IPassengers
     public const string SCENE_PATH = "res://Scenes/Structures/SmallTower.tscn";
     private const string IN_PROGRESS_SCENE_PATH = "res://Scenes/Structures/SmallTower_InProgress.tscn";
     private const string FINISHED_SCENE_PATH = "res://Scenes/Structures/SmallTower_Finished.tscn";
-    private const string SELECTION_RING_PATH = "res://Assets/Game/SelectionRing.fbx";
     /// <summary>
     /// Animation in the finished model that swings the hatch shut from wide open. Played backwards
     /// and then forwards it opens and closes again, whenever someone gets in or out; at rest the
@@ -348,41 +347,7 @@ public partial class SmallTower : TeamEntity, IBuildable, IPassengers
     /// <summary>Nearest enemy the occupant can see through one of the slits.</summary>
     private TeamEntity FindVisibleEnemy()
     {
-        var space = GetWorld3D().DirectSpaceState;
-        var shapeQuery = new PhysicsShapeQueryParameters3D
-        {
-            Shape = new SphereShape3D { Radius = AWARE_RADIUS },
-            Transform = new Transform3D(Basis.Identity, Eye),
-            CollisionMask = 0b0110,
-            CollideWithAreas = true,
-            CollideWithBodies = true
-        };
-
-        TeamEntity best = null;
-        float bestD2 = float.PositiveInfinity;
-        var eye = Eye;
-
-        foreach (var h in space.IntersectShape(shapeQuery, 32))
-        {
-            if (!h.TryGetValue("collider", out var cv) || cv.AsGodotObject() is not Node hitNode)
-                continue;
-
-            TeamEntity entity = null;
-            for (Node n = hitNode; n != null; n = n.GetParent())
-                if (n is TeamEntity te) { entity = te; break; }
-
-            if (entity == null || entity == this || entity == Occupant)
-                continue;
-
-            var d2 = eye.DistanceSquaredTo(entity.GlobalPosition);
-            if (d2 >= bestD2 || !IsValidTarget(entity))
-                continue;
-
-            best = entity;
-            bestD2 = d2;
-        }
-
-        return best;
+        return Sight.FindNearest(this, Eye, AWARE_RADIUS, e => e != this && e != Occupant && IsValidTarget(e));
     }
 
     /// <summary>
@@ -391,25 +356,7 @@ public partial class SmallTower : TeamEntity, IBuildable, IPassengers
     /// </summary>
     private bool HasLineOfSight(Vector3 eye, Node3D enemyRoot, Vector3 aim)
     {
-        var ray = new PhysicsRayQueryParameters3D
-        {
-            From = eye,
-            To = aim,
-            CollideWithAreas = true,
-            CollideWithBodies = true,
-            CollisionMask = 0b1111,
-            Exclude = new Godot.Collections.Array<Rid> { Occupant.GetRid() }
-        };
-
-        var res = GetWorld3D().DirectSpaceState.IntersectRay(ray);
-        if (!res.TryGetValue("collider", out var cv) || cv.AsGodotObject() is not Node hitNode)
-            return false;
-
-        for (Node n = hitNode; n != null; n = n.GetParent())
-            if (n == enemyRoot)
-                return true;
-
-        return false;
+        return Sight.HasLineOfSight(this, eye, enemyRoot, aim, new Godot.Collections.Array<Rid> { Occupant.GetRid() });
     }
 
     /// <summary>
@@ -454,8 +401,12 @@ public partial class SmallTower : TeamEntity, IBuildable, IPassengers
     private void OpenForGarrison()
     {
         _opened = true;
-        MeasureFootprint();
-        CreateSelectionRing();
+        if (_finishedStage != null)
+        {
+            var radius = GameUtils.FlatRadius(_finishedStage, this);
+            if (radius > 0f) _footRadius = radius;
+        }
+        _selectorObject = GameUtils.CreateSelectionRing(this, _footRadius);
 
         var players = _finishedStage?.FindChildren("*", nameof(AnimationPlayer), true, false);
         if (players != null && players.Count > 0)
@@ -478,61 +429,6 @@ public partial class SmallTower : TeamEntity, IBuildable, IPassengers
         _hatch.ClearQueue();
         _hatch.PlayBackwards(HATCH_ANIMATION);
         _hatch.Queue(HATCH_ANIMATION);
-    }
-
-    /// <summary>Footprint radius of the finished model, in the tower's own space.</summary>
-    private void MeasureFootprint()
-    {
-        if (_finishedStage == null)
-            return;
-
-        float radius = 0f;
-        var toTower = GlobalTransform.AffineInverse();
-
-        foreach (var node in _finishedStage.FindChildren("*", nameof(MeshInstance3D), true, false))
-        {
-            var mesh = (MeshInstance3D)node;
-            var aabb = mesh.GetAabb();
-            var toLocal = toTower * mesh.GlobalTransform;
-            for (int i = 0; i < 8; i++)
-            {
-                var corner = toLocal * aabb.GetEndpoint(i);
-                radius = Mathf.Max(radius, new Vector2(corner.X, corner.Z).Length());
-            }
-        }
-
-        if (radius > 0f) _footRadius = radius;
-    }
-
-    private void CreateSelectionRing()
-    {
-        var scene = GD.Load<PackedScene>(SELECTION_RING_PATH);
-        if (scene == null)
-            return;
-
-        var ring = scene.Instantiate<Node3D>();
-        ring.Name = "SelectionRing";
-        AddChild(ring);
-
-        // Sized off its own mesh, so it hugs the tower whatever units the model came in.
-        float ringRadius = 0f;
-        var toRing = ring.GlobalTransform.AffineInverse();
-        foreach (var node in ring.FindChildren("*", nameof(MeshInstance3D), true, false))
-        {
-            var mesh = (MeshInstance3D)node;
-            var aabb = mesh.GetAabb();
-            var toLocal = toRing * mesh.GlobalTransform;
-            for (int i = 0; i < 8; i++)
-            {
-                var corner = toLocal * aabb.GetEndpoint(i);
-                ringRadius = Mathf.Max(ringRadius, new Vector2(corner.X, corner.Z).Length());
-            }
-        }
-
-        if (ringRadius > 0f)
-            ring.Scale = Vector3.One * ((_footRadius + 0.5f) / ringRadius);
-        ring.Visible = false;
-        _selectorObject = ring;
     }
 
     /// <summary>

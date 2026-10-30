@@ -269,6 +269,7 @@ transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.
 
 [node name="BrowningTurret" parent="Structures" unique_id=1649733155 instance=ExtResource("8_ug4jj")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -57.902443, -0.02372469, -16.67228)
+BuildProgress = 1.0
 
 [node name="Tower2" parent="Structures" unique_id=240200594 instance=ExtResource("5_rbsug")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -18.4057, -0.023726178, 89.60348)
@@ -349,3 +350,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 185.48297, 0.027894618, 97.89
 
 [node name="Crate" parent="." unique_id=1714478700 instance=ExtResource("18_xjk7d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.613379, -4.7683716e-07, 24.073404)
+
+[node name="TurretCrate" parent="." unique_id=1714478701 instance=ExtResource("18_xjk7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.5, -4.7683716e-07, 20)
+Content = 1
