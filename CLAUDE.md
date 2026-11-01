@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Godot 4.7 / .NET 8 RTS-style tactical game ("tacticals"). C# only — no GDScript. Main scene is `Scenes/Core/Main.tscn`.
+Godot 4.7 / .NET 8 RTS-style tactical game ("tacticals"). C# only — no GDScript. Main scene is `Scenes/Core/Main3d.tscn`.
 
 The `.csproj` has a `ProjectReference` to `../tacticals-api-server/tactical-api-common`, a **sibling repo outside this working directory**. It must be checked out next to this one or the build fails. Shared domain types (e.g. `tacticals_api_server.Domain.Battle`) come from there.
 
@@ -17,7 +17,7 @@ dotnet build tacticals.csproj
 # Run the client (--api= overrides BattleServer's hardcoded API address, e.g. for a local test API)
 /Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . -- --api=http://127.0.0.1:6000/
 
-# Run a dedicated server (headless auto-starts the ENet server; see Main._Ready)
+# Run a dedicated server (headless auto-starts the ENet server; see Main3d._Ready)
 /Applications/Godot_mono\ 4.app/Contents/MacOS/Godot --path . --headless -- --port=20000 --join-timeout=600
 ```
 
@@ -27,9 +27,9 @@ There is no test suite, linter, or CI. Verification is by running the game.
 
 ### Node ownership and singletons
 
-`Main` (`Code/Core/Main.cs`) is the root and holds static `Current`. Several managers follow the same idiom: a `Node` in `Main.tscn` that assigns `static Current` in `_Ready()` — `BattleServer`, `BattleNetwork`, `AudioManager` (as `Main.Current.Audio`), `ProjectileManager` (as `Main.Current.Projectiles`), `GameDebug`, `PlayerInput`. Reach them through those statics, not by node path.
+`Main3d` (`Code/Core/Main3d.cs`) is the root and holds static `Current`. Several managers follow the same idiom: a `Node` in `Main3d.tscn` that assigns `static Current` in `_Ready()` — `BattleServer`, `BattleNetwork`, `AudioManager` (as `Main3d.Current.Audio`), `ProjectileManager` (as `Main3d.Current.Projectiles`), `GameDebug`, `PlayerInput`. Reach them through those statics, not by node path.
 
-`Main.NavigateTo(NAVIGATE_TARGET, NavigateContext)` shows one of the menu nodes under `CanvasLayer` and hides the rest (`HideMenus()` hides them all) — they are all instanced siblings, never swapped scenes. State that has to survive from menu to menu (battle id, owner flag, army layout) lives in `Main.Current.Session` (`ClientSession`), not in `NavigateContext`. `Main.StartGame(scenePath, map = null)` swaps the level under the `Map` node and calls `IGameMap.LoadLevel(map)` when given a map, `GenerateLevel()` otherwise.
+`Main3d.NavigateTo(NAVIGATE_TARGET, NavigateContext)` shows one of the menu nodes under `CanvasLayer` and hides the rest (`HideMenus()` hides them all) — they are all instanced siblings, never swapped scenes. State that has to survive from menu to menu (battle id, owner flag, army layout) lives in `Main3d.Current.Session` (`ClientSession`), not in `NavigateContext`. `Main3d.StartGame(scenePath, map = null)` swaps the level under the `Map` node and calls `IGameMap.LoadLevel(map)` when given a map, `GenerateLevel()` otherwise.
 
 Battle flow through the menus: **StartMenu** (army grid; Battle requires login) → **LobbyMenu** (list/create/join on the API) → **BattleMenu** (polls `battle/get` every 1s; ready toggles; owner's Start once all are ready) → **PrepareForBattleMenu** (owner calls `battle/start`, others `battle/endpoint`; connects to the game server, shows the minimap of the map it sends, Deploy sends the army) → level built on `BattleNetwork.BeginBattle`. Any failure goes back to the lobby with a message. The army grid is the reusable `ArmyGrid` scene (StartMenu and PrepareForBattle); its layout moves between them as a string (`GetLayout`/`SetLayout`).
 
@@ -47,10 +47,17 @@ In multiplayer the game server generates the map once, packs it (`MapGenerator.P
 ### Entities
 
 ```
-CharacterBody3D → TeamEntity → MovableTeamEntity → Soldier / Tank / Heli
+CharacterBody3D → TeamEntity → MovableTeamEntity → Soldier / Tank / Heli / Artillery
+                   TeamEntity → Crate, SmallTower (static)
 ```
 
 `TeamEntity` owns membership (`TeamMembership`), passengers (`IPassengers`), damage, and terrain raycasting. `MovableTeamEntity` adds movement, flocking separation, and patrol checkpoints.
+
+Anything soldiers get into implements `IPassengers` — vehicles, the tower, a crate (the soldier drags it), the artillery (crew stands at `CrewSpot` markers). `BoardReach` and `HidesPassengers` are its per-type knobs.
+
+**Building**: a `Crate` carries a `CrateContent`; placing it creates a `BuildSite` (preview blueprint → planned → unpacked into the real structure as its child), and builders feed progress through `IBuildable.AddProgress`. A new buildable needs only a `CrateContent` value, a scene, and `IBuildable` on its root — no soldier/player changes. `Sight` holds the shared spotting / line-of-sight raycasts used by fixed shooters (tower occupant, turret gunner).
+
+**Collision layers** (`project.godot`): 1 Environment, 2 People, 3 Equipment, 5 Picking. Spotting only looks at People/Equipment; layer 1 is also the ground every unit raycasts to, so an entity whose colliders sit on layer 1 (turret, artillery) must exclude them from its own ground ray. Picking is click-only — bullets and sight lines ignore it.
 
 **State machine idiom** (follow it when adding entity behaviour): each entity holds a current `TeamEntityStates` plus a *queue* of pending states. `_Process` dispatches with a chain of `IsInState(...)` checks to `HandleXxx(delta)` methods, falling through to `HandleIdle`. A handler that finishes calls `TransitionToNextState()`, which dequeues via `GetNextState()` (returning IDLE when empty). Commands enqueue with `EnqueueState(state, arg, cleanFirst)` — the `arg` is the state's payload, e.g. a `Vector2` destination for `ONTHEWAY`.
 
@@ -62,7 +69,7 @@ Entities register themselves into `EntityGroup` string groups (`ground-units`, `
 
 ### Projectiles
 
-Shooting does not spawn nodes. Entities call `Main.Current.Projectiles.Spawn(new Projectile{...})`; `ProjectileManager` steps all projectiles in a struct array in `_PhysicsProcess` and raycasts, calling `TeamEntity.TakeHit(damage, shooter, hitPos)` on impact. Add per-projectile behaviour there, not in the shooter.
+Shooting does not spawn nodes. Entities call `Main3d.Current.Projectiles.Spawn(new Projectile{...})`; `ProjectileManager` steps all projectiles in a struct array in `_PhysicsProcess` and raycasts, calling `TeamEntity.TakeHit(damage, shooter, hitPos)` on impact. Add per-projectile behaviour there, not in the shooter.
 
 ### Networking
 

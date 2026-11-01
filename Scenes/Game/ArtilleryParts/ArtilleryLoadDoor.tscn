@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dtt33rx6lxw2r"]
+
+[ext_resource type="PackedScene" uid="uid://wl8xhmhodf7y" path="res://Assets/Game/ArtilleryLoadDoor.glb" id="1_ed41l"]
+
+[node name="ArtilleryLoadDoor" unique_id=1699751820 instance=ExtResource("1_ed41l")]

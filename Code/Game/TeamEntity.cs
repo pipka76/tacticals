@@ -15,7 +15,12 @@ public partial class TeamEntity : CharacterBody3D
     private Queue<Tuple<TeamEntityStates, object>> _entityStateQueue;
     protected TeamMembership _teamMembership;
     protected int _damageTaken;
-    
+    /// <summary>
+    /// Colliders of the entity's own that sit on the terrain layer, for RaycastToTerrain to look
+    /// through - otherwise a unit whose model collides there would find itself as the ground.
+    /// </summary>
+    protected readonly Godot.Collections.Array<Rid> _ownTerrainColliders = new();
+
     protected TeamEntity()
     {
         _passengers = new List<TeamEntity>();
@@ -209,7 +214,7 @@ public partial class TeamEntity : CharacterBody3D
             To = to,
             CollisionMask = 1,
             // Optional but recommended if you're raycasting from the entity itself
-            Exclude = new Godot.Collections.Array<Rid> { GetRid() }
+            Exclude = new Godot.Collections.Array<Rid>(_ownTerrainColliders) { GetRid() }
         };
 
         var result = space.IntersectRay(query);

@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" uid="uid://bwhs5omi0dbja" path="res://Scenes/Biome/TreeC4.tscn" id="16_1m8xm"]
 [ext_resource type="PackedScene" uid="uid://dv1g8lqlkwofo" path="res://Scenes/Biome/TreeC2.tscn" id="17_ugdf6"]
 [ext_resource type="PackedScene" uid="uid://bi243svb0ckq5" path="res://Scenes/Structures/Crate.tscn" id="18_xjk7d"]
+[ext_resource type="PackedScene" uid="uid://ddb5blhr61akf" path="res://Scenes/Game/Artillery.tscn" id="20_artil"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uwkgb"]
 
@@ -36,6 +37,9 @@ transform = Transform3D(-0.7132504, 0, -0.7009093, 0, 1, 0, 0.7009093, 0, -0.713
 
 [node name="Heli" parent="Entities" unique_id=560480997 instance=ExtResource("11_xjk7d")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 135.53436, 0.088325605, 135.84596)
+
+[node name="Artillery" parent="Entities" unique_id=1385295140 instance=ExtResource("20_artil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.481491, 0.05, 35.924026)
 
 [node name="Players" type="Node" parent="." unique_id=2045950461]
 

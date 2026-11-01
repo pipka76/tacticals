@@ -471,8 +471,12 @@ public partial class Player : Node3D
 	{
 		if ((Time.GetTicksMsec() / 1000f - _selectCooldown) > CLICK_COOLDOWN)
 		{
-			var nodeHit = MouseRaycastToEntity(0b1110, skipBoarded: true);
-			var entity = nodeHit as TeamEntity ?? MouseRaycastToGarrison();
+			// A unit whose colliders are its model's (the artillery) is hit on a child body, not on
+			// itself, so walk up to whoever owns what was hit.
+			TeamEntity entity = null;
+			for (Node n = MouseRaycastToEntity(0b1110 | PICK_LAYER, skipBoarded: true); n != null && entity == null; n = n.GetParent())
+				entity = n as TeamEntity;
+			entity ??= MouseRaycastToGarrison();
 			if (entity != null)
 			{
 				entity.IsSelected = !entity.IsSelected;

@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://ddb5blhr61akf"]
+
+[ext_resource type="Script" uid="uid://dst2s3747bfo7" path="res://Code/Game/Artillery.cs" id="0_art"]
+[ext_resource type="PackedScene" uid="uid://nygqr22se08u" path="res://Assets/Game/SelectionRing.fbx" id="1_mr1cg"]
+[ext_resource type="PackedScene" uid="uid://dyoecfsciex7k" path="res://Scenes/Game/ArtilleryParts/ArtilleryBody.tscn" id="2_wn7s8"]
+[ext_resource type="PackedScene" uid="uid://tcxvrb72blru" path="res://Scenes/Game/ArtilleryParts/ArtilleryCannon.tscn" id="3_dfx5h"]
+[ext_resource type="PackedScene" uid="uid://dtt33rx6lxw2r" path="res://Scenes/Game/ArtilleryParts/ArtilleryLoadDoor.tscn" id="4_6vhx4"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art"]
+size = Vector3(3.2, 3.2, 4.813867)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_art"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[node name="Artillery" type="CharacterBody3D" unique_id=1385295134]
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("0_art")
+
+[node name="SelectionRing" parent="." unique_id=1365372701 instance=ExtResource("1_mr1cg")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)
+visible = false
+
+[node name="Model" type="Node3D" parent="." unique_id=1385295135]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
+
+[node name="ArtilleryBody-col" parent="Model" unique_id=936377692 instance=ExtResource("2_wn7s8")]
+
+[node name="ArtilleryCannon" parent="Model" unique_id=971052153 instance=ExtResource("3_dfx5h")]
+
+[node name="ArtilleryLoadDoor" parent="Model" unique_id=1699751820 instance=ExtResource("4_6vhx4")]
+
+[node name="CrewSpot1" type="Marker3D" parent="." unique_id=1385295136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7489048, 0, 1.2765586)
+
+[node name="CrewSpot2" type="Marker3D" parent="." unique_id=1385295137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5764124, 0, 1.4825747)
+
+[node name="CrewSpot3" type="Marker3D" parent="." unique_id=1385295138]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.5095508)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1385295141]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -0.0069334507)
+shape = SubResource("BoxShape3D_art")
+
+[node name="ServerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1385295139]
+replication_config = SubResource("SceneReplicationConfig_art")

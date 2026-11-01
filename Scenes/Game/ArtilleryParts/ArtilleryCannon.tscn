@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://tcxvrb72blru"]
+
+[ext_resource type="PackedScene" uid="uid://qff85erowg1v" path="res://Assets/Game/ArtilleryCannon-col.glb" id="1_gl1tb"]
+
+[node name="ArtilleryCannon" unique_id=971052153 instance=ExtResource("1_gl1tb")]
